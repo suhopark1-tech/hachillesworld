@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld Admin</title>
+  <style>
+    :root {
+      --bg: #07080d;
+      --bg-2: #0e1018;
+      --bg-3: #141722;
+      --border: #1e2235;
+      --accent: #5b7fff;
+      --accent-2: #8b5cf6;
+      --green: #22d3a5;
+      --yellow: #f59e0b;
+      --red: #f43f5e;
+      --text: #e8eaf0;
+      --text-muted: #6b7280;
+      --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      width: 380px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+    .login-logo {
+      font-size: 1.2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .login-sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
+    .input-wrap { position: relative; margin-bottom: 1rem; }
+    .input-wrap input {
+      width: 100%; padding: 0.85rem 1rem;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: var(--accent); }
+    .btn-login {
+      width: 100%; padding: 0.85rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s; margin-top: 0.5rem;
+    }
+    .btn-login:hover { opacity: 0.9; }
+    .login-error {
+      color: var(--red); font-size: 0.85rem; margin-top: 0.75rem;
+      display: none;
+    }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; min-height: 100vh; }
+
+    .top-bar {
+      background: var(--bg-2); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .top-logo {
+      font-size: 1rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .top-right { display: flex; align-items: center; gap: 1rem; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text-muted); display: inline-block;
+    }
+    .status-dot.live { background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .status-label { font-size: 0.8rem; color: var(--text-muted); }
+    .btn-logout {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); border-radius: 8px; padding: 0.35rem 0.85rem;
+      font-size: 0.8rem; cursor: pointer; transition: border-color 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    .dash-body { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+    /* ── TOKEN BANNER ── */
+    #token-banner {
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 12px; padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    #token-banner p { color: var(--yellow); font-size: 0.9rem; flex: 1; line-height: 1.5; }
+    #token-banner a { color: var(--accent); }
+    .token-input-row { display: flex; gap: 0.75rem; width: 100%; }
+    .token-input-row input {
+      flex: 1; padding: 0.6rem 1rem;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 0.82rem;
+      outline: none;
+    }
+    .token-input-row input:focus { border-color: var(--accent); }
+    .btn-connect {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; padding: 0.6rem 1.25rem;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .kpi-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+    .kpi-num { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; font-family: var(--mono); }
+    .kpi-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .kpi-num.green { color: var(--green); }
+    .kpi-num.accent { color: var(--accent); }
+    .kpi-num.yellow { color: var(--yellow); }
+    .kpi-num.purple { color: var(--accent-2); }
+
+    /* ── CHART ── */
+    .section-title {
+      font-size: 0.85rem; font-weight: 600; color: var(--text-dim);
+      letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .chart-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .chart-wrap { position: relative; height: 180px; display: flex; align-items: flex-end; gap: 6px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar-views {
+      width: 100%; border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--accent), rgba(91,127,255,0.4));
+      transition: height 0.6s ease; min-height: 2px;
+    }
+    .bar-uniques {
+      width: 60%; border-radius: 4px 4px 0 0;
+      background: var(--green); opacity: 0.8;
+      transition: height 0.6s ease; min-height: 2px;
+    }
+    .bar-label { font-size: 0.6rem; color: var(--text-muted); font-family: var(--mono); white-space: nowrap; }
+    .chart-legend { display: flex; gap: 1.5rem; margin-top: 1rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-dim); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* ── TABLES ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+    .table-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .stat-table { width: 100%; font-size: 0.85rem; }
+    .stat-table tr { border-bottom: 1px solid var(--border); }
+    .stat-table tr:last-child { border-bottom: none; }
+    .stat-table td { padding: 0.65rem 0; }
+    .stat-table td:first-child { color: var(--text-dim); }
+    .stat-table td:last-child { text-align: right; font-family: var(--mono); font-weight: 600; color: var(--accent); }
+    .bar-inline {
+      display: inline-block; height: 4px; border-radius: 4px;
+      background: var(--accent); margin-left: 0.5rem; vertical-align: middle; opacity: 0.6;
+    }
+
+    /* ── SKELETON ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-3) 25%, var(--border) 50%, var(--bg-3) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── MISC ── */
+    .note { font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; }
+    #last-updated { font-size: 0.78rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">HAchillesWorld</div>
+    <div class="login-sub">Admin Dashboard</div>
+    <div class="input-wrap">
+      <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="btn-login">로그인</button>
+    <div class="login-error" id="login-error">비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <div class="top-bar">
+    <div class="top-logo">HAchillesWorld Admin</div>
+    <div class="top-right">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">연결 전</span>
+      <span id="last-updated"></span>
+      <button class="btn-logout" id="btn-logout">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- Token Banner -->
+    <div id="token-banner">
+      <div style="width:100%">
+        <p>
+          GitHub Personal Access Token이 필요합니다.
+          <a href="https://github.com/settings/tokens/new?description=HAchillesWorld+Admin&scopes=repo" target="_blank">여기서 발급 →</a>
+          <span style="color:var(--text-muted)">(repo 스코프 필요 / 세션 종료 시 자동 삭제)</span>
+        </p>
+      </div>
+      <div class="token-input-row">
+        <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+        <button class="btn-connect" id="btn-connect">연결</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">14일 총 방문</div><div class="kpi-num accent skeleton" id="kpi-views" style="height:2.2rem;width:80px;">&nbsp;</div><div class="kpi-sub">Page Views</div></div>
+      <div class="kpi-card"><div class="kpi-label">14일 유니크 방문자</div><div class="kpi-num green skeleton" id="kpi-uniques" style="height:2.2rem;width:80px;">&nbsp;</div><div class="kpi-sub">Unique Visitors</div></div>
+      <div class="kpi-card"><div class="kpi-label">오늘 방문</div><div class="kpi-num yellow skeleton" id="kpi-today" style="height:2.2rem;width:60px;">&nbsp;</div><div class="kpi-sub">Today Views</div></div>
+      <div class="kpi-card"><div class="kpi-label">상위 추천 경로</div><div class="kpi-num purple skeleton" id="kpi-top-ref" style="height:2.2rem;width:120px;">&nbsp;</div><div class="kpi-sub">Top Referrer</div></div>
+    </div>
+
+    <!-- Daily Chart -->
+    <div class="chart-card">
+      <div class="section-title">일별 방문 추이 (최근 14일)</div>
+      <div class="chart-wrap" id="chart-wrap">
+        <!-- filled by JS -->
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Page Views</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Unique Visitors</div>
+      </div>
+    </div>
+
+    <!-- Referrers + Paths -->
+    <div class="two-col">
+      <div class="table-card">
+        <div class="section-title">상위 추천 경로 (Referrers)</div>
+        <table class="stat-table" id="ref-table">
+          <tbody><tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">—</td></tr></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <div class="section-title">상위 페이지 (Paths)</div>
+        <table class="stat-table" id="path-table">
+          <tbody><tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="note">
+      ※ GitHub Pages Traffic API는 최근 14일 데이터만 제공합니다.
+      저장소 소유자/협업자 권한의 GitHub PAT가 필요합니다.
+    </p>
+
+  </div>
+</div>
+
+<script>
+  // ── 비밀번호 해시 (SHA-256 of "1234") ──────────────────────────────────
+  const PASS_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+  const REPO      = 'suhopark1-tech/hachillesworld';
+  const AUTH_KEY  = 'haw_admin_authed';
+
+  async function sha256(str) {
+    const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ── 로그인 상태 복원 ────────────────────────────────────────────────────
+  if (sessionStorage.getItem(AUTH_KEY) === '1') showDashboard();
+
+  // ── 로그인 ──────────────────────────────────────────────────────────────
+  document.getElementById('btn-login').addEventListener('click', doLogin);
+  document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+  async function doLogin() {
+    const pw   = document.getElementById('pw-input').value;
+    const hash = await sha256(pw);
+    if (hash === PASS_HASH) {
+      sessionStorage.setItem(AUTH_KEY, '1');
+      showDashboard();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    // 이미 토큰이 저장된 경우 자동 로드
+    const saved = sessionStorage.getItem('haw_gh_token');
+    if (saved) {
+      document.getElementById('gh-token-input').value = saved;
+      loadStats(saved);
+    }
+  }
+
+  // ── 로그아웃 ────────────────────────────────────────────────────────────
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    sessionStorage.clear();
+    location.reload();
+  });
+
+  // ── GitHub 연결 ─────────────────────────────────────────────────────────
+  document.getElementById('btn-connect').addEventListener('click', () => {
+    const token = document.getElementById('gh-token-input').value.trim();
+    if (!token) return;
+    sessionStorage.setItem('haw_gh_token', token);
+    loadStats(token);
+  });
+
+  // ── 데이터 로드 ─────────────────────────────────────────────────────────
+  async function ghFetch(path, token) {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/${path}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  async function loadStats(token) {
+    const dot   = document.getElementById('status-dot');
+    const label = document.getElementById('status-label');
+    dot.className   = 'status-dot';
+    label.textContent = '로딩 중…';
+
+    try {
+      const [views, referrers, paths] = await Promise.all([
+        ghFetch('traffic/views',           token),
+        ghFetch('traffic/referrers',       token),
+        ghFetch('traffic/popular/paths',   token),
+      ]);
+
+      dot.className   = 'status-dot live';
+      label.textContent = 'GitHub API 연결됨';
+      document.getElementById('last-updated').textContent =
+        '업데이트: ' + new Date().toLocaleTimeString('ko-KR');
+
+      renderKPIs(views, referrers);
+      renderChart(views.views);
+      renderReferrers(referrers);
+      renderPaths(paths);
+
+      // 토큰 배너 숨기기
+      document.getElementById('token-banner').style.display = 'none';
+
+    } catch(err) {
+      dot.className   = 'status-dot';
+      label.textContent = '연결 실패';
+      alert(`GitHub API 오류: ${err.message}\n\nPAT에 repo 스코프가 있는지, 저장소 소유자/협업자인지 확인하세요.`);
+    }
+  }
+
+  // ── KPI ─────────────────────────────────────────────────────────────────
+  function renderKPIs(views, referrers) {
+    // 스켈레톤 제거
+    ['kpi-views','kpi-uniques','kpi-today','kpi-top-ref'].forEach(id => {
+      document.getElementById(id).classList.remove('skeleton');
+      document.getElementById(id).style.height = '';
+      document.getElementById(id).style.width  = '';
+    });
+
+    document.getElementById('kpi-views').textContent   = views.count.toLocaleString();
+    document.getElementById('kpi-uniques').textContent = views.uniques.toLocaleString();
+
+    // 오늘 방문
+    const today     = new Date().toISOString().slice(0,10);
+    const todayData = (views.views || []).find(v => v.timestamp.startsWith(today));
+    document.getElementById('kpi-today').textContent   = todayData ? todayData.count.toLocaleString() : '0';
+
+    // 상위 추천 경로
+    const topRef = referrers && referrers[0];
+    document.getElementById('kpi-top-ref').textContent = topRef ? topRef.referrer : '—';
+    document.getElementById('kpi-top-ref').style.fontSize = topRef ? '1rem' : '';
+  }
+
+  // ── 차트 ────────────────────────────────────────────────────────────────
+  function renderChart(dailyViews) {
+    const wrap = document.getElementById('chart-wrap');
+    wrap.innerHTML = '';
+    if (!dailyViews || dailyViews.length === 0) {
+      wrap.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;margin:auto;">데이터 없음</div>';
+      return;
+    }
+
+    const maxV = Math.max(...dailyViews.map(d => d.count), 1);
+    const H    = 160; // px
+
+    dailyViews.forEach(day => {
+      const date    = new Date(day.timestamp);
+      const label   = `${date.getMonth()+1}/${date.getDate()}`;
+      const hViews  = Math.max(Math.round((day.count / maxV) * H), 2);
+      const hUniq   = Math.max(Math.round((day.uniques / maxV) * H), 2);
+
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.title = `${label}\nViews: ${day.count}\nUniques: ${day.uniques}`;
+      col.innerHTML = `
+        <div style="display:flex;align-items:flex-end;gap:2px;height:${H}px;">
+          <div class="bar-views" style="height:${hViews}px;flex:1" title="Views: ${day.count}"></div>
+          <div class="bar-uniques" style="height:${hUniq}px;flex:1" title="Uniques: ${day.uniques}"></div>
+        </div>
+        <div class="bar-label">${label}</div>
+      `;
+      wrap.appendChild(col);
+    });
+  }
+
+  // ── 추천 경로 ────────────────────────────────────────────────────────────
+  function renderReferrers(referrers) {
+    const tbody = document.querySelector('#ref-table tbody');
+    if (!referrers || referrers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">데이터 없음</td></tr>';
+      return;
+    }
+    const max = referrers[0].count;
+    tbody.innerHTML = referrers.slice(0, 8).map(r => `
+      <tr>
+        <td>
+          ${escHtml(r.referrer)}
+          <span class="bar-inline" style="width:${Math.round((r.count/max)*60)}px"></span>
+        </td>
+        <td>${r.count.toLocaleString()} <span style="color:var(--text-muted);font-weight:400">(${r.uniques})</span></td>
+      </tr>
+    `).join('');
+  }
+
+  // ── 상위 페이지 ──────────────────────────────────────────────────────────
+  function renderPaths(paths) {
+    const tbody = document.querySelector('#path-table tbody');
+    if (!paths || paths.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">데이터 없음</td></tr>';
+      return;
+    }
+    const max = paths[0].count;
+    tbody.innerHTML = paths.slice(0, 8).map(p => {
+      const name = p.path.replace('/hachillesworld','') || '/';
+      return `
+        <tr>
+          <td>
+            ${escHtml(name)}
+            <span class="bar-inline" style="width:${Math.round((p.count/max)*60)}px"></span>
+          </td>
+          <td>${p.count.toLocaleString()} <span style="color:var(--text-muted);font-weight:400">(${p.uniques})</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+</script>
+
+</body>
+</html>
