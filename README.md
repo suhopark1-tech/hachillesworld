@@ -1,5 +1,12 @@
 # HAchillesWorld
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/releases/tag/v1.0.0)
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
+[![Tests](https://img.shields.io/badge/tests-39%20passed-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/tree/main/tests)
+[![License](https://img.shields.io/badge/license-Proprietary-lightgrey?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld)
+[![Anthropic](https://img.shields.io/badge/Powered%20by-Claude%20Sonnet%204.6-D97706?style=flat-square&logo=anthropic&logoColor=white)](https://www.anthropic.com)
+[![Framework](https://img.shields.io/badge/Framework-Levels%20%C3%97%20Laws-8B5CF6?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/blob/main/docs/HAchillesWorld_%EA%B8%B0%ED%9A%8D%EC%84%9C.md)
+
 > **"당신의 AI 에이전트는 세계를 얼마나 정확히 이해하고 있는가?"**
 
 World Model 진단 및 최적화 플랫폼. 기업과 개인의 AI 에이전트 시스템을 Levels × Laws 프레임워크로 진단하고, 최적화 로드맵을 생성하며, 실시간 운영을 지원한다.
