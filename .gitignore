@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 가상환경
+.venv/
+venv/
+env/
+.env
+
+# 환경변수 (절대 커밋 금지)
+.env
+.env.local
+.env.*.local
+*.env
+
+# API 키 패턴
+*api_key*
+*secret*
+*credentials*
+
+# 테스트 캐시
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 타입 체커 캐시
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 빌드 산출물
+*.whl
+*.tar.gz
+
+# 로그
+*.log
+logs/
+
+# 테스트용 임시 데이터 (실제 고객 로그 보호)
+test_client_logs/
+client_data/
