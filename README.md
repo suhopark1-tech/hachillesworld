@@ -79,7 +79,7 @@ HAchillesWorld/
 ## 개발 환경 설정
 
 ```bash
-git clone https://github.com/suhoppark/hachillesworld
+git clone https://github.com/suhopark1-tech/hachillesworld
 cd HAchillesWorld
 pip install -e ".[dev]"
 pytest
