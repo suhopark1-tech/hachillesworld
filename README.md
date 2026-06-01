@@ -9,7 +9,10 @@
 
 > **"당신의 AI 에이전트는 세계를 얼마나 정확히 이해하고 있는가?"**
 
-World Model 진단 및 최적화 플랫폼. 기업과 개인의 AI 에이전트 시스템을 Levels × Laws 프레임워크로 진단하고, 최적화 로드맵을 생성하며, 실시간 운영을 지원한다.
+**HAchillesWorld**는 AI 에이전트 시스템의 **World Model 품질을 진단하고 최적화하는 플랫폼**이다.  
+기업과 개인의 에이전트를 Levels × Laws 프레임워크로 10분 안에 진단하고, 다음 Level로의 구체적인 로드맵을 제시하며, 실시간 운영을 지원한다.
+
+> World Model diagnosis & optimization platform — AI Agent diagnostics based on Levels × Laws framework.
 
 이론적 기반: 《Agentic World Modeling 2027: The Architecture of Autonomous Intelligence》 — 박성훈
 
