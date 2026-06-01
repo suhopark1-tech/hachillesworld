@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld — AI 에이전트 World Model 진단 플랫폼</title>
+  <style>
+    :root {
+      --bg: #07080d;
+      --bg-2: #0e1018;
+      --bg-3: #141722;
+      --border: #1e2235;
+      --accent: #5b7fff;
+      --accent-2: #8b5cf6;
+      --accent-glow: rgba(91,127,255,0.18);
+      --green: #22d3a5;
+      --yellow: #f59e0b;
+      --red: #f43f5e;
+      --text: #e8eaf0;
+      --text-muted: #6b7280;
+      --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+      background: rgba(7,8,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: #4a6ef0; transform: translateY(-1px); }
+    .lang-switch {
+      font-size: 0.78rem; color: var(--text-muted); text-decoration: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.6rem;
+      transition: color 0.2s, border-color 0.2s; margin-right: 0.75rem;
+    }
+    .lang-switch:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 6rem 1.5rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse at center, rgba(91,127,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(91,127,255,0.12); border: 1px solid rgba(91,127,255,0.3);
+      border-radius: 100px; padding: 0.35rem 1rem;
+      font-size: 0.75rem; color: var(--accent); font-weight: 500;
+      margin-bottom: 2rem; letter-spacing: 0.03em;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+      margin-bottom: 1.5rem; max-width: 860px;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+
+    .hero-sub {
+      font-size: 1.1rem; color: var(--text-dim); max-width: 600px;
+      margin: 0 auto 2.5rem; line-height: 1.75;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none; border-radius: 10px;
+      padding: 0.85rem 2rem; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.85rem 2rem; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-secondary:hover { border-color: var(--accent); background: var(--accent-glow); }
+
+    /* ── TERMINAL MOCKUP ── */
+    .terminal-wrap {
+      margin-top: 4rem; width: 100%; max-width: 760px;
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+    .terminal-bar {
+      background: var(--bg-3); padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot.r { background: #f43f5e; }
+    .terminal-dot.y { background: #f59e0b; }
+    .terminal-dot.g { background: #22d3a5; }
+    .terminal-title { color: var(--text-muted); font-size: 0.8rem; margin-left: auto; font-family: var(--mono); }
+    .terminal-body {
+      background: var(--bg-2); padding: 1.5rem;
+      font-family: var(--mono); font-size: 0.82rem; line-height: 1.8;
+      color: #cdd6f4;
+    }
+    .t-cmd { color: #89b4fa; }
+    .t-comment { color: #585b70; }
+    .t-ok { color: var(--green); }
+    .t-warn { color: var(--yellow); }
+    .t-err { color: var(--red); }
+    .t-label { color: #cba6f7; }
+    .t-val { color: #a6e3a1; }
+    .t-score { color: var(--accent); font-weight: 700; }
+
+    /* ── SECTIONS ── */
+    section { padding: 5rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 1rem;
+    }
+    h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800; letter-spacing: -0.025em; line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--text-dim); font-size: 1.05rem; max-width: 560px; line-height: 1.75; }
+
+    /* ── PROBLEM ── */
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .problem-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .problem-icon { font-size: 1.75rem; margin-bottom: 1rem; }
+    .problem-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem; line-height: 1.4; }
+    .problem-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; }
+
+    /* ── TOOL COMPARISON ── */
+    .compare-table-wrap { overflow-x: auto; margin-top: 3rem; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    th {
+      background: var(--bg-3); padding: 0.9rem 1.25rem;
+      color: var(--text-dim); font-weight: 600; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .highlight-row td { background: rgba(91,127,255,0.06) !important; }
+    .highlight-row td:first-child { border-left: 3px solid var(--accent); }
+    .badge-accent { background: rgba(91,127,255,0.15); color: var(--accent); border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 600; }
+    .cross { color: var(--text-muted); }
+
+    /* ── MATRIX ── */
+    .matrix-section { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .matrix-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    @media (max-width: 768px) { .matrix-inner { grid-template-columns: 1fr; gap: 2rem; } }
+    .matrix-grid {
+      font-family: var(--mono); font-size: 0.8rem; line-height: 1.5;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; overflow: auto;
+    }
+    .matrix-grid pre { color: #cdd6f4; }
+    .m-header { color: var(--text-muted); }
+    .m-l1 { color: #89b4fa; }
+    .m-l2 { color: #cba6f7; }
+    .m-l3 { color: var(--green); }
+    .m-dot { color: var(--text-muted); }
+    .m-active { color: var(--accent); font-weight: 700; }
+    .m-you { background: rgba(91,127,255,0.2); border-radius: 4px; padding: 0 4px; color: var(--accent); }
+
+    /* ── MODULES ── */
+    .modules-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .module-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 2rem; transition: border-color 0.2s, transform 0.2s;
+    }
+    .module-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .module-num {
+      font-family: var(--mono); font-size: 0.75rem; color: var(--accent);
+      font-weight: 600; letter-spacing: 0.05em; margin-bottom: 1rem;
+    }
+    .module-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .module-card .sub { color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
+    .module-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.25rem; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .feature-list li { color: var(--text-dim); font-size: 0.875rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+    .feature-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 0.05em; }
+
+    /* ── SCAN REPORT ── */
+    .report-mockup {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; font-family: var(--mono); font-size: 0.78rem;
+      line-height: 1.9; margin-top: 3rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .report-title { color: var(--accent); font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; }
+    .report-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .report-col { flex: 1; min-width: 200px; }
+    .score-big { font-size: 2.5rem; font-weight: 800; color: var(--yellow); font-family: var(--mono); }
+    .score-label { color: var(--text-muted); font-size: 0.75rem; }
+    .metric-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
+    .metric-name { color: var(--text-dim); flex: 1; }
+    .metric-score { font-weight: 700; width: 50px; text-align: right; }
+    .metric-track { flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .metric-fill { height: 100%; border-radius: 4px; }
+    .fill-green { background: var(--green); }
+    .fill-yellow { background: var(--yellow); }
+    .fill-red { background: var(--red); }
+    .issue-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .issue { font-size: 0.8rem; }
+    .issue.red { color: var(--red); }
+    .issue.yellow { color: var(--yellow); }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .plan-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 2rem; position: relative;
+    }
+    .plan-card.featured {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(91,127,255,0.08), rgba(139,92,246,0.06));
+    }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+      padding: 0.25rem 0.75rem; border-radius: 100px; white-space: nowrap;
+    }
+    .plan-name { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .plan-price { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.25rem; }
+    .plan-price span { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+    .plan-desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .plan-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.75rem; }
+    .plan-features li { display: flex; gap: 0.5rem; font-size: 0.875rem; color: var(--text-dim); align-items: flex-start; }
+    .plan-features li::before { content: '✓'; color: var(--green); flex-shrink: 0; font-weight: 700; }
+    .plan-features li.no::before { content: '–'; color: var(--text-muted); }
+    .plan-features li.no { opacity: 0.5; }
+    .plan-cta {
+      width: 100%; border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s;
+    }
+    .plan-cta-outline {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+    }
+    .plan-cta-outline:hover { border-color: var(--accent); }
+    .plan-cta-filled {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+    }
+    .plan-cta-filled:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── PERSONAS ── */
+    .persona-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .persona-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .persona-avatar {
+      width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    }
+    .persona-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .persona-role { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem; }
+    .persona-pain { font-size: 0.875rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1rem; }
+    .persona-value {
+      background: rgba(34,211,165,0.08); border: 1px solid rgba(34,211,165,0.2);
+      border-radius: 8px; padding: 0.75rem;
+      font-size: 0.8rem; color: var(--green); line-height: 1.6;
+    }
+
+    /* ── STATS ── */
+    .stats-section { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem; text-align: center;
+    }
+    .stat-num {
+      font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* ── ROADMAP ── */
+    .roadmap-phases { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 3rem; }
+    .phase-item {
+      display: grid; grid-template-columns: 140px 1fr; gap: 1.5rem; align-items: start;
+    }
+    @media (max-width: 600px) { .phase-item { grid-template-columns: 1fr; } }
+    .phase-time {
+      font-family: var(--mono); font-size: 0.8rem; color: var(--text-muted);
+      padding-top: 0.25rem;
+    }
+    .phase-content {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+    .phase-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .phase-tag {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 0.2rem 0.6rem; border-radius: 100px;
+    }
+    .phase-tag.p0 { background: rgba(34,211,165,0.15); color: var(--green); }
+    .phase-tag.p1 { background: rgba(91,127,255,0.15); color: var(--accent); }
+    .phase-tag.p2 { background: rgba(139,92,246,0.15); color: var(--accent-2); }
+    .phase-tag.p3 { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .phase-content h3 { font-size: 1rem; font-weight: 700; }
+    .phase-content p { color: var(--text-dim); font-size: 0.875rem; line-height: 1.7; margin-top: 0.5rem; }
+
+    /* ── CTA ── */
+    .cta-section { text-align: center; padding: 7rem 1.5rem; position: relative; }
+    .cta-section::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 { font-size: clamp(1.8rem,4vw,3rem); margin-bottom: 1.25rem; }
+    .cta-section p { color: var(--text-dim); max-width: 480px; margin: 0 auto 2.5rem; line-height: 1.75; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg-2); border-top: 1px solid var(--border);
+      padding: 3rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-logo { font-size: 1rem; font-weight: 700; color: var(--accent); }
+    .footer-meta { font-size: 0.8rem; color: var(--text-muted); }
+    .footer-links { display: flex; gap: 1.5rem; list-style: none; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── MISC ── */
+    .tag { display: inline-block; background: rgba(91,127,255,0.12); color: var(--accent); border: 1px solid rgba(91,127,255,0.25); border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 600; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">HAchillesWorld</div>
+  <ul class="nav-links">
+    <li><a href="#product">제품</a></li>
+    <li><a href="#framework">프레임워크</a></li>
+    <li><a href="#pricing">가격</a></li>
+    <li><a href="#roadmap">로드맵</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;">
+    <a href="index-en.html" class="lang-switch">English</a>
+    <a href="#cta" class="nav-cta">무료 진단 시작</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    《Agentic World Modeling 2027》 기반 — Levels × Laws 프레임워크
+  </div>
+
+  <h1>
+    당신의 AI 에이전트는<br/>
+    <em>세계를 얼마나 정확히</em><br/>
+    이해하고 있는가?
+  </h1>
+
+  <p class="hero-sub">
+    HAchillesWorld는 AI 에이전트의 World Model 품질을 진단하고,
+    최적화 로드맵을 자동 생성하며, 실패 전에 위험을 포착합니다.
+    10분 안에 진단 리포트를 받아보세요.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#cta" class="btn-primary">무료로 시작하기</a>
+    <a href="#product" class="btn-secondary">제품 살펴보기</a>
+  </div>
+
+  <!-- Terminal mockup -->
+  <div class="terminal-wrap">
+    <div class="terminal-bar">
+      <div class="terminal-dot r"></div>
+      <div class="terminal-dot y"></div>
+      <div class="terminal-dot g"></div>
+      <div class="terminal-title">hachillesworld scan — supply-chain-agent</div>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-comment">$ </span><span class="t-cmd">hachillesworld scan --logs ./agent_logs/ --config ./agent_config.json</span></div>
+      <div>&nbsp;</div>
+      <div><span class="t-ok">✓</span> 로그 분석 완료 — 847개 이벤트</div>
+      <div><span class="t-ok">✓</span> 15개 지표 측정 완료</div>
+      <div><span class="t-ok">✓</span> Levels × Laws 위치 진단 완료</div>
+      <div>&nbsp;</div>
+      <div>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div>  HAchillesWorld Scan Report</div>
+      <div>  시스템: supply-chain-agent&nbsp;&nbsp;진단일: 2026-06-01</div>
+      <div>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div>&nbsp;</div>
+      <div>  현재 위치: <span class="t-label">L2 Simulator × Digital Laws</span></div>
+      <div>  목표 위치: <span class="t-label">L2 Simulator × Digital+Social Laws</span></div>
+      <div>&nbsp;</div>
+      <div>  종합 점수: <span class="t-score">67 / 100</span> &nbsp;<span class="t-warn">⚠ 주의</span></div>
+      <div>&nbsp;</div>
+      <div>  World Model 품질 &nbsp;&nbsp;&nbsp;72/100 <span class="t-warn">🟡</span></div>
+      <div>  에이전시 수준 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;61/100 <span class="t-warn">🟡</span></div>
+      <div>  운영 건전성 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;68/100 <span class="t-warn">🟡</span></div>
+      <div>&nbsp;</div>
+      <div>  <span class="t-err">🔴 즉시 조치 필요 (2건)</span></div>
+      <div>  ├─ Simulation Drift: 재보정 빈도 31% (기준: 10%)</div>
+      <div>  └─ 캘리브레이션 ECE: 0.23 (기준: &lt; 0.10)</div>
+      <div>&nbsp;</div>
+      <div>  <span class="t-ok">→ 최적화 로드맵 생성: hachillesworld optimize</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">88%</div>
+        <div class="stat-label">에이전트 실패 원인을 알 수 없는 기업</div>
+      </div>
+      <div>
+        <div class="stat-num">$2.3M</div>
+        <div class="stat-label">에이전트 사고로 인한 연간 평균 손실</div>
+      </div>
+      <div>
+        <div class="stat-num">10분</div>
+        <div class="stat-label">진단 리포트 생성 시간</div>
+      </div>
+      <div>
+        <div class="stat-num">70%</div>
+        <div class="stat-label">최적화 비용 절감 목표</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PROBLEM -->
+<section>
+  <div class="container">
+    <div class="section-label">Problem</div>
+    <h2>기존 도구가 놓치는 것들</h2>
+    <p class="section-sub">
+      MLOps, APM, LLM 평가 도구는 모두 에이전트가
+      <strong>왜 그 결정을 내렸는가</strong>를 설명하지 못합니다.
+    </p>
+
+    <div class="compare-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>도구 유형</th>
+            <th>측정하는 것</th>
+            <th>놓치는 것</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>일반 MLOps <span style="color:var(--text-muted);font-size:0.8rem">(MLflow, W&amp;B)</span></td>
+            <td>모델 정확도, 훈련 손실</td>
+            <td class="cross">에이전트의 세계 이해 품질</td>
+          </tr>
+          <tr>
+            <td>APM 도구 <span style="color:var(--text-muted);font-size:0.8rem">(Datadog, New Relic)</span></td>
+            <td>응답시간, 에러율</td>
+            <td class="cross">의사결정 품질, Simulation Drift</td>
+          </tr>
+          <tr>
+            <td>LLM 평가 <span style="color:var(--text-muted);font-size:0.8rem">(LangSmith)</span></td>
+            <td>출력 품질, 토큰 비용</td>
+            <td class="cross">World Model 캘리브레이션</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong>HAchillesWorld</strong> <span class="badge-accent">NEW</span></td>
+            <td><span style="color:var(--green)">Levels 진단, Laws 도메인 최적화</span></td>
+            <td><span style="color:var(--text-muted)">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🔍</div>
+        <h3>"우리 에이전트가 왜 실패했는지 모른다"</h3>
+        <p>World Model의 Simulation Drift가 축적됐지만 감지하지 못해, 실패 후에도 원인을 알 수 없고 재발 방지가 불가능합니다.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🗺️</div>
+        <h3>"L3 에이전트를 만들고 싶은데 어디서 시작해야 하는지 모른다"</h3>
+        <p>현재 시스템이 어느 Level인지, 무엇이 병목인지 진단 도구가 없어 AI 팀이 방향을 잡지 못하고 표류합니다.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>"AI 비용이 폭발하는데 어디서 새는지 모른다"</h3>
+        <p>LLM API 비용이 예산을 초과하지만, 라우팅 최적화 부재와 불필요한 대형 모델 사용이 어디서 일어나는지 파악할 수 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- FRAMEWORK -->
+<section class="matrix-section" id="framework">
+  <div class="container">
+    <div class="matrix-inner">
+      <div>
+        <div class="section-label">Framework</div>
+        <h2>Levels × Laws<br/>진단 좌표계</h2>
+        <p style="color:var(--text-dim);line-height:1.75;margin-top:1rem;margin-bottom:1.5rem;">
+          《Agentic World Modeling 2027》의 핵심 이론인
+          <strong>Levels × Laws 2차원 좌표계</strong>를 기반으로
+          에이전트의 현재 위치를 정확히 진단합니다.
+        </p>
+        <ul class="feature-list">
+          <li><strong>L1 Predictor</strong>: 1-step 예측, 마르코프 가정</li>
+          <li><strong>L2 Simulator</strong>: N-step 롤아웃, 인과 추론</li>
+          <li><strong>L3 Evolver</strong>: DEOR 자율 루프, 자기 수정</li>
+        </ul>
+        <div style="margin-top:1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <span class="tag">Physical Laws</span>
+          <span class="tag">Digital Laws</span>
+          <span class="tag">Social Laws</span>
+          <span class="tag">Scientific Laws</span>
+        </div>
+      </div>
+
+      <div class="matrix-grid">
+        <pre><span class="m-header">         Physical  Digital  Social  Scientific</span>
+<span class="m-header">         Laws      Laws     Laws    Laws</span>
+<span class="m-header">         ─────────────────────────────────────</span>
+<span class="m-l1">L1       ·         ·        ·       ·</span>
+<span class="m-l1">Pred.    </span>
+<span class="m-header">         </span>
+<span class="m-l2">L2       ·         </span><span class="m-you">◉ HERE</span><span class="m-l2">   ·       ·</span>
+<span class="m-l2">Sim.     </span>
+<span class="m-header">         </span>
+<span class="m-l3">L3       ·         </span><span class="m-active">◎ GOAL</span><span class="m-l3">   ·       ·</span>
+<span class="m-l3">Evolver  </span>
+
+<span class="m-header">  진단: L2.1 × Digital Laws</span>
+<span class="m-header">  목표: L2.5 → L3 (24주 로드맵)</span>
+
+<span class="t-warn">  ⚠ Simulation Drift: 31% (임계: 10%)</span>
+<span class="t-warn">  ⚠ Planning Depth: 3 step (목표: 15+)</span>
+<span class="t-ok">  ✓ API Idempotency: 정상</span>
+<span class="t-ok">  ✓ Cost Router: 최적 범위 내</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PRODUCT MODULES -->
+<section id="product">
+  <div class="container">
+    <div class="section-label">Product</div>
+    <h2>세 가지 모듈, 하나의 플랫폼</h2>
+    <p class="section-sub">진단부터 최적화, 실시간 운영까지 에이전트 생애주기 전체를 커버합니다.</p>
+
+    <div class="modules-grid">
+      <!-- Scan -->
+      <div class="module-card">
+        <div class="module-num">MODULE 01</div>
+        <h3>HAchillesWorld Scan</h3>
+        <div class="sub">진단 엔진</div>
+        <p>에이전트 시스템을 연결하면 10분 안에 15개 지표 기반 진단 리포트를 생성합니다. 현재 Level과 Laws 도메인 위치, 핵심 병목을 즉시 파악하세요.</p>
+        <ul class="feature-list">
+          <li>World Model 품질 5개 지표 (ECE, Drift Rate 등)</li>
+          <li>에이전시 수준 5개 지표 (Planning Depth, Self-correction)</li>
+          <li>운영 건전성 5개 지표 (비용 효율, HITL 빈도)</li>
+          <li>SDK / OTel 브리지 / 로그 업로드 3가지 연동</li>
+        </ul>
+      </div>
+
+      <!-- Optimize -->
+      <div class="module-card">
+        <div class="module-num">MODULE 02</div>
+        <h3>HAchillesWorld Optimize</h3>
+        <div class="sub">최적화 엔진</div>
+        <p>Scan 결과를 기반으로 맞춤형 최적화 로드맵을 자동 생성합니다. 4주·12주·24주 단계별 실행 계획과 하네스 규칙 코드를 즉시 받아보세요.</p>
+        <ul class="feature-list">
+          <li>영향도 × 난이도 우선순위 매트릭스 자동 생성</li>
+          <li>Laws 도메인 맞춤 하네스 규칙 코드 자동 생성</li>
+          <li>L1→L2, L2→L3 전환 표준 로드맵</li>
+          <li>예상 ROI 계산서 (비용 절감, 실패 감소)</li>
+        </ul>
+      </div>
+
+      <!-- Operate -->
+      <div class="module-card">
+        <div class="module-num">MODULE 03</div>
+        <h3>HAchillesWorld Operate</h3>
+        <div class="sub">운영 인텔리전스</div>
+        <p>프로덕션 에이전트의 World Model 건전성을 실시간 모니터링합니다. 드리프트 경보, Replay Debugging, Meta-Harness 자동화로 사전에 위험을 차단하세요.</p>
+        <ul class="feature-list">
+          <li>실시간 Simulation Drift 감지 + 자동 재보정</li>
+          <li>실패 에피소드 단계별 Replay Debugging</li>
+          <li>Meta-Harness 자동 규칙 생성 + 검토 워크플로</li>
+          <li>Slack / Teams 알림 통합</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Scan Report Mockup -->
+    <div class="report-mockup">
+      <div class="report-title">━━ HAchillesWorld Scan Report ━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="report-row">
+        <div class="report-col">
+          <div class="score-big">67</div>
+          <div class="score-label">/ 100&nbsp;&nbsp;⚠ 주의</div>
+          <br/>
+          <div style="color:var(--text-muted);font-size:0.78rem;">현재: L2.1 × Digital Laws</div>
+          <div style="color:var(--text-muted);font-size:0.78rem;">목표: L2 × Digital+Social</div>
+        </div>
+        <div class="report-col" style="flex:2">
+          <div class="metric-bar">
+            <span class="metric-name">World Model 품질</span>
+            <div class="metric-track"><div class="metric-fill fill-yellow" style="width:72%"></div></div>
+            <span class="metric-score" style="color:var(--yellow)">72</span>
+          </div>
+          <div class="metric-bar">
+            <span class="metric-name">에이전시 수준</span>
+            <div class="metric-track"><div class="metric-fill fill-red" style="width:61%"></div></div>
+            <span class="metric-score" style="color:var(--red)">61</span>
+          </div>
+          <div class="metric-bar">
+            <span class="metric-name">운영 건전성</span>
+            <div class="metric-track"><div class="metric-fill fill-yellow" style="width:68%"></div></div>
+            <span class="metric-score" style="color:var(--yellow)">68</span>
+          </div>
+          <div class="issue-list">
+            <div class="issue red">🔴 Simulation Drift: 31% (기준: 10%) → 즉시 조치</div>
+            <div class="issue red">🔴 Calibration ECE: 0.23 (기준: &lt;0.10) → 즉시 조치</div>
+            <div class="issue yellow">🟡 Planning Depth: 3스텝 (목표: 15+)</div>
+            <div class="issue yellow">🟡 Cost 예산 대비 143% 사용 중</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PERSONAS -->
+<section>
+  <div class="container">
+    <div class="section-label">Who It's For</div>
+    <h2>누구를 위한 플랫폼인가</h2>
+    <p class="section-sub">기업 AI 아키텍트부터 개인 개발자까지, 에이전트를 다루는 모든 사람을 위해 만들었습니다.</p>
+
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(91,127,255,0.15)">👨‍💻</div>
+        <h3>이민혁 — AI 아키텍트</h3>
+        <div class="persona-role">Senior AI Architect · 핀테크 스타트업</div>
+        <div class="persona-pain">
+          Claude API 기반 에이전트 3개를 운영 중인데, 한 달에 한 번씩 이유 불명의 오작동이 발생합니다. CTO는 "AI 비용이 왜 이렇게 많이 나오냐"를 추궁하고 있습니다.
+        </div>
+        <div class="persona-value">
+          ✓ Replay Debugger로 10분 내 오작동 원인 식별<br/>
+          ✓ 비용 절감 로드맵으로 CTO 설득 자료 확보
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(139,92,246,0.15)">👩‍💼</div>
+        <h3>Sarah Kim — 스타트업 CTO</h3>
+        <div class="persona-role">CTO &amp; Co-founder · AI 에이전트 스타트업</div>
+        <div class="persona-pain">
+          자사 에이전트가 경쟁사 대비 얼마나 좋은지 모릅니다. 투자자 미팅에서 "기술 차별화가 무엇인가"라는 질문에 객관적으로 답할 수 없습니다.
+        </div>
+        <div class="persona-value">
+          ✓ "우리 L2.3, 경쟁사 추정 L2.0" — 객관적 비교<br/>
+          ✓ 투자자 피치에 사용 가능한 기술 지표 확보
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(34,211,165,0.15)">🧑‍🎓</div>
+        <h3>박준우 — 개인 개발자</h3>
+        <div class="persona-role">주니어 백엔드 개발자 · 사이드 프로젝트</div>
+        <div class="persona-pain">
+          YouTube와 블로그로 AI 에이전트를 독학 중인데, 방향성이 없습니다. "내 코드가 맞는 건지" 확인할 방법이 없고, 포트폴리오에 AI 프로젝트를 넣고 싶습니다.
+        </div>
+        <div class="persona-value">
+          ✓ "현재 L1.4" — 명확한 현재 위치와 성장 경로<br/>
+          ✓ HAchillesWorld Certified로 이직 시 차별화
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-label">Pricing</div>
+    <h2>투명한 가격 구조</h2>
+    <p class="section-sub">무료로 시작하고, 성과를 확인한 뒤 업그레이드하세요.</p>
+
+    <div class="pricing-grid">
+      <!-- Free -->
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0 <span>/ 월</span></div>
+        <div class="plan-desc">시작해보기 — 무료로 진단의 가치를 경험하세요.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>Scan 3회 / 월</li>
+          <li>기본 진단 리포트</li>
+          <li>Community 접근</li>
+          <li class="no">Optimize 로드맵</li>
+          <li class="no">Operate 모니터링</li>
+          <li class="no">API 접근</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">무료로 시작</button>
+      </div>
+
+      <!-- Starter -->
+      <div class="plan-card featured">
+        <div class="plan-badge">가장 인기</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$29 <span>/ 월</span></div>
+        <div class="plan-desc">개인 개발자와 스몰팀을 위한 완전한 진단·최적화 도구.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>Scan 무제한</li>
+          <li>Optimize 로드맵 생성</li>
+          <li>Learning Path 커리큘럼</li>
+          <li>이메일 지원</li>
+          <li class="no">Operate 모니터링</li>
+          <li class="no">API 접근</li>
+        </ul>
+        <button class="plan-cta plan-cta-filled">14일 무료 체험</button>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$79 <span>/ 월</span></div>
+        <div class="plan-desc">프로덕션 에이전트를 운영하는 개인·소규모 팀을 위한 전체 기능.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>전체 기능 포함</li>
+          <li>Operate (에이전트 1개)</li>
+          <li>API 접근</li>
+          <li>우선 지원</li>
+          <li>HAchillesWorld Certified 시험 1회</li>
+          <li class="no">팀 협업 (Team 플랜)</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">Pro 시작하기</button>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price" style="font-size:1.8rem">협의 <span>/ 월</span></div>
+        <div class="plan-desc">대규모 에이전트 포트폴리오를 운영하는 기업을 위한 엔터프라이즈 솔루션.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>무제한 에이전트</li>
+          <li>On-premise 옵션</li>
+          <li>SSO + RBAC</li>
+          <li>전용 SLA + 전담 지원</li>
+          <li>컨설팅 패키지 포함</li>
+          <li>커스텀 하네스 룰 설계</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">영업팀 문의</button>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">
+      컨설팅 · 워크숍 · 인증 프로그램은 별도 제공됩니다.&nbsp;
+      <a href="#cta" style="color:var(--accent);text-decoration:none;">자세히 보기 →</a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div class="section-label">Roadmap</div>
+    <h2>개발 로드맵</h2>
+    <p class="section-sub">검증된 단계별 출시 전략으로 빠르게 시장에 진입합니다.</p>
+
+    <div class="roadmap-phases">
+      <div class="phase-item">
+        <div class="phase-time">2026년 7~9월<br/><span style="color:var(--text-muted)">Phase 0</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p0">MVP 검증</span>
+            <h3>핵심 가설 검증</h3>
+          </div>
+          <p>Scan Engine v0.1 (7개 핵심 지표), CLI 도구, 베타 테스터 50명 모집. 성공 기준: NPS &gt; 40, 월 $50 지불 의향 &gt; 60%.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">2026년 10~12월<br/><span style="color:var(--text-muted)">Phase 1</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p1">Launch</span>
+            <h3>첫 유료 고객 100명 확보</h3>
+          </div>
+          <p>Scan v1.0 (15개 지표 전체), Optimize v0.5, Web 대시보드, Python SDK v1.0, Free/Starter/Pro 플랜 론칭. ProductHunt 론칭 및 《Agentic World Modeling 2027》 독자 대상 얼리버드.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">2027년 1~6월<br/><span style="color:var(--text-muted)">Phase 2</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p2">Growth</span>
+            <h3>ARR $1.2M, 기업 고객 50개</h3>
+          </div>
+          <p>Operate v1.0 (실시간 모니터링), Meta-Harness 자동화, Enterprise SSO/RBAC, Replay Debugger v1.0. Anthropic 파트너 프로그램 참여.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">2027년 7월~<br/>2028년 6월<br/><span style="color:var(--text-muted)">Phase 3</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p3">Scale</span>
+            <h3>ARR $8.5M, 글로벌 진출</h3>
+          </div>
+          <p>Marketplace (하네스 룰 템플릿 생태계), Multi-agent 진단 지원, On-premise 배포, API-first 화이트레이블. 영어권 론칭 (미국·유럽).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="section-label">Get Started</div>
+  <h2>진단 없는 최적화는 도박입니다</h2>
+  <p>
+    10분 안에 에이전트의 현재 Level과 핵심 병목을 파악하세요.
+    무료로 시작할 수 있습니다.
+  </p>
+  <div class="hero-actions" style="justify-content:center">
+    <a href="#" class="btn-primary">무료 Scan 시작하기</a>
+    <a href="#" class="btn-secondary">데모 예약하기</a>
+  </div>
+  <div style="margin-top:1.5rem;color:var(--text-muted);font-size:0.85rem;">
+    신용카드 불필요 · 설치 5분 · Scan 3회 무료
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex;flex-direction:column;gap:0.35rem;">
+    <div class="footer-logo">HAchillesWorld</div>
+    <div class="footer-meta">AI 에이전트 World Model 진단 플랫폼</div>
+    <div class="footer-meta" style="font-size:0.75rem;margin-top:0.25rem;">
+      기반 이론: 《Agentic World Modeling 2027》 — 박성훈
+    </div>
+  </div>
+  <ul class="footer-links">
+    <li><a href="#product">제품</a></li>
+    <li><a href="#pricing">가격</a></li>
+    <li><a href="#roadmap">로드맵</a></li>
+    <li><a href="#">문서</a></li>
+    <li><a href="#">개인정보처리방침</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld — AI Agent World Model Diagnostics Platform</title>
+  <style>
+    :root {
+      --bg: #07080d;
+      --bg-2: #0e1018;
+      --bg-3: #141722;
+      --border: #1e2235;
+      --accent: #5b7fff;
+      --accent-2: #8b5cf6;
+      --accent-glow: rgba(91,127,255,0.18);
+      --green: #22d3a5;
+      --yellow: #f59e0b;
+      --red: #f43f5e;
+      --text: #e8eaf0;
+      --text-muted: #6b7280;
+      --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 64px;
+      background: rgba(7,8,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: #4a6ef0; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 1.5rem 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse at center, rgba(91,127,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(91,127,255,0.12); border: 1px solid rgba(91,127,255,0.3);
+      border-radius: 100px; padding: 0.35rem 1rem;
+      font-size: 0.75rem; color: var(--accent); font-weight: 500;
+      margin-bottom: 2rem; letter-spacing: 0.03em;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+      margin-bottom: 1.5rem; max-width: 860px;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+
+    .hero-sub {
+      font-size: 1.1rem; color: var(--text-dim); max-width: 600px;
+      margin: 0 auto 2.5rem; line-height: 1.75;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none; border-radius: 10px;
+      padding: 0.85rem 2rem; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.85rem 2rem; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-secondary:hover { border-color: var(--accent); background: var(--accent-glow); }
+
+    /* ── TERMINAL ── */
+    .terminal-wrap {
+      margin-top: 4rem; width: 100%; max-width: 760px;
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+    .terminal-bar {
+      background: var(--bg-3); padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot.r { background: #f43f5e; }
+    .terminal-dot.y { background: #f59e0b; }
+    .terminal-dot.g { background: #22d3a5; }
+    .terminal-title { color: var(--text-muted); font-size: 0.8rem; margin-left: auto; font-family: var(--mono); }
+    .terminal-body {
+      background: var(--bg-2); padding: 1.5rem;
+      font-family: var(--mono); font-size: 0.82rem; line-height: 1.8; color: #cdd6f4;
+    }
+    .t-cmd { color: #89b4fa; }
+    .t-comment { color: #585b70; }
+    .t-ok { color: var(--green); }
+    .t-warn { color: var(--yellow); }
+    .t-err { color: var(--red); }
+    .t-label { color: #cba6f7; }
+    .t-score { color: var(--accent); font-weight: 700; }
+
+    /* ── SECTIONS ── */
+    section { padding: 5rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 1rem;
+    }
+    h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--text-dim); font-size: 1.05rem; max-width: 560px; line-height: 1.75; }
+
+    /* ── PROBLEM ── */
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .problem-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .problem-icon { font-size: 1.75rem; margin-bottom: 1rem; }
+    .problem-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem; line-height: 1.4; }
+    .problem-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; }
+
+    /* ── TABLE ── */
+    .compare-table-wrap { overflow-x: auto; margin-top: 3rem; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    th {
+      background: var(--bg-3); padding: 0.9rem 1.25rem;
+      color: var(--text-dim); font-weight: 600; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .highlight-row td { background: rgba(91,127,255,0.06) !important; }
+    .highlight-row td:first-child { border-left: 3px solid var(--accent); }
+    .badge-accent { background: rgba(91,127,255,0.15); color: var(--accent); border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 600; }
+    .cross { color: var(--text-muted); }
+
+    /* ── MATRIX ── */
+    .matrix-section { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .matrix-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    @media (max-width: 768px) { .matrix-inner { grid-template-columns: 1fr; gap: 2rem; } }
+    .matrix-grid {
+      font-family: var(--mono); font-size: 0.8rem; line-height: 1.5;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; overflow: auto;
+    }
+    .matrix-grid pre { color: #cdd6f4; }
+    .m-header { color: var(--text-muted); }
+    .m-l1 { color: #89b4fa; }
+    .m-l2 { color: #cba6f7; }
+    .m-l3 { color: var(--green); }
+    .m-you { background: rgba(91,127,255,0.2); border-radius: 4px; padding: 0 4px; color: var(--accent); }
+    .m-active { color: var(--accent); font-weight: 700; }
+
+    /* ── MODULES ── */
+    .modules-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .module-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 2rem; transition: border-color 0.2s, transform 0.2s;
+    }
+    .module-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .module-num {
+      font-family: var(--mono); font-size: 0.75rem; color: var(--accent);
+      font-weight: 600; letter-spacing: 0.05em; margin-bottom: 1rem;
+    }
+    .module-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .module-card .sub { color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
+    .module-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.25rem; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .feature-list li { color: var(--text-dim); font-size: 0.875rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+    .feature-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 0.05em; }
+
+    /* ── SCAN REPORT ── */
+    .report-mockup {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; font-family: var(--mono); font-size: 0.78rem;
+      line-height: 1.9; margin-top: 3rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .report-title { color: var(--accent); font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; }
+    .report-row { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .report-col { flex: 1; min-width: 200px; }
+    .score-big { font-size: 2.5rem; font-weight: 800; color: var(--yellow); font-family: var(--mono); }
+    .score-label { color: var(--text-muted); font-size: 0.75rem; }
+    .metric-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; }
+    .metric-name { color: var(--text-dim); flex: 1; }
+    .metric-score { font-weight: 700; width: 50px; text-align: right; }
+    .metric-track { flex: 1; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .metric-fill { height: 100%; border-radius: 4px; }
+    .fill-green { background: var(--green); }
+    .fill-yellow { background: var(--yellow); }
+    .fill-red { background: var(--red); }
+    .issue-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .issue { font-size: 0.8rem; }
+    .issue.red { color: var(--red); }
+    .issue.yellow { color: var(--yellow); }
+
+    /* ── STATS ── */
+    .stats-section { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem; text-align: center;
+    }
+    .stat-num {
+      font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* ── HOW IT WORKS ── */
+    .how-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0; margin-top: 3rem; position: relative;
+    }
+    .how-step {
+      padding: 2rem; position: relative; text-align: center;
+    }
+    .how-step:not(:last-child)::after {
+      content: '→'; position: absolute; right: -0.5rem; top: 50%;
+      transform: translateY(-50%); color: var(--accent); font-size: 1.25rem;
+      font-weight: 700;
+    }
+    @media (max-width: 640px) { .how-step:not(:last-child)::after { display: none; } }
+    .how-num {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(91,127,255,0.12); border: 1px solid rgba(91,127,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; font-weight: 800; color: var(--accent);
+      margin: 0 auto 1rem; font-family: var(--mono);
+    }
+    .how-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .how-step p { color: var(--text-dim); font-size: 0.875rem; line-height: 1.6; }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .plan-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 2rem; position: relative;
+    }
+    .plan-card.featured {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(91,127,255,0.08), rgba(139,92,246,0.06));
+    }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+      padding: 0.25rem 0.75rem; border-radius: 100px; white-space: nowrap;
+    }
+    .plan-name { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .plan-price { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.25rem; }
+    .plan-price span { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+    .plan-desc { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .plan-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.75rem; }
+    .plan-features li { display: flex; gap: 0.5rem; font-size: 0.875rem; color: var(--text-dim); align-items: flex-start; }
+    .plan-features li::before { content: '✓'; color: var(--green); flex-shrink: 0; font-weight: 700; }
+    .plan-features li.no::before { content: '–'; color: var(--text-muted); }
+    .plan-features li.no { opacity: 0.5; }
+    .plan-cta {
+      width: 100%; border-radius: 10px; padding: 0.8rem; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s;
+    }
+    .plan-cta-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .plan-cta-outline:hover { border-color: var(--accent); }
+    .plan-cta-filled { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+    .plan-cta-filled:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── PERSONAS ── */
+    .persona-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .persona-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px;
+      padding: 1.75rem;
+    }
+    .persona-avatar {
+      width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    }
+    .persona-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .persona-role { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem; }
+    .persona-pain { font-size: 0.875rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1rem; }
+    .persona-value {
+      background: rgba(34,211,165,0.08); border: 1px solid rgba(34,211,165,0.2);
+      border-radius: 8px; padding: 0.75rem;
+      font-size: 0.8rem; color: var(--green); line-height: 1.6;
+    }
+
+    /* ── ROADMAP ── */
+    .roadmap-phases { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 3rem; }
+    .phase-item {
+      display: grid; grid-template-columns: 160px 1fr; gap: 1.5rem; align-items: start;
+    }
+    @media (max-width: 600px) { .phase-item { grid-template-columns: 1fr; } }
+    .phase-time { font-family: var(--mono); font-size: 0.8rem; color: var(--text-muted); padding-top: 0.25rem; }
+    .phase-content {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+    .phase-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .phase-tag {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 0.2rem 0.6rem; border-radius: 100px;
+    }
+    .phase-tag.p0 { background: rgba(34,211,165,0.15); color: var(--green); }
+    .phase-tag.p1 { background: rgba(91,127,255,0.15); color: var(--accent); }
+    .phase-tag.p2 { background: rgba(139,92,246,0.15); color: var(--accent-2); }
+    .phase-tag.p3 { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .phase-content h3 { font-size: 1rem; font-weight: 700; }
+    .phase-content p { color: var(--text-dim); font-size: 0.875rem; line-height: 1.7; margin-top: 0.5rem; }
+
+    /* ── CTA ── */
+    .cta-section { text-align: center; padding: 7rem 1.5rem; position: relative; }
+    .cta-section::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 { font-size: clamp(1.8rem,4vw,3rem); margin-bottom: 1.25rem; }
+    .cta-section p { color: var(--text-dim); max-width: 480px; margin: 0 auto 2.5rem; line-height: 1.75; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg-2); border-top: 1px solid var(--border);
+      padding: 3rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-logo { font-size: 1rem; font-weight: 700; color: var(--accent); }
+    .footer-meta { font-size: 0.8rem; color: var(--text-muted); }
+    .footer-links { display: flex; gap: 1.5rem; list-style: none; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── MISC ── */
+    .tag { display: inline-block; background: rgba(91,127,255,0.12); color: var(--accent); border: 1px solid rgba(91,127,255,0.25); border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 600; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+    .lang-switch {
+      font-size: 0.78rem; color: var(--text-muted); text-decoration: none;
+      border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.6rem;
+      transition: color 0.2s, border-color 0.2s; margin-right: 0.75rem;
+    }
+    .lang-switch:hover { color: var(--text); border-color: var(--accent); }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">HAchillesWorld</div>
+  <ul class="nav-links">
+    <li><a href="#product">Product</a></li>
+    <li><a href="#framework">Framework</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;">
+    <a href="index.html" class="lang-switch">한국어</a>
+    <a href="#cta" class="nav-cta">Start Free Scan</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Based on <em>Agentic World Modeling 2027</em> — Levels × Laws Framework
+  </div>
+
+  <h1>
+    Does Your AI Agent<br/>
+    <em>Truly Understand</em><br/>
+    the World It Operates In?
+  </h1>
+
+  <p class="hero-sub">
+    HAchillesWorld diagnoses the World Model quality of your AI agents,
+    auto-generates optimization roadmaps, and catches failure risks
+    before they reach production. Get your diagnostic report in 10 minutes.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#cta" class="btn-primary">Start for Free</a>
+    <a href="#product" class="btn-secondary">Explore the Product</a>
+  </div>
+
+  <!-- Terminal mockup -->
+  <div class="terminal-wrap">
+    <div class="terminal-bar">
+      <div class="terminal-dot r"></div>
+      <div class="terminal-dot y"></div>
+      <div class="terminal-dot g"></div>
+      <div class="terminal-title">hachillesworld scan — supply-chain-agent</div>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-comment">$ </span><span class="t-cmd">hachillesworld scan --logs ./agent_logs/ --config ./agent_config.json</span></div>
+      <div>&nbsp;</div>
+      <div><span class="t-ok">✓</span> Log analysis complete — 847 events processed</div>
+      <div><span class="t-ok">✓</span> 15 diagnostic metrics measured</div>
+      <div><span class="t-ok">✓</span> Levels × Laws position identified</div>
+      <div>&nbsp;</div>
+      <div>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div>  HAchillesWorld Scan Report</div>
+      <div>  System: supply-chain-agent &nbsp;&nbsp; Date: 2026-06-01</div>
+      <div>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div>&nbsp;</div>
+      <div>  Current Position: <span class="t-label">L2 Simulator × Digital Laws</span></div>
+      <div>  Target Position:  <span class="t-label">L2 Simulator × Digital+Social Laws</span></div>
+      <div>&nbsp;</div>
+      <div>  Overall Score: <span class="t-score">67 / 100</span> &nbsp;<span class="t-warn">⚠ Needs Attention</span></div>
+      <div>&nbsp;</div>
+      <div>  World Model Quality &nbsp;&nbsp;72/100 <span class="t-warn">🟡</span></div>
+      <div>  Agency Level &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;61/100 <span class="t-warn">🟡</span></div>
+      <div>  Operational Health &nbsp;&nbsp;68/100 <span class="t-warn">🟡</span></div>
+      <div>&nbsp;</div>
+      <div>  <span class="t-err">🔴 Immediate Action Required (2 issues)</span></div>
+      <div>  ├─ Simulation Drift: recalibration rate 31% (threshold: 10%)</div>
+      <div>  └─ Calibration ECE: 0.23 (threshold: &lt; 0.10)</div>
+      <div>&nbsp;</div>
+      <div>  <span class="t-ok">→ Generate optimization roadmap: hachillesworld optimize</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">88%</div>
+        <div class="stat-label">of enterprises can't explain why their agent failed</div>
+      </div>
+      <div>
+        <div class="stat-num">$2.3M</div>
+        <div class="stat-label">average annual loss per company from agent incidents</div>
+      </div>
+      <div>
+        <div class="stat-num">10 min</div>
+        <div class="stat-label">to get a full diagnostic report</div>
+      </div>
+      <div>
+        <div class="stat-num">70%</div>
+        <div class="stat-label">optimization cost reduction target</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="container">
+    <div class="section-label">How It Works</div>
+    <h2>Diagnose. Optimize. Operate.</h2>
+    <p class="section-sub">A systematic, evidence-based methodology for AI agent excellence — not guesswork.</p>
+
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <h3>Connect</h3>
+        <p>Integrate via Python SDK, OpenTelemetry bridge, or log upload. Setup takes under 5 minutes.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <h3>Diagnose</h3>
+        <p>Get a 15-metric diagnostic report pinpointing your exact Level and bottlenecks within 10 minutes.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <h3>Optimize</h3>
+        <p>Receive auto-generated harness rules, code templates, and a phased roadmap tailored to your domain.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <h3>Monitor</h3>
+        <p>Continuously track World Model health in production. Catch Simulation Drift before it causes failures.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PROBLEM -->
+<section>
+  <div class="container">
+    <div class="section-label">Problem</div>
+    <h2>What Existing Tools Miss</h2>
+    <p class="section-sub">
+      MLOps, APM, and LLM evaluation tools all fail to answer one critical question:
+      <strong>why did your agent make that decision?</strong>
+    </p>
+
+    <div class="compare-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Category</th>
+            <th>What It Measures</th>
+            <th>What It Misses</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>General MLOps <span style="color:var(--text-muted);font-size:0.8rem">(MLflow, W&amp;B)</span></td>
+            <td>Model accuracy, training loss</td>
+            <td class="cross">Agent world understanding quality</td>
+          </tr>
+          <tr>
+            <td>APM Tools <span style="color:var(--text-muted);font-size:0.8rem">(Datadog, New Relic)</span></td>
+            <td>Latency, error rates</td>
+            <td class="cross">Decision quality, Simulation Drift</td>
+          </tr>
+          <tr>
+            <td>LLM Evaluation <span style="color:var(--text-muted);font-size:0.8rem">(LangSmith)</span></td>
+            <td>Output quality, token cost</td>
+            <td class="cross">World Model calibration</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong>HAchillesWorld</strong> <span class="badge-accent">NEW</span></td>
+            <td><span style="color:var(--green)">Levels diagnosis, Laws-domain optimization</span></td>
+            <td><span style="color:var(--text-muted)">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🔍</div>
+        <h3>"We have no idea why our agent failed."</h3>
+        <p>Accumulated Simulation Drift goes undetected until production failures occur. Without root-cause tooling, the same failure repeats — and prevention stays impossible.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🗺️</div>
+        <h3>"We want an L3 agent but don't know where to start."</h3>
+        <p>Without knowing your current Level or where the bottleneck is, your AI team drifts without direction — wasting engineering hours on low-impact improvements.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>"Our AI costs are exploding and we can't find the leak."</h3>
+        <p>LLM API bills exceed budgets, but poor routing and unnecessary large-model calls are invisible. Every month the cost grows while ROI deteriorates.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- FRAMEWORK -->
+<section class="matrix-section" id="framework">
+  <div class="container">
+    <div class="matrix-inner">
+      <div>
+        <div class="section-label">Framework</div>
+        <h2>The Levels × Laws<br/>Diagnostic Grid</h2>
+        <p style="color:var(--text-dim);line-height:1.75;margin-top:1rem;margin-bottom:1.5rem;">
+          Every analysis in HAchillesWorld is grounded in the
+          <strong>Levels × Laws 2D coordinate system</strong> from
+          <em>Agentic World Modeling 2027</em>.
+          We precisely locate your agent, identify its bottlenecks,
+          and chart the shortest path to the next Level.
+        </p>
+        <ul class="feature-list">
+          <li><strong>L1 Predictor</strong>: Single-step prediction, Markov assumption</li>
+          <li><strong>L2 Simulator</strong>: N-step rollouts, causal reasoning</li>
+          <li><strong>L3 Evolver</strong>: DEOR autonomous loop, self-correction</li>
+        </ul>
+        <div style="margin-top:1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <span class="tag">Physical Laws</span>
+          <span class="tag">Digital Laws</span>
+          <span class="tag">Social Laws</span>
+          <span class="tag">Scientific Laws</span>
+        </div>
+      </div>
+
+      <div class="matrix-grid">
+        <pre><span class="m-header">         Physical  Digital  Social  Scientific</span>
+<span class="m-header">         Laws      Laws     Laws    Laws</span>
+<span class="m-header">         ─────────────────────────────────────</span>
+<span class="m-l1">L1       ·         ·        ·       ·</span>
+<span class="m-l1">Pred.    </span>
+<span class="m-header">         </span>
+<span class="m-l2">L2       ·         </span><span class="m-you">◉ YOU</span><span class="m-l2">    ·       ·</span>
+<span class="m-l2">Sim.     </span>
+<span class="m-header">         </span>
+<span class="m-l3">L3       ·         </span><span class="m-active">◎ GOAL</span><span class="m-l3">   ·       ·</span>
+<span class="m-l3">Evolver  </span>
+
+<span class="m-header">  Diagnosis: L2.1 × Digital Laws</span>
+<span class="m-header">  Target:    L2.5 → L3 (24-week roadmap)</span>
+
+<span class="t-warn">  ⚠ Simulation Drift: 31%  (threshold: 10%)</span>
+<span class="t-warn">  ⚠ Planning Depth:   3 steps (target: 15+)</span>
+<span class="t-ok">  ✓ API Idempotency: within normal range</span>
+<span class="t-ok">  ✓ Cost Router: within budget</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PRODUCT MODULES -->
+<section id="product">
+  <div class="container">
+    <div class="section-label">Product</div>
+    <h2>Three Modules, One Platform</h2>
+    <p class="section-sub">From diagnosis to optimization to live monitoring — HAchillesWorld covers the entire agent lifecycle.</p>
+
+    <div class="modules-grid">
+      <!-- Scan -->
+      <div class="module-card">
+        <div class="module-num">MODULE 01</div>
+        <h3>HAchillesWorld Scan</h3>
+        <div class="sub">Diagnostic Engine</div>
+        <p>Connect your agent system and receive a 15-metric diagnostic report in under 10 minutes. Instantly understand your current Level, Laws-domain position, and critical bottlenecks.</p>
+        <ul class="feature-list">
+          <li>5 World Model quality metrics (ECE, Drift Rate, etc.)</li>
+          <li>5 agency-level metrics (Planning Depth, Self-correction)</li>
+          <li>5 operational health metrics (cost efficiency, HITL frequency)</li>
+          <li>3 integration options: SDK / OTel bridge / log upload</li>
+        </ul>
+      </div>
+
+      <!-- Optimize -->
+      <div class="module-card">
+        <div class="module-num">MODULE 02</div>
+        <h3>HAchillesWorld Optimize</h3>
+        <div class="sub">Optimization Engine</div>
+        <p>Auto-generate a tailored optimization roadmap from your Scan results. Get 4-week, 12-week, and 24-week phased execution plans — plus generated harness rule code — immediately.</p>
+        <ul class="feature-list">
+          <li>Impact × effort priority matrix, auto-generated</li>
+          <li>Domain-matched harness rule code generation</li>
+          <li>Standard L1→L2 and L2→L3 transition roadmaps</li>
+          <li>ROI projection (cost savings, failure reduction)</li>
+        </ul>
+      </div>
+
+      <!-- Operate -->
+      <div class="module-card">
+        <div class="module-num">MODULE 03</div>
+        <h3>HAchillesWorld Operate</h3>
+        <div class="sub">Operations Intelligence</div>
+        <p>Real-time World Model health monitoring for production agents. Drift alerts, Replay Debugging, and Meta-Harness automation intercept risk before it becomes downtime.</p>
+        <ul class="feature-list">
+          <li>Real-time Simulation Drift detection + auto-recalibration</li>
+          <li>Step-by-step Replay Debugging of failure episodes</li>
+          <li>Meta-Harness auto rule generation + review workflow</li>
+          <li>Slack / Teams alert integration</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Scan Report Mockup -->
+    <div class="report-mockup">
+      <div class="report-title">━━ HAchillesWorld Scan Report ━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="report-row">
+        <div class="report-col">
+          <div class="score-big">67</div>
+          <div class="score-label">/ 100 &nbsp;⚠ Needs Attention</div>
+          <br/>
+          <div style="color:var(--text-muted);font-size:0.78rem;">Current: L2.1 × Digital Laws</div>
+          <div style="color:var(--text-muted);font-size:0.78rem;">Target: L2 × Digital+Social</div>
+        </div>
+        <div class="report-col" style="flex:2">
+          <div class="metric-bar">
+            <span class="metric-name">World Model Quality</span>
+            <div class="metric-track"><div class="metric-fill fill-yellow" style="width:72%"></div></div>
+            <span class="metric-score" style="color:var(--yellow)">72</span>
+          </div>
+          <div class="metric-bar">
+            <span class="metric-name">Agency Level</span>
+            <div class="metric-track"><div class="metric-fill fill-red" style="width:61%"></div></div>
+            <span class="metric-score" style="color:var(--red)">61</span>
+          </div>
+          <div class="metric-bar">
+            <span class="metric-name">Operational Health</span>
+            <div class="metric-track"><div class="metric-fill fill-yellow" style="width:68%"></div></div>
+            <span class="metric-score" style="color:var(--yellow)">68</span>
+          </div>
+          <div class="issue-list">
+            <div class="issue red">🔴 Simulation Drift: 31%  (threshold: 10%) → Immediate action</div>
+            <div class="issue red">🔴 Calibration ECE: 0.23 (threshold: &lt;0.10) → Immediate action</div>
+            <div class="issue yellow">🟡 Planning Depth: 3 steps (target: 15+)</div>
+            <div class="issue yellow">🟡 Cost running at 143% of budget</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PERSONAS -->
+<section>
+  <div class="container">
+    <div class="section-label">Who It's For</div>
+    <h2>Built for Everyone Who Ships Agents</h2>
+    <p class="section-sub">From enterprise AI architects to solo developers, HAchillesWorld meets you where you are.</p>
+
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(91,127,255,0.15)">👨‍💻</div>
+        <h3>Alex — AI Architect</h3>
+        <div class="persona-role">Senior AI Architect · FinTech Startup</div>
+        <div class="persona-pain">
+          Running 3 Claude API–based agents in production. Unexplained misbehaviors surface once a month. The CTO demands answers on ballooning AI costs, but existing monitoring tools offer nothing agent-specific.
+        </div>
+        <div class="persona-value">
+          ✓ Identify misbehavior root cause in &lt;10 min via Replay Debugger<br/>
+          ✓ Generate cost-reduction roadmap to present to leadership
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(139,92,246,0.15)">👩‍💼</div>
+        <h3>Sarah — Startup CTO</h3>
+        <div class="persona-role">CTO &amp; Co-founder · AI Agent Startup</div>
+        <div class="persona-pain">
+          No objective measure of how the company's agent compares to competitors. Investor due-diligence meetings expose the gap: "What's your technical differentiation?" can't be answered with data.
+        </div>
+        <div class="persona-value">
+          ✓ "Our agent is L2.3 vs. estimated L2.0 for competitors" — objective proof<br/>
+          ✓ Investor-ready technical metrics on day one
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-avatar" style="background:rgba(34,211,165,0.15)">🧑‍🎓</div>
+        <h3>Jordan — Independent Developer</h3>
+        <div class="persona-role">Junior Backend Dev · Side Project</div>
+        <div class="persona-pain">
+          Learning AI agent development through YouTube and blog posts, but with no roadmap. No way to verify whether code is correct, and no clear picture of how to level up for a portfolio or job search.
+        </div>
+        <div class="persona-value">
+          ✓ "You're at L1.4" — clear current position and growth path<br/>
+          ✓ HAchillesWorld Certified credential for job differentiation
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-label">Pricing</div>
+    <h2>Transparent Pricing</h2>
+    <p class="section-sub">Start free, see the value, then upgrade when you're ready.</p>
+
+    <div class="pricing-grid">
+      <!-- Free -->
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0 <span>/ mo</span></div>
+        <div class="plan-desc">Get started — experience the value of a real diagnostic at zero cost.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>3 Scans / month</li>
+          <li>Basic diagnostic report</li>
+          <li>Community access</li>
+          <li class="no">Optimize roadmaps</li>
+          <li class="no">Operate monitoring</li>
+          <li class="no">API access</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">Start Free</button>
+      </div>
+
+      <!-- Starter -->
+      <div class="plan-card featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$29 <span>/ mo</span></div>
+        <div class="plan-desc">Complete diagnose-and-optimize tooling for individual developers and small teams.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>Unlimited Scans</li>
+          <li>Optimize roadmap generation</li>
+          <li>Personalized Learning Path</li>
+          <li>Email support</li>
+          <li class="no">Operate monitoring</li>
+          <li class="no">API access</li>
+        </ul>
+        <button class="plan-cta plan-cta-filled">14-Day Free Trial</button>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$79 <span>/ mo</span></div>
+        <div class="plan-desc">Full feature access for individuals and small teams running production agents.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>All features included</li>
+          <li>Operate (1 agent)</li>
+          <li>API access</li>
+          <li>Priority support</li>
+          <li>1 HAchillesWorld Certified exam</li>
+          <li class="no">Team collaboration (Team plan)</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">Start Pro</button>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price" style="font-size:1.8rem">Custom <span>/ mo</span></div>
+        <div class="plan-desc">Enterprise-grade solution for organizations running large agent portfolios.</div>
+        <hr class="plan-divider" />
+        <ul class="plan-features">
+          <li>Unlimited agents</li>
+          <li>On-premise deployment option</li>
+          <li>SSO + RBAC</li>
+          <li>Dedicated SLA + support</li>
+          <li>Consulting package included</li>
+          <li>Custom harness rule design</li>
+        </ul>
+        <button class="plan-cta plan-cta-outline">Talk to Sales</button>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">
+      Consulting · Workshops · Certification programs available separately.&nbsp;
+      <a href="#cta" style="color:var(--accent);text-decoration:none;">Learn more →</a>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div class="section-label">Roadmap</div>
+    <h2>Product Roadmap</h2>
+    <p class="section-sub">A validated, phased go-to-market strategy for rapid market entry.</p>
+
+    <div class="roadmap-phases">
+      <div class="phase-item">
+        <div class="phase-time">Jul – Sep 2026<br/><span style="color:var(--text-muted)">Phase 0</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p0">MVP Validation</span>
+            <h3>Validate Core Hypothesis</h3>
+          </div>
+          <p>Scan Engine v0.1 with 7 core metrics, CLI tool, 50 beta testers. Success criteria: NPS &gt; 40, &gt; 60% willing to pay $50/month.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">Oct – Dec 2026<br/><span style="color:var(--text-muted)">Phase 1</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p1">Launch</span>
+            <h3>First 100 Paying Customers</h3>
+          </div>
+          <p>Scan v1.0 (all 15 metrics), Optimize v0.5, web dashboard, Python SDK v1.0, Free / Starter / Pro plan launch. ProductHunt launch and early-bird campaign for <em>Agentic World Modeling 2027</em> readers.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">Jan – Jun 2027<br/><span style="color:var(--text-muted)">Phase 2</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p2">Growth</span>
+            <h3>$1.2M ARR · 50 Enterprise Customers</h3>
+          </div>
+          <p>Operate v1.0 (real-time monitoring), Meta-Harness automation, Enterprise SSO/RBAC, Replay Debugger v1.0. Anthropic partner program enrollment.</p>
+        </div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-time">Jul 2027 – Jun 2028<br/><span style="color:var(--text-muted)">Phase 3</span></div>
+        <div class="phase-content">
+          <div class="phase-header">
+            <span class="phase-tag p3">Scale</span>
+            <h3>$8.5M ARR · Global Expansion</h3>
+          </div>
+          <p>Harness rule template Marketplace, multi-agent diagnostics, on-premise deployment, API-first white-label. US and European market launch with local SI partnerships.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="section-label">Get Started</div>
+  <h2>Optimization without diagnosis<br/>is just guessing.</h2>
+  <p>
+    Find out your agent's current Level and critical bottlenecks in 10 minutes.
+    No credit card required.
+  </p>
+  <div class="hero-actions" style="justify-content:center">
+    <a href="#" class="btn-primary">Start Free Scan</a>
+    <a href="#" class="btn-secondary">Book a Demo</a>
+  </div>
+  <div style="margin-top:1.5rem;color:var(--text-muted);font-size:0.85rem;">
+    No credit card · 5-minute setup · 3 free Scans included
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex;flex-direction:column;gap:0.35rem;">
+    <div class="footer-logo">HAchillesWorld</div>
+    <div class="footer-meta">AI Agent World Model Diagnostics Platform</div>
+    <div class="footer-meta" style="font-size:0.75rem;margin-top:0.25rem;">
+      Theory: <em>Agentic World Modeling 2027</em> — Sunghoon Park
+    </div>
+  </div>
+  <ul class="footer-links">
+    <li><a href="#product">Product</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#">Docs</a></li>
+    <li><a href="#">Privacy Policy</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>
