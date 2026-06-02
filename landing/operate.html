@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld Operate — L2.3 → L3 운영 모니터링</title>
+  <style>
+    :root {
+      --bg:#07080d; --bg-2:#0e1018; --bg-3:#141722; --border:#1e2235;
+      --accent:#5b7fff; --accent-2:#8b5cf6; --green:#22d3a5;
+      --yellow:#f59e0b; --red:#f43f5e; --orange:#fb923c; --cyan:#06b6d4;
+      --text:#e8eaf0; --text-muted:#6b7280; --text-dim:#9ca3af;
+      --mono:'JetBrains Mono','Fira Code',monospace;
+      --sidebar:240px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;display:flex;flex-direction:column;min-height:100vh}
+
+    /* ── TOP BAR ── */
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:200;height:52px;background:var(--bg-2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.5rem;gap:1.25rem}
+    .topbar-logo{font-size:.9rem;font-weight:800;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+    .topbar-sep{width:1px;height:20px;background:var(--border)}
+    .topbar-agent{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--text-dim)}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .topbar-kpis{display:flex;gap:1.25rem;margin-left:auto}
+    .kpi-chip{display:flex;align-items:center;gap:.45rem;font-size:.78rem}
+    .kpi-chip-label{color:var(--text-muted)}
+    .kpi-chip-val{font-family:var(--mono);font-weight:700}
+    .topbar-actions{display:flex;gap:.5rem}
+    .btn-sm{padding:.32rem .85rem;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);background:transparent;transition:.2s;text-decoration:none;display:inline-block}
+    .btn-sm:hover{border-color:var(--accent);color:var(--text)}
+    .btn-sm.primary{background:linear-gradient(135deg,var(--green),var(--cyan));border:none;color:#07080d;font-weight:700}
+
+    /* ── LAYOUT ── */
+    .layout{display:flex;margin-top:52px;min-height:calc(100vh - 52px)}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:var(--sidebar);flex-shrink:0;position:fixed;top:52px;left:0;bottom:0;background:var(--bg-2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+    .nav-group-label{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);padding:.7rem 1.25rem .2rem}
+    .nav-item{display:flex;align-items:center;gap:.55rem;padding:.4rem 1.25rem;font-size:.78rem;color:var(--text-dim);text-decoration:none;cursor:pointer;border-left:2px solid transparent;transition:.15s}
+    .nav-item:hover{background:rgba(91,127,255,.06);color:var(--text)}
+    .nav-item.active{background:rgba(91,127,255,.1);color:var(--accent);border-left-color:var(--accent)}
+    .phase-tag{font-size:.6rem;font-weight:700;padding:.15rem .4rem;border-radius:4px;flex-shrink:0}
+    .tag-p1{background:rgba(34,211,165,.15);color:var(--green)}
+    .tag-p2{background:rgba(91,127,255,.15);color:var(--accent)}
+    .tag-p3{background:rgba(139,92,246,.15);color:var(--accent-2)}
+    .tag-l3{background:rgba(34,211,165,.2);color:var(--green)}
+    .nav-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .d-green{background:var(--green)} .d-red{background:var(--red)} .d-yellow{background:var(--yellow)}
+    .d-blue{background:var(--accent)} .d-purple{background:var(--accent-2)} .d-cyan{background:var(--cyan)}
+    .sidebar-bottom{margin-top:auto;padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem}
+    .btn-full{display:block;width:100%;padding:.55rem;border-radius:8px;font-size:.78rem;font-weight:700;text-align:center;cursor:pointer;border:none;text-decoration:none}
+    .btn-outline{background:transparent;border:1px solid var(--border)!important;color:var(--text-dim)}
+    .btn-outline:hover{border-color:var(--accent)!important;color:var(--text)}
+    .btn-gradient{background:linear-gradient(135deg,var(--green),var(--cyan));color:#07080d}
+
+    /* ── MAIN ── */
+    .main{margin-left:var(--sidebar);flex:1;padding:2rem 2.5rem;max-width:1100px}
+    .section{margin-bottom:2.5rem}
+    h2{font-size:1.2rem;font-weight:800;margin-bottom:.3rem;letter-spacing:-.02em}
+    h3{font-size:.95rem;font-weight:700;margin-bottom:.4rem}
+    h4{font-size:.85rem;font-weight:700;margin-bottom:.3rem}
+    p{font-size:.87rem;color:var(--text-dim)}
+    .section-desc{font-size:.82rem;color:var(--text-muted);margin-bottom:1.25rem}
+
+    /* ── PHASE PROGRESS BAR ── */
+    .phase-progress{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:2rem}
+    .phase-progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .phase-progress-title{font-size:.82rem;font-weight:700;color:var(--text-dim)}
+    .phase-steps{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:center;gap:0}
+    .phase-node{text-align:center;position:relative}
+    .phase-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;margin:0 auto .4rem;border:2px solid}
+    .phase-circle.done{background:rgba(34,211,165,.2);border-color:var(--green);color:var(--green)}
+    .phase-circle.active{background:rgba(91,127,255,.2);border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px rgba(91,127,255,.3)}
+    .phase-circle.pending{background:var(--bg-3);border-color:var(--border);color:var(--text-muted)}
+    .phase-circle.l3{background:rgba(139,92,246,.2);border-color:var(--accent-2);color:var(--accent-2)}
+    .phase-node-label{font-size:.68rem;color:var(--text-muted);line-height:1.3}
+    .phase-node-sub{font-size:.62rem;color:var(--text-muted)}
+    .phase-connector{height:2px;background:var(--border);flex:1}
+    .phase-connector.done{background:linear-gradient(90deg,var(--green),var(--accent))}
+
+    /* ── PHASE DIVIDER ── */
+    .phase-divider{display:flex;align-items:center;gap:1rem;margin:2rem 0 1.5rem}
+    .phase-divider-line{flex:1;height:1px;background:var(--border)}
+    .phase-divider-badge{padding:.35rem 1rem;border-radius:999px;font-size:.75rem;font-weight:700;white-space:nowrap}
+    .pd-p1{background:rgba(34,211,165,.12);color:var(--green);border:1px solid rgba(34,211,165,.3)}
+    .pd-p2{background:rgba(91,127,255,.12);color:var(--accent);border:1px solid rgba(91,127,255,.3)}
+    .pd-p3{background:rgba(139,92,246,.12);color:var(--accent-2);border:1px solid rgba(139,92,246,.3)}
+    .pd-l3{background:rgba(34,211,165,.15);color:var(--green);border:1px solid rgba(34,211,165,.4)}
+
+    /* ── KPI GRID ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.25rem}
+    .kpi-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:1.1rem;position:relative;overflow:hidden}
+    .kpi-card::before{content:'';position:absolute;inset:0;opacity:.04;border-radius:12px}
+    .kpi-card.drift::before{background:var(--yellow)} .kpi-card.ece::before{background:var(--red)}
+    .kpi-card.score::before{background:var(--green)} .kpi-card.cost::before{background:var(--accent)}
+    .kpi-label{font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.4rem}
+    .kpi-value{font-size:1.85rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:.3rem}
+    .kpi-sub{font-size:.68rem;color:var(--text-muted)}
+    .kpi-trend{position:absolute;top:.85rem;right:.85rem;font-size:.68rem;font-weight:700;padding:.18rem .45rem;border-radius:999px}
+    .trend-up{background:rgba(244,63,94,.15);color:var(--red)}
+    .trend-down{background:rgba(34,211,165,.15);color:var(--green)}
+    .trend-ok{background:rgba(34,211,165,.15);color:var(--green)}
+
+    /* ── CHART ── */
+    .chart-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:1.1rem;margin-bottom:.85rem}
+    .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+    .chart-title{font-size:.85rem;font-weight:700}
+    .chart-legend{display:flex;gap:.85rem}
+    .legend-item{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--text-muted)}
+    .legend-dot{width:7px;height:7px;border-radius:50%}
+    .chart-wrap{position:relative;height:130px}
+    svg.chart{width:100%;height:100%;overflow:visible}
+
+    /* ── TWO / THREE COL ── */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
+
+    /* ── ALERT FEED ── */
+    .alert-feed{display:flex;flex-direction:column;gap:.45rem}
+    .feed-item{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 1rem;background:var(--bg-3);border:1px solid var(--border);border-radius:9px;font-size:.8rem}
+    .feed-item.a-danger{border-color:rgba(244,63,94,.35);background:rgba(244,63,94,.04)}
+    .feed-item.a-warn{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.04)}
+    .feed-item.a-ok{border-color:rgba(34,211,165,.25)}
+    .feed-item.a-info{border-color:rgba(91,127,255,.25);background:rgba(91,127,255,.03)}
+    .feed-icon{font-size:.88rem;flex-shrink:0;margin-top:.05rem}
+    .feed-body{flex:1}
+    .feed-title{font-weight:700;margin-bottom:.1rem}
+    .feed-meta{font-size:.7rem;color:var(--text-muted)}
+    .feed-time{font-family:var(--mono);font-size:.68rem;color:var(--text-muted);flex-shrink:0;margin-top:.05rem}
+
+    /* ── REPLAY ── */
+    .replay-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+    .replay-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1.2rem;background:var(--bg-3);border-bottom:1px solid var(--border)}
+    .replay-badge{padding:.22rem .65rem;border-radius:999px;font-size:.65rem;font-weight:700}
+    .rb-fail{background:rgba(244,63,94,.15);color:var(--red)}
+    .rb-ok{background:rgba(34,211,165,.15);color:var(--green)}
+    .step-row{display:flex;align-items:flex-start;gap:.85rem;padding:.75rem 1.2rem;border-bottom:1px solid var(--border);font-size:.8rem;cursor:pointer;transition:background .15s}
+    .step-row:last-child{border-bottom:none}
+    .step-row:hover{background:rgba(91,127,255,.04)}
+    .step-row.anomaly{background:rgba(244,63,94,.04)}
+    .step-num{font-family:var(--mono);font-size:.68rem;color:var(--text-muted);width:26px;flex-shrink:0;padding-top:.1rem}
+    .step-info{flex:1}
+    .step-action{font-weight:600;margin-bottom:.08rem}
+    .step-detail{font-size:.72rem;color:var(--text-muted);font-family:var(--mono)}
+    .step-drift{font-family:var(--mono);font-size:.75rem;font-weight:700;padding:.13rem .45rem;border-radius:5px;flex-shrink:0}
+    .drift-ok{background:rgba(34,211,165,.12);color:var(--green)}
+    .drift-warn{background:rgba(245,158,11,.12);color:var(--yellow)}
+    .drift-bad{background:rgba(244,63,94,.15);color:var(--red)}
+    .root-cause-box{margin:.85rem 1.2rem 1.2rem;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.2);border-radius:9px;padding:.9rem 1.1rem}
+    .root-cause-box h4{color:var(--red);margin-bottom:.35rem}
+    .success-box{margin:.85rem 1.2rem 1.2rem;background:rgba(34,211,165,.05);border:1px solid rgba(34,211,165,.2);border-radius:9px;padding:.9rem 1.1rem}
+
+    /* ── MCTS MONITOR ── */
+    .mcts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:.85rem}
+    .mcts-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:1.1rem;text-align:center}
+    .mcts-val{font-size:1.7rem;font-weight:900;font-family:var(--mono);line-height:1.1;margin-bottom:.25rem}
+    .mcts-label{font-size:.68rem;color:var(--text-muted)}
+
+    /* ── META HARNESS ── */
+    .proposal-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.75rem}
+    .proposal-header{display:flex;align-items:center;gap:.7rem;margin-bottom:.55rem}
+    .proposal-badge{font-size:.62rem;font-weight:700;padding:.18rem .55rem;border-radius:999px}
+    .p-new{background:rgba(139,92,246,.15);color:var(--accent-2)}
+    .p-auto{background:rgba(34,211,165,.15);color:var(--green)}
+    .p-applied{background:rgba(91,127,255,.15);color:var(--accent)}
+    .proposal-title{font-size:.88rem;font-weight:700}
+    .proposal-meta{font-size:.72rem;color:var(--text-muted)}
+    .proposal-body{font-size:.82rem;color:var(--text-dim);margin-bottom:.7rem}
+    .proposal-code{font-family:var(--mono);font-size:.73rem;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;color:#c4b5fd;line-height:1.7;white-space:pre;overflow-x:auto;margin-bottom:.7rem}
+    .proposal-actions{display:flex;gap:.5rem}
+    .btn-approve{padding:.38rem .9rem;background:rgba(34,211,165,.15);border:1px solid rgba(34,211,165,.4);color:var(--green);border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;transition:.2s}
+    .btn-approve:hover{background:rgba(34,211,165,.25)}
+    .btn-reject{padding:.38rem .9rem;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;transition:.2s}
+    .btn-reject:hover{border-color:var(--red);color:var(--red)}
+
+    /* ── CODE BLOCK ── */
+    .code-block{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:.7rem 0}
+    .code-header{background:var(--bg-3);padding:.5rem 1.1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .code-filename{font-family:var(--mono);font-size:.73rem;color:var(--accent);font-weight:600}
+    .code-lang{font-size:.63rem;color:var(--text-muted)}
+    .code-body{padding:.9rem 1.2rem;font-family:var(--mono);font-size:.74rem;line-height:1.85;overflow-x:auto;white-space:pre}
+    .c-kw{color:#67e8f9} .c-fn{color:#fcd34d} .c-str{color:#86efac}
+    .c-num{color:#fda4af} .c-cm{color:#4b5563} .c-cls{color:#c4b5fd}
+
+    /* ── GAUGE / TABLE ── */
+    .gauge-row{display:flex;align-items:center;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--border);font-size:.8rem}
+    .gauge-row:last-child{border-bottom:none}
+    .gauge-label{width:155px;color:var(--text-dim);flex-shrink:0}
+    .gauge-track{flex:1;height:6px;background:var(--border);border-radius:999px;overflow:hidden}
+    .gauge-fill{height:100%;border-radius:999px}
+    .gauge-val{width:48px;text-align:right;font-family:var(--mono);font-weight:700;font-size:.8rem}
+    .data-table{width:100%;border-collapse:collapse;font-size:.8rem}
+    .data-table th{background:var(--bg-3);padding:.55rem .9rem;text-align:left;font-size:.68rem;font-weight:600;color:var(--text-muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--text-dim)}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(91,127,255,.03)}
+    .val-red{color:var(--red);font-weight:700} .val-yellow{color:var(--yellow);font-weight:700}
+    .val-green{color:var(--green);font-weight:700} .val-cyan{color:var(--cyan);font-weight:700}
+
+    /* ── L3 CERT ── */
+    .cert-section{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(34,211,165,.06));border:1px solid rgba(139,92,246,.3);border-radius:16px;padding:2rem;text-align:center;margin-bottom:2rem}
+    .cert-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;background:rgba(34,211,165,.12);border:1px solid rgba(34,211,165,.35);color:var(--green);border-radius:999px;font-size:.78rem;font-weight:700;margin-bottom:1.25rem}
+    .cert-title{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--accent-2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.75rem}
+    .cert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin:1.5rem 0}
+    .cert-item{background:rgba(34,211,165,.06);border:1px solid rgba(34,211,165,.2);border-radius:12px;padding:1rem}
+    .cert-val{font-size:1.6rem;font-weight:900;font-family:var(--mono);color:var(--green);line-height:1.1;margin-bottom:.2rem}
+    .cert-label{font-size:.68rem;color:var(--text-muted)}
+    .checklist{display:flex;flex-direction:column;gap:.4rem;text-align:left}
+    .check-item{display:flex;align-items:flex-start;gap:.65rem;font-size:.83rem;padding:.55rem .9rem;background:var(--bg-3);border:1px solid var(--border);border-radius:8px}
+    .check-box{width:17px;height:17px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;margin-top:.1rem;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+    .check-box.done{background:var(--green);border-color:var(--green);color:#07080d}
+    .check-text{color:var(--text-dim)}
+
+    /* ── LIVE / MISC ── */
+    .live-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .55rem;background:rgba(34,211,165,.12);border:1px solid rgba(34,211,165,.3);color:var(--green);border-radius:999px;font-size:.62rem;font-weight:700}
+    .live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+    .done-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .55rem;background:rgba(34,211,165,.12);border:1px solid rgba(34,211,165,.3);color:var(--green);border-radius:999px;font-size:.62rem;font-weight:700}
+    .info-row{display:flex;gap:.7rem;flex-wrap:wrap;margin:.85rem 0}
+    .info-chip{display:flex;align-items:center;gap:.45rem;padding:.45rem .9rem;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;font-size:.78rem}
+    .info-chip-label{color:var(--text-muted);font-size:.68rem}
+    .info-chip-val{font-weight:700;font-family:var(--mono)}
+    .alert-banner{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.1rem;border-radius:9px;margin-bottom:1.25rem;border:1px solid;font-size:.83rem}
+    .ab-ok{background:rgba(34,211,165,.07);border-color:rgba(34,211,165,.3)}
+    .ab-warn{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}
+    .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.1rem}
+    .tab{padding:.5rem 1rem;font-size:.78rem;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+
+    @media(max-width:900px){
+      .sidebar{display:none}
+      .main{margin-left:0;padding:1.25rem}
+      .kpi-grid{grid-template-columns:1fr 1fr}
+      .two-col,.three-col,.mcts-grid,.cert-grid{grid-template-columns:1fr}
+      .topbar-kpis{display:none}
+      .phase-steps{grid-template-columns:1fr}
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .fade-in{animation:fadeIn .4s ease both}
+    .delay-1{animation-delay:.1s} .delay-2{animation-delay:.2s} .delay-3{animation-delay:.3s}
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<header class="topbar">
+  <span class="topbar-logo">HAchillesWorld Operate</span>
+  <div class="topbar-sep"></div>
+  <div class="topbar-agent">
+    <div class="status-dot"></div>
+    <span id="tb-agent">supply-chain-agent</span>
+    <span style="color:var(--text-muted)">·</span>
+    <span style="color:var(--accent-2);font-family:var(--mono);font-size:.73rem" id="tb-level">L3</span>
+  </div>
+  <div class="topbar-kpis">
+    <div class="kpi-chip"><span class="kpi-chip-label">Drift</span><span class="kpi-chip-val" id="tb-drift" style="color:var(--green)">3.8%</span></div>
+    <div class="kpi-chip"><span class="kpi-chip-label">ECE</span><span class="kpi-chip-val" id="tb-ece" style="color:var(--green)">0.05</span></div>
+    <div class="kpi-chip"><span class="kpi-chip-label">Score</span><span class="kpi-chip-val" id="tb-score" style="color:var(--green)">91</span></div>
+    <div class="kpi-chip"><span class="kpi-chip-label">비용</span><span class="kpi-chip-val" id="tb-cost" style="color:var(--green)">74%</span></div>
+  </div>
+  <div class="topbar-actions">
+    <a class="btn-sm" href="optimize_report.html">← Optimize</a>
+    <a class="btn-sm primary" href="scan.html">+ 재진단</a>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div style="padding:.7rem 1.25rem .2rem;"><span class="live-badge"><span class="live-dot"></span>L3 LIVE</span></div>
+  <div class="nav-group-label">전체 진행</div>
+  <a class="nav-item" href="#s-progress"><div class="nav-dot d-green"></div>Phase 로드맵</a>
+
+  <div class="nav-group-label">Phase 1 · 완료</div>
+  <a class="nav-item" href="#s-p1"><span class="phase-tag tag-p1">✓</span>P1 완료 요약</a>
+  <a class="nav-item" href="#s-p1-replay"><div class="nav-dot d-green"></div>Replay — EP-2847</a>
+
+  <div class="nav-group-label">Phase 2 · Week 9–16</div>
+  <a class="nav-item active" href="#s-p2"><span class="phase-tag tag-p2">P2</span>P2 대시보드</a>
+  <a class="nav-item" href="#s-mcts"><div class="nav-dot d-blue"></div>MCTS 계획기</a>
+  <a class="nav-item" href="#s-counterfactual"><div class="nav-dot d-purple"></div>Counterfactual</a>
+  <a class="nav-item" href="#s-p2-replay"><div class="nav-dot d-red"></div>Replay — EP-3204</a>
+
+  <div class="nav-group-label">Phase 3 · Week 17–24</div>
+  <a class="nav-item" href="#s-p3"><span class="phase-tag tag-p3">P3</span>P3 대시보드</a>
+  <a class="nav-item" href="#s-meta"><div class="nav-dot d-purple"></div>Meta-Harness</div></a>
+  <a class="nav-item" href="#s-online"><div class="nav-dot d-cyan"></div>온라인 학습</a>
+  <a class="nav-item" href="#s-recal"><div class="nav-dot d-green"></div>실시간 재보정</a>
+
+  <div class="nav-group-label">L3 인증</div>
+  <a class="nav-item" href="#s-l3cert"><span class="phase-tag tag-l3">L3</span>인증 완료</a>
+
+  <div class="sidebar-bottom">
+    <a class="btn-full btn-outline" href="optimize_report.html">← Optimize 리포트</a>
+    <a class="btn-full btn-gradient" href="scan.html">+ 재진단 Scan</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+<!-- ── PHASE PROGRESS ── -->
+<div class="section fade-in" id="s-progress">
+  <h2 style="margin-bottom:.75rem;">전체 로드맵 진행 현황</h2>
+  <div class="phase-progress">
+    <div class="phase-progress-header">
+      <span class="phase-progress-title">L2.3 → L3 Evolver 전환 · 24주 완료</span>
+      <span class="done-badge">✓ L3 인증 달성</span>
+    </div>
+    <div class="phase-steps">
+      <div class="phase-node">
+        <div class="phase-circle done">L2.3</div>
+        <div class="phase-node-label" style="color:var(--green)">시작점</div>
+        <div class="phase-node-sub">점수 67</div>
+      </div>
+      <div class="phase-connector done"></div>
+      <div class="phase-node">
+        <div class="phase-circle done">P1</div>
+        <div class="phase-node-label" style="color:var(--green)">기반 강화</div>
+        <div class="phase-node-sub">Week 8 · 77점</div>
+      </div>
+      <div class="phase-connector done"></div>
+      <div class="phase-node">
+        <div class="phase-circle done">P2</div>
+        <div class="phase-node-label" style="color:var(--green)">시뮬레이션</div>
+        <div class="phase-node-sub">Week 16 · 85점</div>
+      </div>
+      <div class="phase-connector done"></div>
+      <div class="phase-node">
+        <div class="phase-circle done">P3</div>
+        <div class="phase-node-label" style="color:var(--green)">L3 진화</div>
+        <div class="phase-node-sub">Week 24 · 91점</div>
+      </div>
+      <div class="phase-connector done"></div>
+      <div class="phase-node">
+        <div class="phase-circle l3">L3</div>
+        <div class="phase-node-label" style="color:var(--accent-2)">인증 완료</div>
+        <div class="phase-node-sub">Evolver</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PHASE 1 완료
+════════════════════════════════════════ -->
+<div class="phase-divider"><div class="phase-divider-line"></div><span class="phase-divider-badge pd-p1">✓ Phase 1 완료 — Week 8</span><div class="phase-divider-line"></div></div>
+
+<div class="section" id="s-p1">
+  <h2>Phase 1 완료 요약 — 기반 강화</h2>
+  <p class="section-desc">Week 1–8. ECE·Drift·Harness·비용 4개 핵심 지표 모두 목표 달성.</p>
+
+  <div class="alert-banner ab-ok">
+    <span>✅</span>
+    <div><strong>Phase 1 벤치마크 통과</strong> — 종합 점수 77/100 달성. 6개 완료 기준 모두 충족. Phase 2 진입 승인.</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card drift"><div class="kpi-label">Simulation Drift</div><div class="kpi-value val-green">8.2%</div><div class="kpi-sub">목표 &lt;15% ✓ · 진단값 31%</div><div class="kpi-trend trend-down">▼ -22.8%p</div></div>
+    <div class="kpi-card ece"><div class="kpi-label">Calibration ECE</div><div class="kpi-value val-green">0.09</div><div class="kpi-sub">목표 &lt;0.10 ✓ · 진단값 0.23</div><div class="kpi-trend trend-down">▼ -0.14</div></div>
+    <div class="kpi-card score"><div class="kpi-label">종합 점수</div><div class="kpi-value val-green">77</div><div class="kpi-sub">목표 ≥75 ✓ · 진단값 67</div><div class="kpi-trend trend-ok">▲ +10점</div></div>
+    <div class="kpi-card cost"><div class="kpi-label">LLM 비용</div><div class="kpi-value" style="color:var(--green)">98%</div><div class="kpi-sub">목표 ≤100% ✓ · 진단값 143%</div><div class="kpi-trend trend-down">▼ -45%p</div></div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-bottom:.65rem;">Phase 1 완료 체크리스트</h3>
+      <div class="checklist">
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">ECE &lt; 0.10 — 달성: 0.09 (3회 연속)</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Drift Rate &lt; 15% — 달성: 8.2% (7일 평균)</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Harness Coverage ≥ 20개 — 달성: 22개</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">LLM 비용 ≤ 100% — 달성: 98%</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Self-Correction Rate ≥ 10% — 달성: 11%</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">종합 점수 ≥ 75 — 달성: 77/100</div></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:.65rem;">Phase 1 주요 성과</h3>
+      <div class="alert-feed">
+        <div class="feed-item a-ok"><span class="feed-icon">🎯</span><div class="feed-body"><div class="feed-title">Temperature Scaling 적용</div><div class="feed-meta">ECE 0.23 → 0.09 · 5일 소요 · 자동 재보정 6회</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">🛡️</span><div class="feed-body"><div class="feed-title">Harness 22개 규칙 완성</div><div class="feed-meta">자동 차단 47건 · 예산 초과 방지 3건</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">💰</span><div class="feed-body"><div class="feed-title">CostAwareRouter 배포</div><div class="feed-meta">143% → 98% · 월 ₩1.6M 절감</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">🔄</span><div class="feed-body"><div class="feed-title">Self-Correction 루프 구축</div><div class="feed-meta">0% → 11% · 오류 패턴 18개 등록</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 1 Replay -->
+<div class="section" id="s-p1-replay">
+  <h3>Replay Debugger — EP-2847 (Phase 1 핵심 인시던트)</h3>
+  <p class="section-desc">비용 예측 Drift 29.6% → Harness 규칙 15 추가로 재발 0건.</p>
+  <div class="replay-wrap">
+    <div class="replay-header">
+      <span class="replay-badge rb-fail">FAILED → 해결됨</span>
+      <strong style="font-size:.85rem;">EP-2847 · 비용 예측 오류</strong>
+      <span style="font-size:.72rem;color:var(--text-muted);margin-left:.5rem;">Phase 1 Week 3 · 이후 재발 0건</span>
+    </div>
+    <div class="step-row"><span class="step-num">S01</span><span>🔵</span><div class="step-info"><div class="step-action">Plan: 재고 보충 발주 판단</div><div class="step-detail">inventory=120, reorder_point=150</div></div><span class="step-drift drift-ok">3.1%</span></div>
+    <div class="step-row anomaly"><span class="step-num">S04</span><span>🔴</span><div class="step-info"><div class="step-action">Observe: 비용 예측 오류 ← 이상</div><div class="step-detail">predicted=₩4.82M · actual=₩6.25M · 편차 +29.6%</div></div><span class="step-drift drift-bad">29.6%</span></div>
+    <div class="step-row"><span class="step-num">S05</span><span>⚠️</span><div class="step-info"><div class="step-action">Self-Correction 미작동 → 발주 진행</div><div class="step-detail">예산 초과 ₩1.43M</div></div><span class="step-drift drift-bad">31.2%</span></div>
+    <div class="success-box">
+      <h4 style="color:var(--green);margin-bottom:.35rem;">✅ Phase 1 조치 결과</h4>
+      <p>Harness 규칙 15 (비용 예측 Drift 게이트) 추가 → Week 4 이후 동일 패턴 7건 자동 차단. 절감 금액 ₩9.8M.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PHASE 2
+════════════════════════════════════════ -->
+<div class="phase-divider"><div class="phase-divider-line"></div><span class="phase-divider-badge pd-p2">✓ Phase 2 완료 — Week 16</span><div class="phase-divider-line"></div></div>
+
+<div class="section" id="s-p2">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem;">
+    <h2>Phase 2 대시보드 — 시뮬레이션 강화</h2>
+    <span class="done-badge">완료</span>
+  </div>
+  <p class="section-desc">Week 9–16. MCTS 계획기 통합, Counterfactual 추론, Self-Correction 20% 달성.</p>
+
+  <div class="alert-banner ab-ok">
+    <span>✅</span>
+    <div><strong>Phase 2 벤치마크 통과</strong> — 종합 점수 85/100. Planning Depth 16스텝. Counterfactual 정확도 73%. Phase 3 진입.</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card drift"><div class="kpi-label">Simulation Drift</div><div class="kpi-value val-green">5.7%</div><div class="kpi-sub">목표 &lt;8% ✓ · P1 완료 8.2%</div><div class="kpi-trend trend-down">▼ -2.5%p</div></div>
+    <div class="kpi-card ece"><div class="kpi-label">Calibration ECE</div><div class="kpi-value val-green">0.07</div><div class="kpi-sub">목표 &lt;0.08 ✓ · P1 완료 0.09</div><div class="kpi-trend trend-down">▼ -0.02</div></div>
+    <div class="kpi-card score"><div class="kpi-label">종합 점수</div><div class="kpi-value val-green">85</div><div class="kpi-sub">목표 ≥83 ✓ · P1 완료 77</div><div class="kpi-trend trend-ok">▲ +8점</div></div>
+    <div class="kpi-card cost"><div class="kpi-label">Planning Depth</div><div class="kpi-value" style="color:var(--accent)">16스텝</div><div class="kpi-sub">목표 ≥15스텝 ✓ · P1 완료 5스텝</div><div class="kpi-trend trend-ok">▲ +11</div></div>
+  </div>
+
+  <!-- Score Trend Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">종합 점수 트렌드 — Phase 2 (Week 8–16)</span>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>점수</span>
+        <span class="legend-item"><span class="legend-dot" style="background:rgba(139,92,246,.5)"></span>목표선</span>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 700 130" preserveAspectRatio="none">
+        <line x1="0" y1="20" x2="700" y2="20" stroke="rgba(139,92,246,.3)" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="5" y="16" fill="rgba(139,92,246,.6)" font-size="9" font-family="monospace">목표 83</text>
+        <path fill="rgba(91,127,255,.08)" d="M0,67 L88,60 L175,53 L263,42 L350,32 L438,25 L525,20 L613,18 L700,17 L700,130 L0,130 Z"/>
+        <path fill="none" stroke="var(--accent)" stroke-width="2.5" d="M0,67 L88,60 L175,53 L263,42 L350,32 L438,25 L525,20 L613,18 L700,17"/>
+        <circle cx="0"   cy="67" r="3.5" fill="var(--green)"/><text x="0"   y="80" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W8·77</text>
+        <circle cx="175" cy="53" r="3.5" fill="var(--accent)"/><text x="175" y="66" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W10·79</text>
+        <circle cx="350" cy="32" r="3.5" fill="var(--accent)"/><text x="350" y="45" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W12·82</text>
+        <circle cx="525" cy="20" r="3.5" fill="var(--accent)"/><text x="525" y="13" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W14·84</text>
+        <circle cx="700" cy="17" r="4.5" fill="var(--green)" stroke="#07080d" stroke-width="2"/><text x="700" y="30" fill="var(--green)" font-size="9" font-family="monospace" text-anchor="middle" font-weight="700">W16·85</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-bottom:.65rem;">Phase 2 완료 체크리스트</h3>
+      <div class="checklist">
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Planning Depth ≥ 15스텝 — 달성: 16스텝</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Calibration ECE &lt; 0.08 — 달성: 0.07</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Self-Correction ≥ 20% — 달성: 21%</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Drift Rate &lt; 8% — 달성: 5.7%</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Counterfactual 정확도 ≥ 70% — 달성: 73%</div></div>
+        <div class="check-item"><div class="check-box done">✓</div><div class="check-text">종합 점수 ≥ 83 — 달성: 85/100</div></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:.65rem;">Phase 2 지표 비교</h3>
+      <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+        <div class="gauge-row"><span class="gauge-label">ECE (목표 &lt;0.08)</span><div class="gauge-track"><div class="gauge-fill" style="width:91%;background:var(--green)"></div></div><span class="gauge-val val-green">0.07</span></div>
+        <div class="gauge-row"><span class="gauge-label">Drift (목표 &lt;8%)</span><div class="gauge-track"><div class="gauge-fill" style="width:72%;background:var(--green)"></div></div><span class="gauge-val val-green">5.7%</span></div>
+        <div class="gauge-row"><span class="gauge-label">Planning Depth</span><div class="gauge-track"><div class="gauge-fill" style="width:80%;background:var(--accent)"></div></div><span class="gauge-val" style="color:var(--accent)">16</span></div>
+        <div class="gauge-row"><span class="gauge-label">Self-Correction</span><div class="gauge-track"><div class="gauge-fill" style="width:84%;background:var(--accent)"></div></div><span class="gauge-val" style="color:var(--accent)">21%</span></div>
+        <div class="gauge-row"><span class="gauge-label">LLM 비용</span><div class="gauge-track"><div class="gauge-fill" style="width:78%;background:var(--green)"></div></div><span class="gauge-val val-green">84%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MCTS 모니터 -->
+<div class="section" id="s-mcts">
+  <h2>MCTS 계획기 모니터</h2>
+  <p class="section-desc">Monte Carlo Tree Search — Planning Depth 3스텝 → 16스텝 달성. 50회 롤아웃 → 200회 Phase 3에서 업그레이드.</p>
+
+  <div class="mcts-grid">
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--accent)">16스텝</div><div class="mcts-label">현재 Planning Depth</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--green)">200회</div><div class="mcts-label">롤아웃 횟수 (Phase 3)</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--cyan)">91ms</div><div class="mcts-label">평균 계획 latency</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--green)">0.95</div><div class="mcts-label">할인율 γ</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--accent-2)">neural</div><div class="mcts-label">Rollout Policy (P3)</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--green)">+23%</div><div class="mcts-label">장기 의사결정 향상</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">Planning Depth 향상 추이 (Phase 2)</span>
+    </div>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 700 130" preserveAspectRatio="none">
+        <line x1="0" y1="26" x2="700" y2="26" stroke="rgba(34,211,165,.25)" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="5" y="22" fill="rgba(34,211,165,.5)" font-size="9" font-family="monospace">목표 15스텝</text>
+        <path fill="rgba(91,127,255,.07)" d="M0,117 L88,104 L175,91 L263,65 L350,52 L438,39 L525,30 L700,26 L700,130 L0,130 Z"/>
+        <path fill="none" stroke="var(--accent)" stroke-width="2.5" d="M0,117 L88,104 L175,91 L263,65 L350,52 L438,39 L525,30 L700,26"/>
+        <circle cx="0"   cy="117" r="3.5" fill="var(--yellow)"/><text x="0"   y="110" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W9·3</text>
+        <circle cx="263" cy="65"  r="3.5" fill="var(--accent)"/><text x="263" y="58"  fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W11·8</text>
+        <circle cx="525" cy="30"  r="3.5" fill="var(--accent)"/><text x="525" y="23"  fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W13·14</text>
+        <circle cx="700" cy="26"  r="4.5" fill="var(--green)" stroke="#07080d" stroke-width="2"/><text x="700" y="40"  fill="var(--green)" font-size="9" font-family="monospace" text-anchor="middle" font-weight="700">W16·16</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">mcts_planner_p3.py — Phase 3 업그레이드</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.optimize.mcts <span class="c-kw">import</span> MCTSPlanner, NeuralRolloutPolicy
+
+<span class="c-cm"># Phase 3: neural rollout + 200 simulations + depth 20</span>
+planner = MCTSPlanner(
+    agent_name=<span class="c-str">"supply-chain-agent"</span>,
+    n_simulations=<span class="c-num">200</span>,       <span class="c-cm"># Phase 2: 50 → Phase 3: 200</span>
+    exploration_c=<span class="c-num">1.2</span>,
+    max_depth=<span class="c-num">20</span>,            <span class="c-cm"># Phase 2: 5 → Phase 3: 20</span>
+    rollout_policy=NeuralRolloutPolicy(model=world_model),  <span class="c-cm"># random → neural</span>
+    discount_factor=<span class="c-num">0.95</span>,
+)
+<span class="c-cm"># latency: 91ms (캐시 히트율 68%로 실시간 허용 범위 내)</span></div>
+  </div>
+</div>
+
+<!-- Counterfactual -->
+<div class="section" id="s-counterfactual">
+  <h2>Counterfactual 추론 레이어</h2>
+  <p class="section-desc">Week 11–14. "다른 결정을 했다면?" — 5개 대안 동시 시뮬레이션. 후회 최소화로 최선 선택.</p>
+
+  <div class="info-row">
+    <div class="info-chip"><span class="info-chip-label">대안 수</span><span class="info-chip-val" style="color:var(--accent)">5개</span></div>
+    <div class="info-chip"><span class="info-chip-label">시뮬레이션 Horizon</span><span class="info-chip-val" style="color:var(--accent)">10스텝</span></div>
+    <div class="info-chip"><span class="info-chip-label">정확도</span><span class="info-chip-val" style="color:var(--green)">73%</span></div>
+    <div class="info-chip"><span class="info-chip-label">WM 업데이트 기여</span><span class="info-chip-val" style="color:var(--cyan)">38%</span></div>
+    <div class="info-chip"><span class="info-chip-label">평균 후회 감소</span><span class="info-chip-val" style="color:var(--green)">-31%</span></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header"><span class="chart-title">Counterfactual vs 실제 결과 비교 — 최근 100 에피소드</span></div>
+    <table class="data-table">
+      <thead><tr><th>결정 유형</th><th>CF 예측 결과</th><th>실제 결과</th><th>후회값</th><th>WM 업데이트</th></tr></thead>
+      <tbody>
+        <tr><td>대형 발주 (실제 선택)</td><td class="val-green">₩48.2M 절감</td><td class="val-green">₩51.4M 절감</td><td class="val-green">0.06</td><td>✓ 반영</td></tr>
+        <tr><td>소량 발주 (대안 A)</td><td class="val-yellow">₩31.1M 절감</td><td>—</td><td class="val-yellow">0.38</td><td>✓ 반영</td></tr>
+        <tr><td>발주 보류 (대안 B)</td><td class="val-red">₩-12.3M 손실</td><td>—</td><td class="val-red">1.00</td><td>✓ 반영</td></tr>
+        <tr><td>분할 발주 (대안 C)</td><td class="val-green">₩44.7M 절감</td><td>—</td><td>0.12</td><td>✓ 반영</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Phase 2 Replay -->
+<div class="section" id="s-p2-replay">
+  <h3>Replay Debugger — EP-3204 (Phase 2 인시던트)</h3>
+  <p class="section-desc">MCTS 계획기 도입 후 첫 번째 Counterfactual 불일치 감지 → Self-Correction 자동 복구.</p>
+  <div class="replay-wrap">
+    <div class="replay-header">
+      <span class="replay-badge rb-ok">SELF-CORRECTED</span>
+      <strong style="font-size:.85rem;">EP-3204 · MCTS 계획 편향</strong>
+      <span style="font-size:.72rem;color:var(--text-muted);margin-left:.5rem;">Phase 2 Week 11 · Self-Correction 자동 복구</span>
+    </div>
+    <div class="step-row"><span class="step-num">S01</span><span>🔵</span><div class="step-info"><div class="step-action">Plan: MCTS 200회 롤아웃 → 대형 발주 선택</div><div class="step-detail">UCB1 score=2.41 · 5스텝 예측 수익=₩51.4M</div></div><span class="step-drift drift-ok">2.8%</span></div>
+    <div class="step-row anomaly"><span class="step-num">S03</span><span>🟡</span><div class="step-info"><div class="step-action">Observe: CF 시뮬레이션과 실제 편차 감지</div><div class="step-detail">CF 예측=₩51.4M · 실제 진행중=₩39.2M (Week 11 시장 급변)</div></div><span class="step-drift drift-warn">14.2%</span></div>
+    <div class="step-row"><span class="step-num">S04</span><span>✅</span><div class="step-info"><div class="step-action">Reflect: Self-Correction 자동 발동 — 계획 수정</div><div class="step-detail">시장 급변 감지 → MCTS 재실행 → 분할 발주로 전환 · 손실 ₩8.3M 회피</div></div><span class="step-drift drift-ok">4.1%</span></div>
+    <div class="success-box">
+      <h4 style="color:var(--green);margin-bottom:.35rem;">✅ Self-Correction 자동 복구 성공</h4>
+      <p>Phase 2 Reflect 강화로 MCTS 편향을 실시간 감지하고 재계획. 손실 ₩8.3M 방어. Self-Correction Rate 이 에피소드로 21% 달성.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PHASE 3
+════════════════════════════════════════ -->
+<div class="phase-divider"><div class="phase-divider-line"></div><span class="phase-divider-badge pd-p3">✓ Phase 3 완료 — Week 24</span><div class="phase-divider-line"></div></div>
+
+<div class="section" id="s-p3">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem;">
+    <h2>Phase 3 대시보드 — L3 진화</h2>
+    <span class="done-badge">완료 · L3 인증</span>
+  </div>
+  <p class="section-desc">Week 17–24. Meta-Harness 자기수정, 온라인 학습 루프, 실시간 재보정 — 자율 적응 에이전트 전환 완료.</p>
+
+  <div class="alert-banner ab-ok">
+    <span>🏆</span>
+    <div><strong>Phase 3 완료 · HAchillesWorld L3 인증 획득</strong> — 종합 점수 91/100. 6개 인증 기준 모두 통과. L3 Evolver 전환 완료.</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card drift"><div class="kpi-label">Simulation Drift</div><div class="kpi-value val-green">3.8%</div><div class="kpi-sub">목표 &lt;5% ✓ · P2 완료 5.7%</div><div class="kpi-trend trend-down">▼ -1.9%p</div></div>
+    <div class="kpi-card ece"><div class="kpi-label">Calibration ECE</div><div class="kpi-value val-green">0.05</div><div class="kpi-sub">목표 &lt;0.06 ✓ · P2 완료 0.07</div><div class="kpi-trend trend-down">▼ -0.02</div></div>
+    <div class="kpi-card score"><div class="kpi-label">종합 점수</div><div class="kpi-value val-green">91</div><div class="kpi-sub">목표 ≥90 ✓ · P2 완료 85</div><div class="kpi-trend trend-ok">▲ +6점</div></div>
+    <div class="kpi-card cost"><div class="kpi-label">LLM 비용</div><div class="kpi-value val-green">74%</div><div class="kpi-sub">목표 ≤75% ✓ · P2 완료 84%</div><div class="kpi-trend trend-down">▼ -10%p</div></div>
+  </div>
+
+  <!-- Full journey chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">종합 점수 전체 여정 — Week 0 → 24</span>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--accent-2)"></span>Phase 1</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>Phase 2</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Phase 3</span>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:150px;">
+      <svg class="chart" viewBox="0 0 700 150" preserveAspectRatio="none">
+        <line x1="0" y1="10" x2="700" y2="10" stroke="rgba(34,211,165,.25)" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="5" y="8" fill="rgba(34,211,165,.5)" font-size="9" font-family="monospace">L3 목표 90</text>
+        <!-- area -->
+        <path fill="rgba(34,211,165,.07)" d="M0,124 L88,114 L175,101 L263,90 L350,77 L438,64 L525,51 L613,40 L700,34 L700,150 L0,150 Z"/>
+        <!-- P1 segment -->
+        <path fill="none" stroke="var(--accent-2)" stroke-width="2.5" d="M0,124 L88,114 L175,101 L263,90"/>
+        <!-- P2 segment -->
+        <path fill="none" stroke="var(--accent)" stroke-width="2.5" d="M263,90 L350,77 L438,64 L525,51"/>
+        <!-- P3 segment -->
+        <path fill="none" stroke="var(--green)" stroke-width="2.5" d="M525,51 L613,40 L700,34"/>
+        <!-- points -->
+        <circle cx="0"   cy="124" r="4" fill="var(--yellow)"/><text x="0"   y="137" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W0·67</text>
+        <circle cx="263" cy="90"  r="4" fill="var(--accent-2)"/><text x="263" y="103" fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W8·77</text>
+        <circle cx="525" cy="51"  r="4" fill="var(--accent)"/><text x="525" y="64"  fill="var(--text-muted)" font-size="9" font-family="monospace" text-anchor="middle">W16·85</text>
+        <circle cx="700" cy="34"  r="6" fill="var(--green)" stroke="#07080d" stroke-width="2"/>
+        <text x="700" y="22" fill="var(--green)" font-size="10" font-family="monospace" text-anchor="middle" font-weight="800">W24·91 🏆</text>
+        <!-- phase labels -->
+        <text x="130" y="148" fill="rgba(139,92,246,.5)" font-size="9" font-family="monospace" text-anchor="middle">── Phase 1 ──</text>
+        <text x="395" y="148" fill="rgba(91,127,255,.5)"  font-size="9" font-family="monospace" text-anchor="middle">── Phase 2 ──</text>
+        <text x="613" y="148" fill="rgba(34,211,165,.5)"  font-size="9" font-family="monospace" text-anchor="middle">── Phase 3 ──</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="margin-bottom:.65rem;">Phase 3 주요 성과</h3>
+      <div class="alert-feed">
+        <div class="feed-item a-ok"><span class="feed-icon">🧠</span><div class="feed-body"><div class="feed-title">Meta-Harness 자기수정 가동</div><div class="feed-meta">10회 실패 패턴 자동 감지 → 규칙 8개 자동 생성 · 사람 검토 후 적용</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">♾️</span><div class="feed-body"><div class="feed-title">온라인 학습 루프 완성</div><div class="feed-meta">환경 변화 감지 후 평균 18h 내 World Model 업데이트</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">⚡</span><div class="feed-body"><div class="feed-title">실시간 재보정 완전 자동화</div><div class="feed-meta">Drift → 재보정 평균 3.2분 · 인간 개입 0건</div></div></div>
+        <div class="feed-item a-ok"><span class="feed-icon">🛡️</span><div class="feed-body"><div class="feed-title">Red-teaming 자동화 완료</div><div class="feed-meta">취약점 14건 발견 → 12건 자동 패치 · 2건 수동 검토</div></div></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:.65rem;">전체 지표 비교표</h3>
+      <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <table class="data-table">
+          <thead><tr><th>지표</th><th>시작</th><th>P1</th><th>P2</th><th>P3</th></tr></thead>
+          <tbody>
+            <tr><td>종합점수</td><td class="val-yellow">67</td><td>77</td><td>85</td><td class="val-green">91</td></tr>
+            <tr><td>Drift</td><td class="val-red">31%</td><td>8.2%</td><td>5.7%</td><td class="val-green">3.8%</td></tr>
+            <tr><td>ECE</td><td class="val-red">0.23</td><td>0.09</td><td>0.07</td><td class="val-green">0.05</td></tr>
+            <tr><td>Plan Depth</td><td class="val-yellow">3스텝</td><td>5스텝</td><td>16스텝</td><td class="val-green">22스텝</td></tr>
+            <tr><td>LLM 비용</td><td class="val-red">143%</td><td>98%</td><td>84%</td><td class="val-green">74%</td></tr>
+            <tr><td>Harness</td><td class="val-yellow">6개</td><td>22개</td><td>28개</td><td class="val-green">34개</td></tr>
+            <tr><td>Self-Corr</td><td class="val-red">0%</td><td>11%</td><td>21%</td><td class="val-green">28%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Meta-Harness -->
+<div class="section" id="s-meta">
+  <h2>Meta-Harness 자기수정</h2>
+  <p class="section-desc">실패 패턴을 자동으로 하네스 규칙화. Phase 3에서 8개 규칙 자동 생성, 모두 승인 후 적용.</p>
+
+  <div class="info-row">
+    <div class="info-chip"><span class="info-chip-label">총 자동 생성 규칙</span><span class="info-chip-val" style="color:var(--green)">8개</span></div>
+    <div class="info-chip"><span class="info-chip-label">승인율</span><span class="info-chip-val" style="color:var(--green)">100%</span></div>
+    <div class="info-chip"><span class="info-chip-label">방지한 실패</span><span class="info-chip-val" style="color:var(--cyan)">23건</span></div>
+    <div class="info-chip"><span class="info-chip-label">절감 금액</span><span class="info-chip-val" style="color:var(--green)">₩14.2M</span></div>
+  </div>
+
+  <div class="proposal-card">
+    <div class="proposal-header">
+      <span class="proposal-badge p-auto">자동 생성 · 적용완료</span>
+      <div><div class="proposal-title">규칙 27: 시장 급변 감지 게이트</div><div class="proposal-meta">EP-3588, 3601, 3612 패턴 · Phase 3 Week 19 생성 · 자동 적용</div></div>
+    </div>
+    <p class="proposal-body">3개 연속 에피소드에서 비용 예측 편차가 20% 이상이면 "시장 급변" 상태로 판정하고 MCTS 재계획을 강제합니다.</p>
+    <div class="proposal-code"><span style="color:#67e8f9">def</span> <span style="color:#fcd34d">check_market_volatility</span>(self, recent_deviations: list):
+    <span style="color:#4b5563"># 최근 3 에피소드 편차 평균</span>
+    avg_dev = sum(recent_deviations[-<span style="color:#fda4af">3</span>:]) / <span style="color:#fda4af">3</span>
+    <span style="color:#67e8f9">if</span> avg_dev > <span style="color:#fda4af">0.20</span> <span style="color:#67e8f9">and</span> len(recent_deviations) >= <span style="color:#fda4af">3</span>:
+        <span style="color:#67e8f9">return</span> Rule.REJECT(
+            reason=<span style="color:#86efac">f"시장 급변 감지 (avg_dev={avg_dev:.1%}) — MCTS 재계획"</span>,
+            action=<span style="color:#86efac">"replan_with_mcts"</span>
+        )
+    <span style="color:#67e8f9">return</span> Rule.PASS()</div>
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;background:rgba(34,211,165,.07);border:1px solid rgba(34,211,165,.2);border-radius:7px;font-size:.75rem;color:var(--green);">
+      ✓ 적용 완료 · 이후 유사 패턴 9건 자동 차단 · 절감 ₩6.1M
+    </div>
+  </div>
+
+  <div class="proposal-card">
+    <div class="proposal-header">
+      <span class="proposal-badge p-applied">자동 생성 · 적용완료</span>
+      <div><div class="proposal-title">규칙 31: Counterfactual 후회값 게이트</div><div class="proposal-meta">Phase 3 Week 21 생성 · 승인 후 적용</div></div>
+    </div>
+    <p class="proposal-body">Counterfactual 시뮬레이션 결과 후회값(regret)이 0.5 이상인 결정은 즉시 중단하고 상위 대안으로 전환합니다.</p>
+    <div class="proposal-code"><span style="color:#67e8f9">def</span> <span style="color:#fcd34d">check_cf_regret</span>(self, cf_results, proposed_action):
+    regret = cf_results.compute_regret(proposed_action)
+    <span style="color:#67e8f9">if</span> regret > <span style="color:#fda4af">0.50</span>:
+        best = cf_results.best_alternative()
+        <span style="color:#67e8f9">return</span> Rule.REDIRECT(
+            reason=<span style="color:#86efac">f"후회값 {regret:.2f} > 0.50 — 대안 {best.name}으로 전환"</span>,
+            alternative_action=best
+        )
+    <span style="color:#67e8f9">return</span> Rule.PASS()</div>
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;background:rgba(34,211,165,.07);border:1px solid rgba(34,211,165,.2);border-radius:7px;font-size:.75rem;color:var(--green);">
+      ✓ 적용 완료 · 의사결정 품질 +18% · Counterfactual 정확도 73%→79%
+    </div>
+  </div>
+</div>
+
+<!-- 온라인 학습 -->
+<div class="section" id="s-online">
+  <h2>온라인 학습 루프</h2>
+  <p class="section-desc">환경 변화를 감지하면 인간 개입 없이 World Model을 자동 업데이트합니다. L3의 핵심 자율 적응 능력.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="info-row" style="margin-top:0;">
+        <div class="info-chip"><span class="info-chip-label">평균 업데이트 주기</span><span class="info-chip-val" style="color:var(--green)">18h</span></div>
+        <div class="info-chip"><span class="info-chip-label">총 자동 업데이트</span><span class="info-chip-val" style="color:var(--cyan)">14회</span></div>
+      </div>
+      <div class="alert-feed" style="margin-top:.5rem;">
+        <div class="feed-item a-ok"><span class="feed-icon">🔄</span><div class="feed-body"><div class="feed-title">W22 · 공급사 가격 구조 변화 감지</div><div class="feed-meta">Drift 22.4% → 온라인 학습 발동 → 16h 후 Drift 3.1% 복귀</div></div><span class="feed-time">W22</span></div>
+        <div class="feed-item a-ok"><span class="feed-icon">🔄</span><div class="feed-body"><div class="feed-title">W20 · 물류 리드타임 패턴 변화</div><div class="feed-meta">계절 요인 WM 반영 → ECE 0.09→0.05 개선</div></div><span class="feed-time">W20</span></div>
+        <div class="feed-item a-ok"><span class="feed-icon">🔄</span><div class="feed-body"><div class="feed-title">W18 · 시장 수요 급증 이벤트</div><div class="feed-meta">CF 데이터 기반 긴급 WM 업데이트 · 2h 이내 적응</div></div><span class="feed-time">W18</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="margin:0;">
+        <div class="code-header"><span class="code-filename">online_learning.py</span><span class="code-lang">Python</span></div>
+        <div class="code-body"><span class="c-kw">from</span> hachillesworld.operate <span class="c-kw">import</span> OnlineLearner
+
+learner = OnlineLearner(
+    agent_name=<span class="c-str">"supply-chain-agent"</span>,
+    trigger_drift=<span class="c-num">0.12</span>,      <span class="c-cm"># Drift 초과 시 발동</span>
+    learning_rate=<span class="c-num">0.01</span>,
+    cf_weight=<span class="c-num">0.38</span>,          <span class="c-cm"># CF 데이터 반영 비중</span>
+    max_update_hours=<span class="c-num">24</span>,
+)
+
+<span class="c-cm"># 환경 변화 감지 → 자동 업데이트</span>
+<span class="c-cls">@learner</span>.on_drift_detected
+<span class="c-kw">def</span> <span class="c-fn">auto_update</span>(drift_event):
+    learner.update_world_model(
+        new_observations=drift_event.window_data,
+        cf_data=drift_event.cf_simulations,
+    )
+    <span class="c-kw">print</span>(<span class="c-str">f"WM 업데이트 완료 · {drift_event.elapsed_h:.1f}h"</span>)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 실시간 재보정 -->
+<div class="section" id="s-recal">
+  <h2>실시간 재보정 시스템</h2>
+  <p class="section-desc">Drift 감지 → ECE 재보정 자동 실행. 인간 개입 0건. Phase 3 목표 5분 이내 완료 → 달성: 평균 3.2분.</p>
+
+  <div class="mcts-grid">
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--green)">3.2분</div><div class="mcts-label">평균 재보정 완료 시간</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--cyan)">14회</div><div class="mcts-label">Phase 3 자동 재보정</div></div>
+    <div class="mcts-card"><div class="mcts-val" style="color:var(--green)">0건</div><div class="mcts-label">인간 개입 필요 건수</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header"><span class="chart-title">Drift → 재보정 사이클 — Phase 3 주요 이벤트</span></div>
+    <table class="data-table">
+      <thead><tr><th>Week</th><th>Drift 피크</th><th>감지→완료</th><th>재보정 후 ECE</th><th>재보정 후 Drift</th></tr></thead>
+      <tbody>
+        <tr><td>W17</td><td class="val-yellow">17.2%</td><td>2.8분</td><td class="val-green">0.06</td><td class="val-green">4.1%</td></tr>
+        <tr><td>W18</td><td class="val-yellow">19.8%</td><td>3.1분</td><td class="val-green">0.05</td><td class="val-green">3.6%</td></tr>
+        <tr><td>W20</td><td class="val-red">24.1%</td><td>4.2분</td><td class="val-green">0.06</td><td class="val-green">4.8%</td></tr>
+        <tr><td>W22</td><td class="val-red">22.4%</td><td>3.8분</td><td class="val-green">0.05</td><td class="val-green">3.1%</td></tr>
+        <tr><td>W24</td><td class="val-yellow">11.3%</td><td>2.1분</td><td class="val-green">0.05</td><td class="val-green">3.8%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     L3 인증
+════════════════════════════════════════ -->
+<div class="phase-divider"><div class="phase-divider-line"></div><span class="phase-divider-badge pd-l3">🏆 HAchillesWorld L3 인증</span><div class="phase-divider-line"></div></div>
+
+<div class="section" id="s-l3cert">
+  <div class="cert-section">
+    <div class="cert-badge">🏆 HAchillesWorld L3 인증 완료</div>
+    <div class="cert-title">L3 Evolver 달성</div>
+    <p style="color:var(--text-dim);max-width:520px;margin-inline:auto;margin-bottom:0;">
+      supply-chain-agent가 자율 적응 에이전트로 전환됐습니다.<br/>
+      환경이 바뀌면 스스로 감지하고, 학습하고, 진화합니다.
+    </p>
+    <div class="cert-grid">
+      <div class="cert-item"><div class="cert-val">91</div><div class="cert-label">종합 점수 / 100</div></div>
+      <div class="cert-item"><div class="cert-val">3.8%</div><div class="cert-label">Simulation Drift</div></div>
+      <div class="cert-item"><div class="cert-val">0.05</div><div class="cert-label">Calibration ECE</div></div>
+      <div class="cert-item"><div class="cert-val">22스텝</div><div class="cert-label">Planning Depth</div></div>
+      <div class="cert-item"><div class="cert-val">34개</div><div class="cert-label">Harness 규칙</div></div>
+      <div class="cert-item"><div class="cert-val">₩48M</div><div class="cert-label">연간 절감 (예상)</div></div>
+    </div>
+
+    <div class="checklist" style="max-width:600px;margin:0 auto 1.5rem;">
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Meta-Harness 자기수정 — 10회 실패 → 자동 규칙 생성 8개 확인</div></div>
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">온라인 학습 루프 — 환경 변화 감지 후 평균 18h 내 WM 업데이트</div></div>
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">실시간 재보정 자동화 — Drift → 재보정 평균 3.2분 (목표 5분)</div></div>
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Simulation Drift &lt; 5% — 달성: 3.8%</div></div>
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">Harness Coverage ≥ 30개 — 달성: 34개 (자동 생성 8개 포함)</div></div>
+      <div class="check-item"><div class="check-box done">✓</div><div class="check-text">종합 점수 ≥ 90 — 달성: 91/100 ✓ L3 인증</div></div>
+    </div>
+
+    <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+      <a href="scan.html" class="btn-sm primary" style="padding:.65rem 1.6rem;font-size:.85rem;">새 에이전트 진단하기</a>
+      <a href="optimize_report.html" class="btn-sm" style="padding:.65rem 1.6rem;font-size:.85rem;">Optimize 리포트 보기</a>
+      <a href="mailto:suhopark1@gmail.com" class="btn-sm" style="padding:.65rem 1.6rem;font-size:.85rem;">컨설팅 문의</a>
+    </div>
+    <p style="margin-top:1.25rem;font-size:.75rem;color:var(--text-muted);">
+      HAchillesWorld Operate v1.0 &nbsp;·&nbsp; 이론 기반: 《Agentic World Modeling 2027》 — 박성훈 &nbsp;·&nbsp; Built with Claude Sonnet 4.6
+    </p>
+  </div>
+
+  <!-- ROI 최종 -->
+  <h3 style="margin-bottom:.75rem;">최종 ROI 결산 — 24주</h3>
+  <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+    <table class="data-table">
+      <thead><tr><th>절감 항목</th><th>진단 당시</th><th>24주 후</th><th>절감율</th><th>연간 절감액</th></tr></thead>
+      <tbody>
+        <tr><td>LLM API 비용 (CostRouter)</td><td class="val-red">₩60M/년</td><td class="val-green">₩42M/년</td><td>30%</td><td class="val-green">₩18M</td></tr>
+        <tr><td>장애 대응 인건비</td><td class="val-red">₩24M/년</td><td class="val-green">₩12M/년</td><td>50%</td><td class="val-green">₩12M</td></tr>
+        <tr><td>HITL 운영 비용</td><td class="val-red">₩18M/년</td><td class="val-green">₩7M/년</td><td>61%</td><td class="val-green">₩11M</td></tr>
+        <tr><td>Prompt Caching 절감</td><td>₩60M/년</td><td class="val-green">₩53M/년</td><td>12%</td><td class="val-green">₩7M</td></tr>
+        <tr style="font-weight:700;background:rgba(34,211,165,.04)"><td>총 절감</td><td class="val-red">₩162M/년</td><td class="val-green">₩114M/년</td><td>30%</td><td class="val-green">₩48M/년</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:.75rem;font-size:.8rem;text-align:right;color:var(--text-muted);">HAchillesWorld Pro 구독 ₩948,000/년 대비 ROI <strong style="color:var(--green)">5,063%</strong></p>
+</div>
+
+</main>
+</div>
+
+<script>
+  // ── 에이전트 이름 ──
+  const raw = sessionStorage.getItem('haw_scan');
+  const scan = raw ? JSON.parse(raw) : {};
+  document.getElementById('tb-agent').textContent = scan.name || '데모 에이전트';
+
+  // ── 실시간 KPI 미세 변동 ──
+  function rand(base, d) { return +(base + (Math.random()-.5)*d*2).toFixed(base>=10?1:2); }
+  setInterval(() => {
+    const drift = rand(3.8, 0.4);
+    const ece   = rand(0.05, 0.003);
+    const score = Math.max(90, Math.round(rand(91, .5)));
+    const cost  = Math.round(rand(74, 1));
+    document.getElementById('tb-drift').textContent = drift + '%';
+    document.getElementById('tb-ece').textContent   = ece.toFixed(3);
+    document.getElementById('tb-score').textContent = score;
+    document.getElementById('tb-cost').textContent  = cost + '%';
+  }, 4000);
+
+  // ── 사이드바 활성화 ──
+  const navItems = document.querySelectorAll('.nav-item');
+  const sections = document.querySelectorAll('.section');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const a = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => io.observe(s));
+
+  // ── Meta-Harness 승인/거부 (Phase 2 제안용) ──
+  function approveRule(btn) {
+    const card = btn.closest('.proposal-card');
+    card.style.transition = 'opacity .4s';
+    card.style.opacity = '0';
+    setTimeout(() => card.remove(), 400);
+  }
+  function rejectRule(btn) {
+    const card = btn.closest('.proposal-card');
+    card.style.transition = 'opacity .4s';
+    card.style.opacity = '0';
+    setTimeout(() => card.remove(), 400);
+  }
+</script>
+</body>
+</html>

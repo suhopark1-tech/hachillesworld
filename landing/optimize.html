@@ -721,7 +721,7 @@ planner = MCTSPlanner(
         <div class="check-icon">✅</div>
         <h3>신청 완료!</h3>
         <p>베타 오픈 시 <strong id="confirm-email"></strong>으로 안내 드리겠습니다.<br/>
-        무료 Scan을 아직 안 받으셨다면 지금 바로 시작해보세요.</p>
+        잠시 후 Optimize 리포트 샘플로 이동합니다…</p>
         <div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
           <a href="scan.html" class="btn-primary" style="font-size:0.9rem;padding:0.75rem 1.5rem">🔍 무료 Scan 시작</a>
           <a href="index.html" class="btn-secondary" style="font-size:0.9rem;padding:0.75rem 1.5rem">홈으로</a>
@@ -777,19 +777,36 @@ planner = MCTSPlanner(
   // 폼 제출
   function submitForm(e) {
     e.preventDefault();
-    const email = document.getElementById('email').value;
+    const name      = document.getElementById('name').value;
+    const email     = document.getElementById('email').value;
+    const agentType = document.getElementById('agent-type').value;
+    const level     = document.querySelector('input[name="level"]:checked')?.value || 'unsure';
+
+    // sessionStorage에 저장 → optimize_report.html에서 활용
+    const agentLabel = {
+      'supply-chain': '공급망 에이전트',
+      'customer-service': '고객서비스 에이전트',
+      'code-gen': '코드 생성 에이전트',
+      'data-analysis': '데이터 분석 에이전트',
+      'research': '리서치 에이전트',
+      'finance': '금융 분석 에이전트',
+      'other': '에이전트',
+    }[agentType] || '에이전트';
+    const agentName = name ? `${name}의 ${agentLabel}` : agentLabel;
+
+    sessionStorage.setItem('haw_scan', JSON.stringify({
+      name: agentName,
+      domain: 'Digital',
+      email,
+      date: new Date().toISOString(),
+    }));
+
     document.getElementById('confirm-email').textContent = email;
     document.getElementById('waitlist-form').style.display = 'none';
     document.getElementById('success-msg').style.display = 'block';
 
-    // 실제 배포 시 여기서 API 호출 또는 Formspree 등으로 연결
-    console.log('Waitlist signup:', {
-      name: document.getElementById('name').value,
-      email,
-      company: document.getElementById('company').value,
-      agentType: document.getElementById('agent-type').value,
-      level: document.querySelector('input[name="level"]:checked')?.value,
-    });
+    // 2.5초 후 Optimize 리포트로 이동
+    setTimeout(() => { location.href = 'optimize_report.html'; }, 2500);
   }
 
   // 네비 스크롤 효과
