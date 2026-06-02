@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld Optimize Report</title>
+  <style>
+    :root {
+      --bg: #07080d; --bg-2: #0e1018; --bg-3: #141722; --border: #1e2235;
+      --accent: #5b7fff; --accent-2: #8b5cf6; --green: #22d3a5;
+      --yellow: #f59e0b; --red: #f43f5e; --orange: #fb923c; --cyan: #06b6d4;
+      --text: #e8eaf0; --text-muted: #6b7280; --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono','Fira Code',monospace;
+      --sidebar: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height: 1.7; display: flex; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar); flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; background: var(--bg-2); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .sidebar-score { margin: 1rem 1.5rem; background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; text-align: center; }
+    .sidebar-score-num { font-size: 1.8rem; font-weight: 800; font-family: var(--mono); color: var(--green); }
+    .sidebar-score-label { font-size: 0.7rem; color: var(--text-muted); }
+    .nav-section { padding: 0.5rem 0; }
+    .nav-group-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 0.5rem 1.5rem 0.25rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 1.5rem; font-size: 0.8rem; color: var(--text-dim); text-decoration: none; transition: background 0.15s,color 0.15s; cursor: pointer; border-left: 2px solid transparent; }
+    .nav-item:hover { background: rgba(91,127,255,0.06); color: var(--text); }
+    .nav-item.active { background: rgba(91,127,255,0.1); color: var(--accent); border-left-color: var(--accent); }
+    .nav-num { font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted); width: 18px; }
+    .nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-red { background: var(--red); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--accent); }
+    .dot-purple { background: var(--accent-2); }
+    .dot-cyan { background: var(--cyan); }
+    .sidebar-footer { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem; }
+    .btn-print { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: border-color 0.2s; }
+    .btn-print:hover { border-color: var(--accent); }
+    .btn-operate { width: 100%; padding: 0.65rem; background: linear-gradient(135deg,var(--green),var(--cyan)); color: #07080d; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-operate:hover { opacity: 0.88; }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar); flex: 1; padding: 2.5rem 3rem; max-width: 900px; }
+    .section { padding: 1.5rem 0 2rem; }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .page-num { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-bottom: 1rem; letter-spacing: 0.04em; }
+    h2 { font-size: 1.45rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    h3 { font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+    p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+    .section-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+    /* Cover */
+    .cover-badge { display: inline-block; padding: 0.35rem 0.9rem; background: rgba(34,211,165,0.12); border: 1px solid rgba(34,211,165,0.3); color: var(--green); border-radius: 999px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .cover-title { font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1rem; background: linear-gradient(135deg,var(--green),var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .cover-meta { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-top: 1.5rem; }
+    .meta-item { background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; }
+    .meta-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .meta-value { font-size: 0.92rem; font-weight: 700; font-family: var(--mono); }
+
+    /* Explain box */
+    .explain-box { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-top: 1.5rem; }
+    .explain-box h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent); }
+    .explain-box p { font-size: 0.87rem; color: var(--text-dim); margin: 0; }
+    .highlight { color: var(--text); font-weight: 600; }
+
+    /* Score overview */
+    .score-overview { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: center; background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .big-score { text-align: center; }
+    .big-score-num { font-size: 3.5rem; font-weight: 900; font-family: var(--mono); color: var(--green); line-height: 1; }
+    .big-score-sub { font-size: 0.85rem; color: var(--text-muted); }
+    .score-badge { display: inline-block; margin-top: 0.5rem; padding: 0.25rem 0.8rem; background: rgba(34,211,165,0.15); border: 1px solid rgba(34,211,165,0.3); color: var(--green); border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+    .cat-scores { display: flex; flex-direction: column; gap: 0.75rem; }
+    .cat-row { display: flex; align-items: center; gap: 1rem; }
+    .cat-name { font-size: 0.82rem; color: var(--text-dim); width: 130px; flex-shrink: 0; }
+    .cat-track { flex: 1; height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .cat-fill { height: 100%; border-radius: 999px; transition: width 1s ease; }
+    .cat-val { font-size: 0.85rem; font-weight: 700; font-family: var(--mono); width: 30px; }
+
+    /* Phase cards */
+    .phase-card { border-radius: 14px; padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid; }
+    .phase-p1 { background: rgba(91,127,255,0.06); border-color: rgba(91,127,255,0.25); }
+    .phase-p2 { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.25); }
+    .phase-p3 { background: rgba(34,211,165,0.06); border-color: rgba(34,211,165,0.25); }
+    .phase-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .phase-badge { padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+    .badge-p1 { background: rgba(91,127,255,0.15); color: var(--accent); }
+    .badge-p2 { background: rgba(139,92,246,0.15); color: var(--accent-2); }
+    .badge-p3 { background: rgba(34,211,165,0.15); color: var(--green); }
+    .phase-title { font-size: 1rem; font-weight: 700; }
+    .phase-meta { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* Task list */
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 0.75rem 0; }
+    .task-list li { display: flex; gap: 0.75rem; font-size: 0.87rem; align-items: flex-start; }
+    .task-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.45rem; }
+    .task-dot-red { background: var(--red); }
+    .task-dot-yellow { background: var(--yellow); }
+    .task-dot-green { background: var(--green); }
+    .task-dot-blue { background: var(--accent); }
+
+    /* Code block */
+    .code-block { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 1rem 0; }
+    .code-header { background: var(--bg-3); padding: 0.65rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .code-filename { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); font-weight: 600; }
+    .code-lang { font-size: 0.68rem; color: var(--text-muted); }
+    .code-body { padding: 1.25rem 1.5rem; font-family: var(--mono); font-size: 0.77rem; line-height: 1.85; overflow-x: auto; white-space: pre; }
+    .c-kw { color: #67e8f9; } .c-fn { color: #fcd34d; } .c-str { color: #86efac; }
+    .c-num { color: #fda4af; } .c-cm { color: #4b5563; } .c-cls { color: #c4b5fd; }
+    .c-acc { color: var(--accent); } .c-green { color: var(--green); }
+
+    /* Data table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1rem 0; }
+    .data-table th { background: var(--bg-3); padding: 0.65rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    .data-table tr:hover td { background: rgba(91,127,255,0.04); }
+    .data-table .val-red { color: var(--red); font-weight: 700; }
+    .data-table .val-yellow { color: var(--yellow); font-weight: 700; }
+    .data-table .val-green { color: var(--green); font-weight: 700; }
+
+    /* Finding cards */
+    .finding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; }
+    .finding-card { border-radius: 12px; padding: 1.1rem 1.25rem; border: 1px solid; }
+    .finding-card.danger { background: rgba(244,63,94,0.06); border-color: rgba(244,63,94,0.2); }
+    .finding-card.warn { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); }
+    .finding-card.ok { background: rgba(34,211,165,0.06); border-color: rgba(34,211,165,0.2); }
+    .finding-card.info { background: rgba(91,127,255,0.06); border-color: rgba(91,127,255,0.2); }
+    .finding-tag { display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; margin-bottom: 0.5rem; }
+    .tag-danger { background: rgba(244,63,94,0.15); color: var(--red); }
+    .tag-warn { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .tag-ok { background: rgba(34,211,165,0.15); color: var(--green); }
+    .tag-info { background: rgba(91,127,255,0.15); color: var(--accent); }
+    .finding-card h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .finding-card p { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
+    /* ROI cards */
+    .roi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin: 1rem 0; }
+    .roi-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem; text-align: center; }
+    .roi-value { font-size: 1.6rem; font-weight: 900; font-family: var(--mono); line-height: 1.1; }
+    .roi-label { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* Checklist */
+    .checklist { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.75rem 0; }
+    .check-item { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.87rem; padding: 0.6rem 0.9rem; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; }
+    .check-box { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--border); flex-shrink: 0; margin-top: 0.15rem; display: flex; align-items: center; justify-content: center; }
+    .check-box.done { background: var(--green); border-color: var(--green); color: #07080d; font-size: 0.7rem; }
+    .check-text { color: var(--text-dim); }
+
+    /* Progress bar */
+    .progress-bar { height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 0.5rem 0 1rem; }
+    .progress-fill { height: 100%; border-radius: 999px; }
+
+    /* CTA box */
+    .cta-box { background: linear-gradient(135deg,rgba(34,211,165,0.08),rgba(6,182,212,0.08)); border: 1px solid rgba(34,211,165,0.2); border-radius: 16px; padding: 2rem; margin-top: 2rem; text-align: center; }
+    .cta-box h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .cta-box p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.5rem; max-width: 480px; margin-inline: auto; }
+    .cta-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn-cta-primary { padding: 0.8rem 1.75rem; background: linear-gradient(135deg,var(--green),var(--cyan)); color: #07080d; border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .btn-cta-sec { padding: 0.8rem 1.75rem; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 10px; font-size: 0.92rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+
+    /* Metric row */
+    .metric-row { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+    .metric-label-col { width: 200px; font-size: 0.85rem; color: var(--text-dim); flex-shrink: 0; }
+    .metric-from { font-family: var(--mono); font-size: 0.85rem; width: 80px; text-align: center; }
+    .metric-arrow { color: var(--text-muted); font-size: 0.8rem; }
+    .metric-to { font-family: var(--mono); font-size: 0.85rem; font-weight: 700; width: 80px; text-align: center; }
+    .metric-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .metric-bar-fill { height: 100%; border-radius: 999px; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before { content:''; position: absolute; left: 0.5rem; top: 0.5rem; bottom: 0.5rem; width: 2px; background: linear-gradient(180deg,var(--accent),var(--accent-2),var(--green)); opacity: 0.4; }
+    .tl-item { position: relative; margin-bottom: 1.5rem; }
+    .tl-dot { position: absolute; left: -1.65rem; top: 0.4rem; width: 12px; height: 12px; border-radius: 50%; border: 2px solid; }
+    .tl-dot-blue { background: rgba(91,127,255,0.2); border-color: var(--accent); }
+    .tl-dot-purple { background: rgba(139,92,246,0.2); border-color: var(--accent-2); }
+    .tl-dot-green { background: rgba(34,211,165,0.2); border-color: var(--green); }
+    .tl-dot-yellow { background: rgba(245,158,11,0.2); border-color: var(--yellow); }
+    .tl-week { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem; letter-spacing: 0.04em; }
+    .tl-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .tl-desc { font-size: 0.84rem; color: var(--text-muted); }
+
+    /* Info row */
+    .info-row { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+    .info-chip { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem; }
+    .info-chip-label { color: var(--text-muted); font-size: 0.72rem; }
+    .info-chip-val { font-weight: 700; font-family: var(--mono); }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.5rem; }
+      .cover-meta { grid-template-columns: 1fr 1fr; }
+      .finding-grid { grid-template-columns: 1fr; }
+      .roi-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">HAchillesWorld</div>
+    <div class="sidebar-sub">Optimize Report</div>
+  </div>
+  <div class="sidebar-score">
+    <div class="sidebar-score-num" id="sb-target">L3</div>
+    <div class="sidebar-score-label">목표 Level · 24주 로드맵</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">Optimize 개요</div>
+    <a class="nav-item active" href="#s01"><span class="nav-num">01</span>리포트 개요</a>
+    <a class="nav-item" href="#s02"><span class="nav-num">02</span>현재 상태 스냅샷</a>
+    <a class="nav-item" href="#s03"><span class="nav-num">03</span>목표 & 전략</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">Phase 1 · Week 1–8</div>
+    <a class="nav-item" href="#s04"><div class="nav-dot dot-blue"></div>Phase 1 개요</a>
+    <a class="nav-item" href="#s05"><div class="nav-dot dot-red"></div>ECE Calibration 개선</a>
+    <a class="nav-item" href="#s06"><div class="nav-dot dot-yellow"></div>Self-Correction Rate</a>
+    <a class="nav-item" href="#s07"><div class="nav-dot dot-blue"></div>Harness Coverage 확장</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">Phase 2 · Week 9–16</div>
+    <a class="nav-item" href="#s08"><div class="nav-dot dot-purple"></div>Phase 2 개요</a>
+    <a class="nav-item" href="#s09"><div class="nav-dot dot-purple"></div>MCTS 계획기 통합</a>
+    <a class="nav-item" href="#s10"><div class="nav-dot dot-yellow"></div>Counterfactual 추론</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">Phase 3 · Week 17–24</div>
+    <a class="nav-item" href="#s11"><div class="nav-dot dot-green"></div>Phase 3 개요</a>
+    <a class="nav-item" href="#s12"><div class="nav-dot dot-green"></div>Meta-Harness 자기수정</a>
+    <a class="nav-item" href="#s13"><div class="nav-dot dot-cyan"></div>실시간 재보정</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">생성된 코드</div>
+    <a class="nav-item" href="#s14"><span class="nav-num">14</span>harness_rules.py</a>
+    <a class="nav-item" href="#s15"><span class="nav-num">15</span>cost_router.py</a>
+    <a class="nav-item" href="#s16"><span class="nav-num">16</span>mcts_planner.py</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">분석 & 실행</div>
+    <a class="nav-item" href="#s17"><span class="nav-num">17</span>ROI 상세 분석</a>
+    <a class="nav-item" href="#s18"><span class="nav-num">18</span>벤치마크 체크리스트</a>
+    <a class="nav-item" href="#s19"><span class="nav-num">19</span>리스크 & 대안</a>
+    <a class="nav-item" href="#s20"><span class="nav-num">20</span>다음 단계: Operate</a>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-print" onclick="window.print()">🖨️ PDF 저장</button>
+    <button class="btn-operate" onclick="location.href='index.html'">Operate 시작하기 →</button>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+<!-- ═══ S01: 개요 ═══ -->
+<div class="section" id="s01">
+  <div class="page-num">PAGE 01 / 20</div>
+  <div class="cover-badge">⚡ HAchillesWorld Optimize Report v1.0</div>
+  <div class="cover-title" id="cover-title">Optimize 실행 리포트</div>
+  <p style="color:var(--text-dim);font-size:0.95rem;line-height:1.75;max-width:580px;">
+    귀하의 Scan 진단 결과를 기반으로 <strong>L2.3 → L3 전환을 위한 맞춤형 최적화 플랜</strong>을 자동 생성했습니다.
+    3개 Phase, 24주, 6개 즉시 실행 가능한 코드 파일을 포함합니다.
+  </p>
+  <div class="cover-meta">
+    <div class="meta-item"><div class="meta-label">시스템명</div><div class="meta-value" id="meta-name">—</div></div>
+    <div class="meta-item"><div class="meta-label">현재 Level</div><div class="meta-value" id="meta-level" style="color:var(--yellow)">L2.3</div></div>
+    <div class="meta-item"><div class="meta-label">목표 Level</div><div class="meta-value" style="color:var(--green)">L3</div></div>
+    <div class="meta-item"><div class="meta-label">생성일</div><div class="meta-value" id="meta-date">—</div></div>
+  </div>
+  <div class="explain-box" style="margin-top:1.5rem;">
+    <h4>이 리포트에 포함된 것</h4>
+    <p>① 3개 Phase 단계별 실행 계획 &nbsp;② 3개 Python 코드 파일 (harness, router, MCTS) &nbsp;③ Phase별 검증 체크리스트 &nbsp;④ 상세 ROI 분석 &nbsp;⑤ 리스크 대응 전략. 왼쪽 사이드바에서 원하는 섹션으로 바로 이동하세요.</p>
+  </div>
+  <div class="info-row" style="margin-top:1.25rem;">
+    <div class="info-chip"><span class="info-chip-label">Scan 점수</span><span class="info-chip-val" style="color:var(--yellow)" id="ic-score">67/100</span></div>
+    <div class="info-chip"><span class="info-chip-label">목표 점수</span><span class="info-chip-val" style="color:var(--green)">90+/100</span></div>
+    <div class="info-chip"><span class="info-chip-label">예상 기간</span><span class="info-chip-val">24주</span></div>
+    <div class="info-chip"><span class="info-chip-label">연간 절감</span><span class="info-chip-val" style="color:var(--green)">₩24M+</span></div>
+    <div class="info-chip"><span class="info-chip-label">생성 파일</span><span class="info-chip-val">3개 .py</span></div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S02: 현재 상태 스냅샷 ═══ -->
+<div class="section" id="s02">
+  <div class="page-num">PAGE 02 / 20</div>
+  <h2>현재 상태 스냅샷</h2>
+  <p class="section-desc">Scan 진단에서 확인된 현재 에이전트의 상태입니다. Optimize는 이 데이터를 기반으로 플랜을 생성합니다.</p>
+
+  <div class="score-overview">
+    <div class="big-score">
+      <div class="big-score-num" id="snap-score">67</div>
+      <div class="big-score-sub">/ 100 종합 점수</div>
+      <div class="score-badge" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.3);color:var(--yellow)">⚠ L2.3 단계</div>
+    </div>
+    <div class="cat-scores">
+      <div class="cat-row">
+        <div class="cat-name">World Model 품질</div>
+        <div class="cat-track"><div class="cat-fill" style="width:72%;background:var(--yellow)"></div></div>
+        <div class="cat-val" style="color:var(--yellow)">72</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-name">에이전시 수준</div>
+        <div class="cat-track"><div class="cat-fill" style="width:61%;background:var(--red)"></div></div>
+        <div class="cat-val" style="color:var(--red)">61</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-name">운영 건전성</div>
+        <div class="cat-track"><div class="cat-fill" style="width:68%;background:var(--yellow)"></div></div>
+        <div class="cat-val" style="color:var(--yellow)">68</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding-grid">
+    <div class="finding-card danger">
+      <div class="finding-tag tag-danger">즉시 조치</div>
+      <h4>Simulation Drift 31%</h4>
+      <p>허용치(10%)의 3배. World Model이 현실과 빠르게 괴리되고 있습니다.</p>
+    </div>
+    <div class="finding-card danger">
+      <div class="finding-tag tag-danger">즉시 조치</div>
+      <h4>Calibration ECE 0.23</h4>
+      <p>에이전트가 80% 확신할 때 실제 정확도는 57%뿐입니다.</p>
+    </div>
+    <div class="finding-card warn">
+      <div class="finding-tag tag-warn">단기 개선</div>
+      <h4>Planning Depth 3스텝</h4>
+      <p>L2 목표(15스텝)의 20% 수준. 복잡한 상황에서 근시안적 결정.</p>
+    </div>
+    <div class="finding-card warn">
+      <div class="finding-tag tag-warn">단기 개선</div>
+      <h4>AI 비용 예산 대비 143%</h4>
+      <p>대형 모델이 단순 태스크에 과다 투입되고 있습니다.</p>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>지표</th><th>현재 값</th><th>목표 값</th><th>우선순위</th><th>담당 Phase</th></tr></thead>
+    <tbody>
+      <tr><td>Simulation Drift Rate</td><td class="val-red">31%</td><td class="val-green">&lt;5%</td><td>🔴 긴급</td><td>Phase 1</td></tr>
+      <tr><td>Calibration ECE</td><td class="val-red">0.23</td><td class="val-green">&lt;0.08</td><td>🔴 긴급</td><td>Phase 1</td></tr>
+      <tr><td>Self-Correction Rate</td><td class="val-red">0%</td><td class="val-green">≥20%</td><td>🟡 단기</td><td>Phase 1–2</td></tr>
+      <tr><td>Harness Coverage</td><td class="val-yellow">6개</td><td class="val-green">30개+</td><td>🟡 단기</td><td>Phase 1</td></tr>
+      <tr><td>Planning Depth</td><td class="val-yellow">3스텝</td><td class="val-green">20+스텝</td><td>🟡 중기</td><td>Phase 2</td></tr>
+      <tr><td>LLM 비용 비율</td><td class="val-red">143%</td><td class="val-green">≤75%</td><td>🟡 중기</td><td>Phase 1</td></tr>
+    </tbody>
+  </table>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S03: 목표 & 전략 ═══ -->
+<div class="section" id="s03">
+  <div class="page-num">PAGE 03 / 20</div>
+  <h2>목표 설정 & 전략</h2>
+  <p class="section-desc">L2.3에서 L3 Evolver로의 전환 전략과 3개 Phase 구성입니다.</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-yellow"></div>
+      <div class="tl-week">현재 상태 · L2.3 × Digital Laws</div>
+      <div class="tl-title">종합 점수 67/100 — Simulator 초기 단계</div>
+      <div class="tl-desc">멀티스텝 계획 능력은 갖췄지만 World Model이 현실을 제대로 반영하지 못함. Drift·Calibration이 핵심 병목.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-blue"></div>
+      <div class="tl-week">Phase 1 완료 · Week 8 · 예상 L2.5</div>
+      <div class="tl-title">종합 점수 75–78 — 기반 강화 완료</div>
+      <div class="tl-desc">ECE 0.08 달성, Harness 20개+, CostRouter 적용으로 비용 정상화. Drift 10% 이하로 안정.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-purple"></div>
+      <div class="tl-week">Phase 2 완료 · Week 16 · 예상 L2.8</div>
+      <div class="tl-title">종합 점수 83–86 — 시뮬레이션 역량 완성</div>
+      <div class="tl-desc">MCTS 계획기로 15스텝+ 계획, Counterfactual 추론 레이어 도입, Self-Correction 20%.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-green"></div>
+      <div class="tl-week">Phase 3 완료 · Week 24 · 목표 L3</div>
+      <div class="tl-title">종합 점수 90+ — L3 Evolver 전환</div>
+      <div class="tl-desc">Meta-Harness 자기수정, 온라인 학습 루프, 실시간 재보정으로 환경 변화에 자율 적응.</div>
+    </div>
+  </div>
+
+  <div class="finding-grid" style="margin-top:1.5rem;">
+    <div class="finding-card info">
+      <div class="finding-tag tag-info">Phase 1 · Week 1–8</div>
+      <h4>기반 강화</h4>
+      <p>ECE 캘리브레이션, Harness 확장, CostRouter. 가장 빠른 ROI.</p>
+    </div>
+    <div class="finding-card info" style="border-color:rgba(139,92,246,0.25);background:rgba(139,92,246,0.06)">
+      <div class="finding-tag" style="background:rgba(139,92,246,0.15);color:var(--accent-2)">Phase 2 · Week 9–16</div>
+      <h4>시뮬레이션 강화</h4>
+      <p>MCTS 계획기, Counterfactual 추론. L2 완성도 극대화.</p>
+    </div>
+    <div class="finding-card ok" style="grid-column:span 2;">
+      <div class="finding-tag tag-ok">Phase 3 · Week 17–24</div>
+      <h4>L3 진화 — Meta-Harness + 온라인 학습</h4>
+      <p>환경 변화를 스스로 감지하고 World Model을 업데이트하는 자율 적응 에이전트로 전환합니다.</p>
+    </div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S04: Phase 1 개요 ═══ -->
+<div class="section" id="s04">
+  <div class="page-num">PAGE 04 / 20</div>
+  <h2>Phase 1 개요 — 기반 강화</h2>
+  <p class="section-desc">Week 1–8. 가장 빠른 성과를 낼 수 있는 핵심 개선 3가지를 집중 실행합니다.</p>
+
+  <div class="phase-card phase-p1">
+    <div class="phase-header">
+      <span class="phase-badge badge-p1">PHASE 1</span>
+      <div>
+        <div class="phase-title">기반 강화 · Week 1–8</div>
+        <div class="phase-meta">예상 점수 향상: 67 → 75–78 &nbsp;·&nbsp; 예상 비용 절감: ₩9M/년</div>
+      </div>
+    </div>
+    <ul class="task-list">
+      <li><div class="task-dot task-dot-red"></div><div><strong>ECE Calibration 개선</strong> — Temperature Scaling + Platt Scaling 적용. ECE 0.23 → 0.08 목표 (Week 1–3)</div></li>
+      <li><div class="task-dot task-dot-yellow"></div><div><strong>Self-Correction Rate 구축</strong> — 오류 감지 루프 및 재시도 정책 도입. 0% → 10%+ (Week 2–5)</div></li>
+      <li><div class="task-dot task-dot-blue"></div><div><strong>Harness Coverage 확장</strong> — 6개 → 20개 이상의 하네스 규칙. 전체 액션 공간 커버 (Week 1–6)</div></li>
+      <li><div class="task-dot task-dot-green"></div><div><strong>CostAwareRouter 배포</strong> — 태스크 복잡도 기반 모델 라우팅. 비용 143% → 100% (Week 3–6)</div></li>
+      <li><div class="task-dot task-dot-yellow"></div><div><strong>Drift Monitor 임계값 조정</strong> — 0.08 → 0.12 재설정 후 알림 자동화 (Week 1)</div></li>
+    </ul>
+  </div>
+
+  <div class="metric-row">
+    <div class="metric-label-col">Simulation Drift Rate</div>
+    <div class="metric-from val-red">31%</div>
+    <div class="metric-arrow">→</div>
+    <div class="metric-to val-yellow">10%</div>
+    <div class="metric-bar-wrap"><div class="metric-bar-fill" style="width:70%;background:linear-gradient(90deg,var(--red),var(--yellow))"></div></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label-col">Calibration ECE</div>
+    <div class="metric-from val-red">0.23</div>
+    <div class="metric-arrow">→</div>
+    <div class="metric-to val-green">0.08</div>
+    <div class="metric-bar-wrap"><div class="metric-bar-fill" style="width:80%;background:linear-gradient(90deg,var(--red),var(--green))"></div></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label-col">LLM 비용 비율</div>
+    <div class="metric-from val-red">143%</div>
+    <div class="metric-arrow">→</div>
+    <div class="metric-to val-green">100%</div>
+    <div class="metric-bar-wrap"><div class="metric-bar-fill" style="width:65%;background:linear-gradient(90deg,var(--red),var(--green))"></div></div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S05: ECE Calibration ═══ -->
+<div class="section" id="s05">
+  <div class="page-num">PAGE 05 / 20</div>
+  <h2>ECE Calibration 개선 계획</h2>
+  <p class="section-desc">현재 ECE 0.23은 에이전트가 과신하고 있음을 의미합니다. Temperature Scaling으로 2주 안에 0.08 이하로 개선합니다.</p>
+
+  <div class="explain-box">
+    <h4>왜 ECE가 중요한가</h4>
+    <p>ECE(Expected Calibration Error)가 0.23이면 에이전트가 "80% 확신"한다고 말할 때 실제로는 57%만 맞습니다. 이 과신이 잘못된 결정을 만들고, 특히 공급망처럼 비용이 큰 환경에서 손실을 키웁니다. ECE 0.08 달성 시 "80% 확신 = 실제 79%" 수준이 됩니다.</p>
+  </div>
+
+  <h3>Step 1 — Temperature Scaling (Week 1, 2일)</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">calibration_fix.py</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.optimize.calibration <span class="c-kw">import</span> TemperatureScaling
+<span class="c-kw">import</span> numpy <span class="c-kw">as</span> np
+
+<span class="c-cm"># 1. 검증 세트에서 최적 Temperature T 탐색</span>
+calibrator = TemperatureScaling()
+T_optimal = calibrator.fit(
+    logits=validation_logits,   <span class="c-cm"># 모델 출력 로짓</span>
+    labels=validation_labels,
+    method=<span class="c-str">"nll_minimization"</span>      <span class="c-cm"># NLL 최소화로 T 탐색</span>
+)
+<span class="c-kw">print</span>(<span class="c-str">f"최적 Temperature: {T_optimal:.3f}"</span>)  <span class="c-cm"># 예: 1.82</span>
+
+<span class="c-cm"># 2. 예측 시 T로 나눠 보정</span>
+<span class="c-kw">def</span> <span class="c-fn">calibrated_predict</span>(logits, T=T_optimal):
+    scaled = logits / T
+    probs  = softmax(scaled)
+    <span class="c-kw">return</span> probs
+
+<span class="c-cm"># 3. 보정 전후 ECE 비교</span>
+ece_before = calibrator.compute_ece(raw_probs, labels)
+ece_after  = calibrator.compute_ece(calibrated_predict(logits), labels)
+<span class="c-kw">print</span>(<span class="c-str">f"ECE: {ece_before:.3f} → {ece_after:.3f}"</span>)
+<span class="c-cm"># 예상 출력: ECE: 0.230 → 0.081</span></div>
+  </div>
+
+  <h3>Step 2 — 신뢰도 임계값 재설정 (Week 1, 1일)</h3>
+  <p>현재 불확실성 임계값 0.35를 0.20으로 낮춰, ECE 보정 전까지 과신에 의한 잘못된 결정을 방지합니다.</p>
+
+  <table class="data-table">
+    <thead><tr><th>조치</th><th>소요 시간</th><th>ECE 변화</th><th>담당</th></tr></thead>
+    <tbody>
+      <tr><td>불확실성 임계값 0.35 → 0.20 조정</td><td>0.5일</td><td>간접 효과</td><td>Week 1</td></tr>
+      <tr><td>Temperature T 탐색 (검증 500개)</td><td>1일</td><td>0.23 → ~0.12</td><td>Week 1</td></tr>
+      <tr><td>Platt Scaling 추가 보정</td><td>1일</td><td>0.12 → ~0.08</td><td>Week 2</td></tr>
+      <tr><td>ECE 모니터링 자동화 (매일 측정)</td><td>0.5일</td><td>유지 관리</td><td>Week 2</td></tr>
+    </tbody>
+  </table>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S06: Self-Correction ═══ -->
+<div class="section" id="s06">
+  <div class="page-num">PAGE 06 / 20</div>
+  <h2>Self-Correction Rate 개선</h2>
+  <p class="section-desc">현재 자기 수정율 0% — 오류 발생 시 그대로 진행합니다. 3단계 오류 감지·수정 루프로 10%+ 달성합니다.</p>
+
+  <div class="explain-box">
+    <h4>Self-Correction이 없으면</h4>
+    <p>에이전트가 잘못된 API 응답을 받거나 예상치 못한 상태를 만났을 때, 오류를 인식하지 못하고 그대로 다음 단계로 진행합니다. DEOR(Decide-Execute-Observe-Reflect) 루프에서 Reflect 단계가 사실상 비어 있는 상태입니다.</p>
+  </div>
+
+  <h3>3단계 자기수정 루프 구현</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">self_correction_loop.py</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.harness <span class="c-kw">import</span> SelfCorrectionPolicy
+<span class="c-kw">from</span> hachillesworld.operate.monitor <span class="c-kw">import</span> DriftMonitor
+
+policy = SelfCorrectionPolicy(
+    max_retries=<span class="c-num">3</span>,
+    confidence_threshold=<span class="c-num">0.65</span>,   <span class="c-cm"># 이 이하면 재시도</span>
+    error_patterns=[
+        <span class="c-str">"unexpected_state"</span>,
+        <span class="c-str">"api_timeout"</span>,
+        <span class="c-str">"constraint_violation"</span>,
+    ]
+)
+
+<span class="c-kw">def</span> <span class="c-fn">reflect_and_correct</span>(episode, observation, expected):
+    <span class="c-cm"># Step 1: 오류 감지</span>
+    error = policy.detect_error(observation, expected)
+    <span class="c-kw">if not</span> error:
+        <span class="c-kw">return</span> observation  <span class="c-cm"># 정상 — 그대로 진행</span>
+
+    <span class="c-cm"># Step 2: 오류 분류 및 수정 전략 선택</span>
+    strategy = policy.select_correction(error)
+    <span class="c-kw">print</span>(<span class="c-str">f"[Self-Correction] {error.type} → {strategy.name}"</span>)
+
+    <span class="c-cm"># Step 3: 수정 실행 (최대 3회)</span>
+    <span class="c-kw">for</span> attempt <span class="c-kw">in</span> <span class="c-fn">range</span>(policy.max_retries):
+        corrected = strategy.apply(episode, error)
+        <span class="c-kw">if</span> policy.validate(corrected):
+            episode.record_self_correction()  <span class="c-cm"># 수정율 집계</span>
+            <span class="c-kw">return</span> corrected
+    <span class="c-cm"># 3회 실패 → HITL 에스컬레이션</span>
+    <span class="c-kw">return</span> policy.escalate(episode)</div>
+  </div>
+
+  <div class="finding-grid">
+    <div class="finding-card info">
+      <div class="finding-tag tag-info">Week 2–3</div>
+      <h4>오류 패턴 라이브러리 구축</h4>
+      <p>과거 실패 에피소드 로그에서 반복 패턴 20개 추출 후 감지 규칙 등록.</p>
+    </div>
+    <div class="finding-card info">
+      <div class="finding-tag tag-info">Week 4–5</div>
+      <h4>Reflect 단계 강화</h4>
+      <p>DEOR 루프의 Reflect에 실제 수정 로직 연결. Self-Correction Rate 10%+ 달성.</p>
+    </div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S07: Harness Coverage ═══ -->
+<div class="section" id="s07">
+  <div class="page-num">PAGE 07 / 20</div>
+  <h2>Harness Coverage 확장 계획</h2>
+  <p class="section-desc">현재 6개 하네스 규칙으로는 에이전트 액션의 30%만 커버됩니다. 20개+ 로 확장해 전체 액션 공간을 보호합니다.</p>
+
+  <table class="data-table">
+    <thead><tr><th>#</th><th>규칙 이름</th><th>유형</th><th>현재</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>API 멱등성 검사</td><td>중복 방지</td><td>✓ 존재</td><td class="val-green">유지</td></tr>
+      <tr><td>02</td><td>응답 스키마 검증</td><td>형식 검사</td><td>✓ 존재</td><td class="val-green">유지</td></tr>
+      <tr><td>03</td><td>타임아웃 처리</td><td>오류 처리</td><td>✓ 존재</td><td class="val-green">유지</td></tr>
+      <tr><td>04</td><td>예산 한도 체크</td><td>비용 제어</td><td>✓ 존재</td><td class="val-green">강화 필요</td></tr>
+      <tr><td>05</td><td>재고 음수 방지</td><td>물리 제약</td><td>✓ 존재</td><td class="val-green">유지</td></tr>
+      <tr><td>06</td><td>발주량 상한</td><td>도메인 규칙</td><td>✓ 존재</td><td class="val-green">유지</td></tr>
+      <tr><td>07</td><td>Calibration ECE 게이트</td><td>품질 게이트</td><td>✗ 없음</td><td class="val-red">추가</td></tr>
+      <tr><td>08</td><td>Drift Rate 임계값 게이트</td><td>안전성</td><td>✗ 없음</td><td class="val-red">추가</td></tr>
+      <tr><td>09</td><td>불확실성 임계값 게이트</td><td>안전성</td><td>✗ 없음</td><td class="val-red">추가</td></tr>
+      <tr><td>10</td><td>Self-Correction 재시도 게이트</td><td>품질 게이트</td><td>✗ 없음</td><td class="val-red">추가</td></tr>
+      <tr><td>11–20</td><td>도메인 특화 규칙 10개 추가</td><td>혼합</td><td>✗ 없음</td><td class="val-yellow">Week 4–6</td></tr>
+    </tbody>
+  </table>
+
+  <div class="explain-box">
+    <h4>자동 생성된 harness_rules.py 포함 규칙 목록</h4>
+    <p>14번 섹션에서 확인할 수 있는 <code>harness_rules.py</code>에는 위 표의 규칙 01–10이 모두 구현되어 있습니다. 복사해서 즉시 사용 가능합니다. 11–20번 규칙은 에이전트 실제 운영 데이터를 수집한 후 Week 4–6에 추가합니다.</p>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S08: Phase 2 개요 ═══ -->
+<div class="section" id="s08">
+  <div class="page-num">PAGE 08 / 20</div>
+  <h2>Phase 2 개요 — 시뮬레이션 강화</h2>
+  <p class="section-desc">Week 9–16. Phase 1에서 확보한 안정성을 기반으로, 더 깊고 정교한 계획 능력을 구축합니다.</p>
+
+  <div class="phase-card phase-p2">
+    <div class="phase-header">
+      <span class="phase-badge badge-p2">PHASE 2</span>
+      <div>
+        <div class="phase-title">시뮬레이션 강화 · Week 9–16</div>
+        <div class="phase-meta">예상 점수 향상: 75 → 83–86 &nbsp;·&nbsp; Planning Depth 3 → 15스텝</div>
+      </div>
+    </div>
+    <ul class="task-list">
+      <li><div class="task-dot task-dot-purple"></div><div><strong>MCTS 계획기 통합</strong> — Monte Carlo Tree Search로 15스텝 계획 능력 확보 (Week 9–12)</div></li>
+      <li><div class="task-dot task-dot-purple"></div><div><strong>Counterfactual 추론 레이어</strong> — "만약 다른 결정을 했다면?" 반사실 시뮬레이션 (Week 11–14)</div></li>
+      <li><div class="task-dot task-dot-yellow"></div><div><strong>Self-Correction 20% 달성</strong> — Phase 1 구축 기반 위에 패턴 학습 추가 (Week 9–11)</div></li>
+      <li><div class="task-dot task-dot-blue"></div><div><strong>Replay Debugger 구축</strong> — 실패 에피소드 10분 내 근본 원인 파악 (Week 13–15)</div></li>
+      <li><div class="task-dot task-dot-green"></div><div><strong>OpenTelemetry 전체 계측</strong> — 가시성 확보, Operate 준비 (Week 15–16)</div></li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S09: MCTS ═══ -->
+<div class="section" id="s09">
+  <div class="page-num">PAGE 09 / 20</div>
+  <h2>MCTS 계획기 통합</h2>
+  <p class="section-desc">Monte Carlo Tree Search로 Planning Depth를 3스텝에서 15스텝 이상으로 확장합니다. 생성된 <code>mcts_planner.py</code>를 그대로 사용하세요.</p>
+
+  <div class="explain-box">
+    <h4>MCTS가 필요한 이유</h4>
+    <p>현재 에이전트는 탐욕적(greedy) 방식으로 매 스텝 최선을 선택하지만, 3스텝 이후를 보지 못합니다. 공급망처럼 지연 효과가 큰 환경에서 단기 최적이 장기 최악이 되는 경우가 잦습니다. MCTS는 50회 시뮬레이션으로 5스텝 이후 결과를 미리 평가하고 최선의 행동을 선택합니다.</p>
+  </div>
+
+  <h3>구현 순서 (Week 9–12)</h3>
+  <ul class="task-list" style="margin-bottom:1rem;">
+    <li><div class="task-dot task-dot-purple"></div><div><strong>Week 9:</strong> World Model 래퍼 작성 — MCTS가 시뮬레이션에 사용할 환경 모델 인터페이스</div></li>
+    <li><div class="task-dot task-dot-purple"></div><div><strong>Week 10:</strong> UCB1 탐색 정책 튜닝 — exploration_c 값 최적화 (A/B 테스트)</div></li>
+    <li><div class="task-dot task-dot-purple"></div><div><strong>Week 11:</strong> 롤아웃 정책 학습 — random → lightweight neural 업그레이드</div></li>
+    <li><div class="task-dot task-dot-purple"></div><div><strong>Week 12:</strong> 통합 테스트 및 Planning Depth 15스텝 달성 검증</div></li>
+  </ul>
+
+  <table class="data-table">
+    <thead><tr><th>파라미터</th><th>초기값 (Phase 2)</th><th>목표값 (Phase 3)</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td>n_simulations</td><td>50</td><td>200</td><td>롤아웃 횟수 — 많을수록 정확</td></tr>
+      <tr><td>exploration_c</td><td>1.414</td><td>1.2</td><td>탐색/활용 균형 (UCB1)</td></tr>
+      <tr><td>max_depth</td><td>5</td><td>15</td><td>롤아웃 최대 깊이</td></tr>
+      <tr><td>rollout_policy</td><td>random</td><td>neural</td><td>시뮬레이션 정책</td></tr>
+    </tbody>
+  </table>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S10: Counterfactual ═══ -->
+<div class="section" id="s10">
+  <div class="page-num">PAGE 10 / 20</div>
+  <h2>Counterfactual 추론 레이어</h2>
+  <p class="section-desc">"다른 결정을 했다면 어떤 결과가 나왔을까?" — 반사실 시뮬레이션으로 현재 결정의 질을 평가하고 World Model을 강화합니다.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">counterfactual_layer.py</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.optimize.counterfactual <span class="c-kw">import</span> CounterfactualSimulator
+
+simulator = CounterfactualSimulator(
+    world_model=agent.world_model,
+    n_alternatives=<span class="c-num">5</span>,   <span class="c-cm"># 대안 행동 5개를 동시 시뮬레이션</span>
+    horizon=<span class="c-num">10</span>,          <span class="c-cm"># 10스텝 앞까지 시뮬레이션</span>
+)
+
+<span class="c-kw">def</span> <span class="c-fn">decide_with_counterfactual</span>(state, proposed_action):
+    <span class="c-cm"># 제안된 행동과 대안들을 동시 시뮬레이션</span>
+    cf_results = simulator.simulate(state, proposed_action)
+
+    <span class="c-cm"># 후회 최소화(Regret Minimization)로 최선 선택</span>
+    best_action = simulator.minimize_regret(cf_results)
+
+    <span class="c-cm"># 반사실 데이터로 World Model 업데이트 (온라인 학습 준비)</span>
+    simulator.update_world_model(cf_results)
+
+    <span class="c-kw">return</span> best_action</div>
+  </div>
+
+  <div class="explain-box">
+    <h4>Phase 3 온라인 학습과의 연결</h4>
+    <p>Counterfactual 데이터는 Phase 3의 온라인 학습 루프에 직접 투입됩니다. "실제로 일어나지 않은 일"을 시뮬레이션한 데이터가 World Model을 더 빠르게, 더 적은 실제 실패로 개선합니다.</p>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S11: Phase 3 개요 ═══ -->
+<div class="section" id="s11">
+  <div class="page-num">PAGE 11 / 20</div>
+  <h2>Phase 3 개요 — L3 진화</h2>
+  <p class="section-desc">Week 17–24. 환경 변화를 스스로 감지하고 World Model을 업데이트하는 자율 적응 에이전트로 전환합니다.</p>
+
+  <div class="phase-card phase-p3">
+    <div class="phase-header">
+      <span class="phase-badge badge-p3">PHASE 3</span>
+      <div>
+        <div class="phase-title">L3 진화 · Week 17–24</div>
+        <div class="phase-meta">예상 점수 향상: 83 → 90+ &nbsp;·&nbsp; L3 Evolver 전환 완료</div>
+      </div>
+    </div>
+    <ul class="task-list">
+      <li><div class="task-dot task-dot-green"></div><div><strong>Meta-Harness 자기수정</strong> — 실패 패턴을 자동으로 하네스 규칙화 (Week 17–20)</div></li>
+      <li><div class="task-dot task-dot-green"></div><div><strong>온라인 학습 루프</strong> — 환경 변화 감지 후 World Model 실시간 업데이트 (Week 18–22)</div></li>
+      <li><div class="task-dot task-dot-cyan"></div><div><strong>실시간 재보정 시스템</strong> — 드리프트 감지 즉시 ECE 재보정 자동 실행 (Week 19–21)</div></li>
+      <li><div class="task-dot task-dot-green"></div><div><strong>Red-teaming 자동화</strong> — 취약점 자동 발견 및 하네스 보완 (Week 22–24)</div></li>
+      <li><div class="task-dot task-dot-blue"></div><div><strong>L3 인증 검증</strong> — HAchillesWorld L3 체크리스트 통과 (Week 24)</div></li>
+    </ul>
+  </div>
+
+  <div class="finding-grid">
+    <div class="finding-card ok">
+      <div class="finding-tag tag-ok">L3 핵심 능력</div>
+      <h4>자율 적응 (Self-Adaptation)</h4>
+      <p>환경 규칙이 바뀌면 스스로 감지하고 World Model을 업데이트합니다. 인간 개입 최소화.</p>
+    </div>
+    <div class="finding-card ok">
+      <div class="finding-tag tag-ok">L3 핵심 능력</div>
+      <h4>메타 학습 (Meta-Learning)</h4>
+      <p>실패로부터 하네스 규칙을 자동 생성합니다. 시스템이 사용될수록 더 똑똑해집니다.</p>
+    </div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S12: Meta-Harness ═══ -->
+<div class="section" id="s12">
+  <div class="page-num">PAGE 12 / 20</div>
+  <h2>Meta-Harness 자기수정</h2>
+  <p class="section-desc">실패 에피소드를 자동 분석해 새로운 하네스 규칙을 생성합니다. 인간이 규칙을 수동 작성하는 한계를 넘어섭니다.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">meta_harness.py</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.operate <span class="c-kw">import</span> MetaHarness
+
+meta = MetaHarness(
+    agent_name=<span class="c-str">"supply-chain-agent"</span>,
+    base_harness=SupplyChainHarness(),   <span class="c-cm"># Phase 1에서 생성한 하네스</span>
+    learning_rate=<span class="c-num">0.01</span>,
+    min_episodes_to_learn=<span class="c-num">10</span>,          <span class="c-cm"># 10번 실패 후 규칙 생성</span>
+)
+
+<span class="c-cm"># Meta-Harness는 백그라운드에서 실패를 관찰</span>
+<span class="c-kw">@meta</span>.observe
+<span class="c-kw">def</span> <span class="c-fn">on_episode_end</span>(episode):
+    <span class="c-kw">if</span> episode.failed:
+        pattern = meta.extract_failure_pattern(episode)
+        <span class="c-kw">if</span> meta.is_new_pattern(pattern):
+            new_rule = meta.generate_rule(pattern)
+            <span class="c-kw">print</span>(<span class="c-str">f"[MetaHarness] 새 규칙 생성: {new_rule.name}"</span>)
+            meta.propose_rule(new_rule)  <span class="c-cm"># 사람에게 검토 요청</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>자동 생성 규칙의 검토 프로세스</h4>
+    <p>Meta-Harness가 새 규칙을 제안하면 Slack으로 알림이 발송됩니다. 담당자가 24시간 내 승인/거부를 결정합니다. 승인된 규칙은 자동으로 하네스에 추가됩니다. L3에서는 이 과정이 완전 자동화됩니다.</p>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S13: 실시간 재보정 ═══ -->
+<div class="section" id="s13">
+  <div class="page-num">PAGE 13 / 20</div>
+  <h2>실시간 재보정 시스템</h2>
+  <p class="section-desc">Drift 감지 즉시 ECE 재보정을 자동 실행하는 파이프라인. 인간 개입 없이 World Model 정확도를 유지합니다.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">realtime_recalibration.py</span><span class="code-lang">Python</span></div>
+    <div class="code-body"><span class="c-kw">from</span> hachillesworld.operate.monitor <span class="c-kw">import</span> DriftMonitor
+<span class="c-kw">from</span> hachillesworld.optimize.calibration <span class="c-kw">import</span> OnlineCalibrator
+
+monitor = DriftMonitor(agent_name=<span class="c-str">"supply-chain-agent"</span>, threshold=<span class="c-num">0.12</span>)
+calibrator = OnlineCalibrator(method=<span class="c-str">"temperature_scaling"</span>, window=<span class="c-num">200</span>)
+
+monitor.on_alert = <span class="c-kw">lambda</span> alert: (
+    calibrator.recalibrate(recent_observations=alert.window_data),
+    <span class="c-fn">print</span>(<span class="c-str">f"[Auto-Recal] Drift {alert.drift:.3f} → 재보정 완료"</span>)
+)
+
+<span class="c-cm"># DEOR 루프에서 매 스텝 호출</span>
+<span class="c-kw">for</span> step <span class="c-kw">in</span> episode:
+    predicted = calibrator.calibrated_predict(world_model, state, action)
+    actual    = env.observe()
+    monitor.record(predicted, actual)  <span class="c-cm"># 임계값 초과 시 자동 재보정</span></div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S14: harness_rules.py ═══ -->
+<div class="section" id="s14">
+  <div class="page-num">PAGE 14 / 20</div>
+  <h2>생성된 코드 — harness_rules.py</h2>
+  <p class="section-desc">Scan 결과를 기반으로 자동 생성된 하네스 규칙 코드입니다. 복사해서 즉시 실행하세요.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">harness_rules.py</span><span class="code-lang">Python 3.11+</span></div>
+    <div class="code-body"><span class="c-cm"># harness_rules.py — HAchillesWorld Optimize 자동 생성</span>
+<span class="c-cm"># 에이전트: supply-chain-agent | Level: L2.3 × Digital Laws</span>
+<span class="c-cm"># 생성 기준: Scan 결과 §05 ECE, §06 Self-Correction, §07 Coverage</span>
+
+<span class="c-kw">from</span> hachillesworld.harness <span class="c-kw">import</span> HarnessSpec, Rule, RuleResult
+
+<span class="c-kw">class</span> <span class="c-cls">SupplyChainHarness</span>(HarnessSpec):
+    <span class="c-str">"""L2.3 → L3 전환을 위한 자동 생성 하네스"""</span>
+
+    <span class="c-cm"># ── 규칙 01: API 멱등성 (기존) ────────────────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_idempotency</span>(self, action, history):
+        <span class="c-kw">if</span> action.id <span class="c-kw">in</span> history.executed_ids:
+            <span class="c-kw">return</span> Rule.REJECT(<span class="c-str">"중복 API 호출"</span>, action=<span class="c-str">"skip"</span>)
+        <span class="c-kw">return</span> Rule.PASS()
+
+    <span class="c-cm"># ── 규칙 07: ECE Calibration 게이트 (신규) ────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_calibration_ece</span>(self, pred_probs, actual):
+        ece = self._compute_ece(pred_probs, actual)
+        <span class="c-kw">if</span> ece > <span class="c-num">0.10</span>:  <span class="c-cm"># Scan §05: 현재 0.23, 목표 0.08</span>
+            <span class="c-kw">return</span> Rule.WARN(
+                reason=<span class="c-str">f"ECE {ece:.3f} > 0.10 — 재보정 권장"</span>,
+                action=<span class="c-str">"flag_for_recalibration"</span>
+            )
+        <span class="c-kw">if</span> ece > <span class="c-num">0.20</span>:
+            <span class="c-kw">return</span> Rule.REJECT(
+                reason=<span class="c-str">f"ECE {ece:.3f} > 0.20 — 즉시 재보정 필요"</span>,
+                action=<span class="c-str">"pause_and_recalibrate"</span>
+            )
+        <span class="c-kw">return</span> Rule.PASS()
+
+    <span class="c-cm"># ── 규칙 08: Drift Rate 게이트 (신규) ─────────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_drift_rate</span>(self, drift_value):
+        <span class="c-kw">if</span> drift_value > <span class="c-num">0.25</span>:
+            <span class="c-kw">return</span> Rule.REJECT(
+                reason=<span class="c-str">f"Drift {drift_value:.3f} 위험 수준"</span>,
+                action=<span class="c-str">"halt_and_alert"</span>
+            )
+        <span class="c-kw">if</span> drift_value > <span class="c-num">0.12</span>:
+            <span class="c-kw">return</span> Rule.WARN(reason=<span class="c-str">f"Drift {drift_value:.3f} 주의"</span>)
+        <span class="c-kw">return</span> Rule.PASS()
+
+    <span class="c-cm"># ── 규칙 09: 불확실성 임계값 게이트 (신규) ────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_uncertainty</span>(self, confidence):
+        <span class="c-kw">if</span> confidence < <span class="c-num">0.20</span>:  <span class="c-cm"># 0.35 → 0.20 강화</span>
+            <span class="c-kw">return</span> Rule.REJECT(
+                reason=<span class="c-str">f"신뢰도 {confidence:.2f} < 0.20"</span>,
+                action=<span class="c-str">"request_human_input"</span>
+            )
+        <span class="c-kw">return</span> Rule.PASS()
+
+    <span class="c-cm"># ── 규칙 10: Self-Correction 재시도 (신규) ────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_self_correction</span>(self, episode, error):
+        <span class="c-kw">if</span> error <span class="c-kw">and not</span> episode.attempted_correction:
+            <span class="c-kw">return</span> Rule.RETRY(
+                prompt=<span class="c-str">"이전 결과에서 오류를 감지했습니다. 다시 시도하세요."</span>,
+                max_attempts=<span class="c-num">3</span>
+            )
+        <span class="c-kw">return</span> Rule.PASS()
+
+    <span class="c-cm"># ── 규칙 04 강화: 예산 한도 (강화) ───────────────</span>
+    <span class="c-kw">def</span> <span class="c-fn">check_budget</span>(self, cost_estimate, budget_remaining):
+        ratio = cost_estimate / max(budget_remaining, <span class="c-num">1</span>)
+        <span class="c-kw">if</span> ratio > <span class="c-num">0.90</span>:
+            <span class="c-kw">return</span> Rule.REJECT(reason=<span class="c-str">"예산 90% 초과 예상"</span>)
+        <span class="c-kw">if</span> ratio > <span class="c-num">0.70</span>:
+            <span class="c-kw">return</span> Rule.WARN(reason=<span class="c-str">f"예산 {ratio*100:.0f}% 소진 예상"</span>)
+        <span class="c-kw">return</span> Rule.PASS()</div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S15: cost_router.py ═══ -->
+<div class="section" id="s15">
+  <div class="page-num">PAGE 15 / 20</div>
+  <h2>생성된 코드 — cost_router.py</h2>
+  <p class="section-desc">태스크 복잡도 분석 기반 자동 모델 라우팅. 현재 143% 비용을 100% 이하로 줄입니다. 예상 연간 절감 ₩18,000,000.</p>
+
+  <div class="info-row">
+    <div class="info-chip"><span class="info-chip-label">현재 비용</span><span class="info-chip-val val-red">143%</span></div>
+    <div class="info-chip"><span class="info-chip-label">4주 후</span><span class="info-chip-val val-yellow">100%</span></div>
+    <div class="info-chip"><span class="info-chip-label">24주 후</span><span class="info-chip-val val-green">75%</span></div>
+    <div class="info-chip"><span class="info-chip-label">연간 절감</span><span class="info-chip-val val-green">₩18M</span></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">cost_router.py</span><span class="code-lang">Python 3.11+</span></div>
+    <div class="code-body"><span class="c-cm"># cost_router.py — HAchillesWorld Optimize 자동 생성</span>
+<span class="c-cm"># Scan §15 복잡도 분포: low 12% / medium 61% / high 27%</span>
+<span class="c-cm"># 목표 분포: low 35% / medium 55% / high 10% → 비용 30% 절감</span>
+
+<span class="c-kw">from</span> hachillesworld.optimize <span class="c-kw">import</span> CostAwareRouter
+<span class="c-kw">from</span> anthropic <span class="c-kw">import</span> Anthropic
+
+client = Anthropic()
+router = CostAwareRouter(
+    agent_name=<span class="c-str">"supply-chain-agent"</span>,
+    tiers=[
+        {
+            <span class="c-str">"name"</span>:       <span class="c-str">"simple"</span>,
+            <span class="c-str">"model"</span>:      <span class="c-str">"claude-haiku-4-5-20251001"</span>,
+            <span class="c-str">"threshold"</span>:  <span class="c-num">0.30</span>,   <span class="c-cm"># 복잡도 0.30 이하</span>
+            <span class="c-str">"cost_per_1k"</span>: <span class="c-num">0.00025</span>  <span class="c-cm"># $0.25/1M tokens</span>
+        },
+        {
+            <span class="c-str">"name"</span>:       <span class="c-str">"medium"</span>,
+            <span class="c-str">"model"</span>:      <span class="c-str">"claude-sonnet-4-6"</span>,
+            <span class="c-str">"threshold"</span>:  <span class="c-num">0.75</span>,
+            <span class="c-str">"cost_per_1k"</span>: <span class="c-num">0.003</span>
+        },
+        {
+            <span class="c-str">"name"</span>:       <span class="c-str">"complex"</span>,
+            <span class="c-str">"model"</span>:      <span class="c-str">"claude-opus-4-8"</span>,
+            <span class="c-str">"threshold"</span>:  <span class="c-num">1.0</span>,
+            <span class="c-str">"cost_per_1k"</span>: <span class="c-num">0.015</span>
+        },
+    ],
+    features=[
+        <span class="c-str">"token_count"</span>,       <span class="c-cm"># 입력 토큰 수</span>
+        <span class="c-str">"entity_count"</span>,      <span class="c-cm"># 관련 엔티티 수</span>
+        <span class="c-str">"requires_reasoning"</span>,<span class="c-cm"># 추론 필요 여부</span>
+        <span class="c-str">"has_constraints"</span>,   <span class="c-cm"># 복합 제약 조건</span>
+        <span class="c-str">"time_sensitivity"</span>,  <span class="c-cm"># 시간 민감도</span>
+    ]
+)
+
+<span class="c-kw">def</span> <span class="c-fn">route_and_call</span>(task: str, context: dict) -> str:
+    complexity = router.compute_complexity(task, context)
+    model_cfg  = router.select_model(complexity)
+
+    <span class="c-kw">with</span> client.messages.stream(
+        model=model_cfg[<span class="c-str">"model"</span>],
+        max_tokens=<span class="c-num">1024</span>,
+        messages=[{<span class="c-str">"role"</span>: <span class="c-str">"user"</span>, <span class="c-str">"content"</span>: task}],
+        <span class="c-cm"># Prompt Caching으로 추가 10-15% 절감</span>
+        extra_headers={<span class="c-str">"anthropic-beta"</span>: <span class="c-str">"prompt-caching-2024-07-31"</span>}
+    ) <span class="c-kw">as</span> stream:
+        <span class="c-kw">return</span> stream.get_final_text()</div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S16: mcts_planner.py ═══ -->
+<div class="section" id="s16">
+  <div class="page-num">PAGE 16 / 20</div>
+  <h2>생성된 코드 — mcts_planner.py</h2>
+  <p class="section-desc">Planning Depth 3스텝 → 15스텝+. Phase 2에서 통합하고 Phase 3에서 neural rollout으로 업그레이드합니다.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">mcts_planner.py</span><span class="code-lang">Python 3.11+</span></div>
+    <div class="code-body"><span class="c-cm"># mcts_planner.py — HAchillesWorld Optimize 자동 생성</span>
+<span class="c-cm"># Scan §09 Planning Depth: 3스텝 → 목표 15스텝</span>
+
+<span class="c-kw">from</span> hachillesworld.optimize.mcts <span class="c-kw">import</span> MCTSPlanner, MCTSNode
+<span class="c-kw">import</span> math
+
+planner = MCTSPlanner(
+    agent_name=<span class="c-str">"supply-chain-agent"</span>,
+    n_simulations=<span class="c-num">50</span>,        <span class="c-cm"># Phase 2 초기값; Phase 3에서 200으로 증가</span>
+    exploration_c=<span class="c-num">1.414</span>,    <span class="c-cm"># UCB1 상수 √2</span>
+    max_depth=<span class="c-num">5</span>,            <span class="c-cm"># Phase 2: 5, Phase 3: 15</span>
+    rollout_policy=<span class="c-str">"random"</span>, <span class="c-cm"># Phase 3: "neural"로 교체</span>
+    discount_factor=<span class="c-num">0.95</span>,
+)
+
+<span class="c-kw">def</span> <span class="c-fn">plan_action</span>(state, goal, world_model):
+    <span class="c-cm"># 1. 루트 노드 생성</span>
+    root = MCTSNode(state=state, goal=goal)
+
+    <span class="c-cm"># 2. n_simulations회 반복: Selection → Expansion → Rollout → Backprop</span>
+    <span class="c-kw">for</span> _ <span class="c-kw">in</span> <span class="c-fn">range</span>(planner.n_simulations):
+        node = planner.select(root)           <span class="c-cm"># UCB1으로 탐색 노드 선택</span>
+        child = planner.expand(node, world_model)   <span class="c-cm"># 새 자식 노드 확장</span>
+        reward = planner.rollout(child, world_model) <span class="c-cm"># 랜덤 롤아웃</span>
+        planner.backpropagate(child, reward)  <span class="c-cm"># 보상 역전파</span>
+
+    <span class="c-cm"># 3. 가장 많이 방문된 자식 = 최선의 행동</span>
+    best_action = planner.best_action(root)
+
+    <span class="c-cm"># 4. Phase 3: Meta-Harness와 연동해 자기 수정</span>
+    <span class="c-cm"># best_action = meta_harness.validate_and_correct(best_action)</span>
+
+    <span class="c-kw">return</span> best_action
+
+<span class="c-cm"># Phase 3 업그레이드 포인트:</span>
+<span class="c-cm"># planner.rollout_policy = NeuralRolloutPolicy(model=world_model)</span>
+<span class="c-cm"># planner.n_simulations = 200</span>
+<span class="c-cm"># planner.max_depth = 15</span></div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S17: ROI ═══ -->
+<div class="section" id="s17">
+  <div class="page-num">PAGE 17 / 20</div>
+  <h2>ROI 상세 분석</h2>
+  <p class="section-desc">24주 최적화 투자 대비 기대 수익입니다. 보수적 추정치입니다.</p>
+
+  <div class="roi-grid">
+    <div class="roi-card">
+      <div class="roi-value" style="color:var(--green)">₩18M</div>
+      <div class="roi-label">연간 LLM 비용 절감<br/>(CostRouter 적용)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-value" style="color:var(--accent)">70%</div>
+      <div class="roi-label">에이전트 실패율 감소<br/>(Harness + Drift)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-value" style="color:var(--accent-2)">+23점</div>
+      <div class="roi-label">종합 점수 향상<br/>(67 → 90)</div>
+    </div>
+    <div class="roi-card">
+      <div class="roi-value" style="color:var(--yellow)">60%</div>
+      <div class="roi-label">HITL 개입 감소<br/>(Self-Correction)</div>
+    </div>
+  </div>
+
+  <table class="data-table" style="margin-top:1rem;">
+    <thead><tr><th>절감 항목</th><th>현재 비용</th><th>절감율</th><th>연간 절감액</th></tr></thead>
+    <tbody>
+      <tr><td>LLM API 비용 (CostRouter)</td><td>₩60M/년</td><td>30%</td><td class="val-green">₩18M</td></tr>
+      <tr><td>장애 대응 인건비 감소</td><td>₩24M/년</td><td>50%</td><td class="val-green">₩12M</td></tr>
+      <tr><td>HITL 운영 비용 감소</td><td>₩18M/년</td><td>60%</td><td class="val-green">₩10.8M</td></tr>
+      <tr><td>Prompt Caching 절감</td><td>₩60M/년</td><td>12%</td><td class="val-green">₩7.2M</td></tr>
+      <tr style="font-weight:700;"><td>합계</td><td>₩162M/년</td><td>29.6%</td><td class="val-green">₩48M/년</td></tr>
+    </tbody>
+  </table>
+
+  <div class="explain-box" style="margin-top:1rem;">
+    <h4>투자 회수 기간</h4>
+    <p>HAchillesWorld Pro 구독(₩79,000/월 = 연 ₩948,000) 대비 연간 절감 ₩48M. ROI 5,063%. 첫 달 CostRouter 적용만으로도 구독비의 약 19배를 회수합니다.</p>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S18: 벤치마크 체크리스트 ═══ -->
+<div class="section" id="s18">
+  <div class="page-num">PAGE 18 / 20</div>
+  <h2>벤치마크 체크리스트</h2>
+  <p class="section-desc">각 Phase 완료 시 다음 기준을 만족해야 다음 Phase로 진행합니다.</p>
+
+  <h3>Phase 1 완료 기준 (Week 8)</h3>
+  <div class="checklist">
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Calibration ECE &lt; 0.10 (3회 연속 측정)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Simulation Drift Rate &lt; 15% (7일 평균)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Harness Coverage ≥ 20개 규칙</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">LLM 비용 ≤ 100% (예산 이내)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Self-Correction Rate ≥ 10%</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">종합 점수 ≥ 75</div></div>
+  </div>
+
+  <h3>Phase 2 완료 기준 (Week 16)</h3>
+  <div class="checklist">
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Planning Depth ≥ 15스텝 (MCTS 검증)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Calibration ECE &lt; 0.08</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Self-Correction Rate ≥ 20%</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Simulation Drift Rate &lt; 8%</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Counterfactual 추론 정확도 ≥ 70%</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">종합 점수 ≥ 83</div></div>
+  </div>
+
+  <h3>Phase 3 완료 기준 — L3 인증 (Week 24)</h3>
+  <div class="checklist">
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Meta-Harness 자기수정 동작 확인 (10회 실패 → 자동 규칙 생성)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">온라인 학습 루프 작동 (환경 변화 감지 후 24시간 내 모델 업데이트)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">실시간 재보정 자동화 (Drift 감지 → 재보정 5분 이내)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Simulation Drift Rate &lt; 5%</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">Harness Coverage ≥ 30개 (자동 생성 포함)</div></div>
+    <div class="check-item"><div class="check-box">□</div><div class="check-text">종합 점수 ≥ 90 (HAchillesWorld L3 인증)</div></div>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S19: 리스크 ═══ -->
+<div class="section" id="s19">
+  <div class="page-num">PAGE 19 / 20</div>
+  <h2>리스크 & 대안 전략</h2>
+  <p class="section-desc">각 Phase에서 발생 가능한 리스크와 대응 전략입니다.</p>
+
+  <table class="data-table">
+    <thead><tr><th>리스크</th><th>발생 확률</th><th>영향도</th><th>대응 전략</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Temperature Scaling 후 ECE 개선 미흡</td>
+        <td>30%</td>
+        <td>중</td>
+        <td>Platt Scaling + Isotonic Regression 추가 적용</td>
+      </tr>
+      <tr>
+        <td>MCTS 계산 비용 과다 (latency 증가)</td>
+        <td>40%</td>
+        <td>중</td>
+        <td>n_simulations 축소 또는 비동기 계획 실행</td>
+      </tr>
+      <tr>
+        <td>CostRouter 오분류 (복잡 → 단순 오판)</td>
+        <td>20%</td>
+        <td>고</td>
+        <td>fallback: 오분류 감지 시 자동으로 상위 모델로 재라우팅</td>
+      </tr>
+      <tr>
+        <td>Meta-Harness 오규칙 생성</td>
+        <td>35%</td>
+        <td>중</td>
+        <td>사람 검토 필수 (24시간 내 승인/거부) + A/B 테스트</td>
+      </tr>
+      <tr>
+        <td>Phase 1 일정 지연 (3주 초과)</td>
+        <td>25%</td>
+        <td>저</td>
+        <td>ECE 개선 먼저 완료 후 나머지 병렬 진행</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="explain-box" style="margin-top:1rem;">
+    <h4>가장 주의할 리스크</h4>
+    <p>CostRouter 오분류는 비용 절감 효과를 상쇄할 수 있습니다. 처음 2주는 router를 <strong>모니터링 전용</strong>으로 운영(실제 라우팅 없이 로그만 수집)하고, 정확도 85% 이상 확인 후 실제 적용을 권장합니다.</p>
+  </div>
+</div>
+<hr class="section-divider"/>
+
+<!-- ═══ S20: 다음 단계 ═══ -->
+<div class="section" id="s20">
+  <div class="page-num">PAGE 20 / 20</div>
+  <h2>다음 단계: HAchillesWorld Operate</h2>
+  <p class="section-desc">Phase 3 완료 후 — 또는 지금 당장 — 프로덕션 에이전트의 World Model 건전성을 실시간으로 모니터링합니다.</p>
+
+  <div class="phase-card phase-p3" style="margin-bottom:1.5rem;">
+    <div class="phase-header">
+      <span class="phase-badge badge-p3">OPERATE</span>
+      <div>
+        <div class="phase-title">실시간 운영 모니터링</div>
+        <div class="phase-meta">DriftMonitor · Replay Debugger · Meta-Harness</div>
+      </div>
+    </div>
+    <ul class="task-list">
+      <li><div class="task-dot task-dot-green"></div><div><strong>DriftMonitor</strong> — Simulation Drift를 실시간 감지하고 Slack/PagerDuty로 경보 발송</div></li>
+      <li><div class="task-dot task-dot-green"></div><div><strong>Replay Debugger</strong> — 실패 에피소드를 단계별로 재생해 근본 원인을 10분 내 파악</div></li>
+      <li><div class="task-dot task-dot-cyan"></div><div><strong>자동 재보정</strong> — Drift 임계값 초과 시 ECE 자동 재보정 실행</div></li>
+      <li><div class="task-dot task-dot-blue"></div><div><strong>성과 대시보드</strong> — 종합 점수·비용·실패율 실시간 추적</div></li>
+    </ul>
+  </div>
+
+  <table class="data-table" style="margin-bottom:2rem;">
+    <thead><tr><th>지표</th><th>현재</th><th>Phase 1 (8주)</th><th>Phase 2 (16주)</th><th>Phase 3 (24주)</th></tr></thead>
+    <tbody>
+      <tr><td>종합 점수</td><td class="val-yellow">67</td><td>75–78</td><td>83–86</td><td class="val-green">90+</td></tr>
+      <tr><td>Simulation Drift</td><td class="val-red">31%</td><td>10%</td><td>8%</td><td class="val-green">&lt;5%</td></tr>
+      <tr><td>Calibration ECE</td><td class="val-red">0.23</td><td>0.08</td><td>0.07</td><td class="val-green">&lt;0.06</td></tr>
+      <tr><td>Planning Depth</td><td class="val-yellow">3스텝</td><td>5스텝</td><td>15스텝</td><td class="val-green">20+스텝</td></tr>
+      <tr><td>LLM 비용</td><td class="val-red">143%</td><td>100%</td><td>85%</td><td class="val-green">75%</td></tr>
+      <tr><td>Harness 규칙</td><td class="val-yellow">6개</td><td>20개+</td><td>25개+</td><td class="val-green">30개+</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cta-box">
+    <h3>Optimize 완료 — 이제 Operate로</h3>
+    <p>로드맵을 실행하면서 프로덕션 에이전트를 실시간으로 감시하세요. HAchillesWorld Operate가 Drift, ECE, 비용을 24시간 추적합니다.</p>
+    <div class="cta-btns">
+      <a href="index.html" class="btn-cta-primary">Operate 시작하기 →</a>
+      <a href="report.html" class="btn-cta-sec">Scan 리포트로 돌아가기</a>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem;">
+      Optimize Report ID: <span id="footer-id">—</span> &nbsp;·&nbsp; HAchillesWorld v1.0 &nbsp;·&nbsp; 이론 기반: 《Agentic World Modeling 2027》
+    </p>
+  </div>
+</div>
+
+</main>
+
+<script>
+  // ── 스캔 데이터 로드 ──────────────────────────────────────
+  const raw = sessionStorage.getItem('haw_scan');
+  const scan = raw ? JSON.parse(raw) : {};
+  const agentName = scan.name || '데모 에이전트';
+  const domain    = scan.domain || 'Digital Laws';
+  const scanDate  = scan.date ? new Date(scan.date) : new Date();
+
+  document.getElementById('cover-title').textContent = agentName + ' — Optimize 리포트';
+  document.getElementById('meta-name').textContent   = agentName;
+  document.getElementById('meta-level').textContent  = 'L2.3 × ' + domain;
+  document.getElementById('meta-date').textContent   = scanDate.toLocaleDateString('ko-KR');
+
+  // Report ID
+  const rid = 'OPT-' + Math.random().toString(36).substr(2,7).toUpperCase();
+  const fidEl = document.getElementById('footer-id');
+  if (fidEl) fidEl.textContent = rid;
+
+  // ── 사이드바 활성화 ──────────────────────────────────────
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const id = e.target.id;
+        const active = document.querySelector(`.nav-item[href="#${id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+
+  // ── 스크롤 진행 바 ───────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+    document.querySelectorAll('.progress-fill').forEach(b => b.style.width = pct + '%');
+  });
+</script>
+</body>
+</html>
