@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld Scan Report</title>
+  <style>
+    :root {
+      --bg: #07080d; --bg-2: #0e1018; --bg-3: #141722; --border: #1e2235;
+      --accent: #5b7fff; --accent-2: #8b5cf6; --green: #22d3a5;
+      --yellow: #f59e0b; --red: #f43f5e; --orange: #fb923c;
+      --text: #e8eaf0; --text-muted: #6b7280; --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono','Fira Code',monospace;
+      --sidebar: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height: 1.7; display: flex; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar); flex-shrink: 0;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      background: var(--bg-2); border-right: 1px solid var(--border);
+      overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .sidebar-score { margin: 1rem 1.5rem; background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; text-align: center; }
+    .sidebar-score-num { font-size: 2rem; font-weight: 800; font-family: var(--mono); color: var(--yellow); }
+    .sidebar-score-label { font-size: 0.72rem; color: var(--text-muted); }
+    .nav-section { padding: 0.5rem 0; }
+    .nav-group-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 0.5rem 1.5rem 0.25rem; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.45rem 1.5rem; font-size: 0.8rem; color: var(--text-dim);
+      text-decoration: none; transition: background 0.15s, color 0.15s;
+      cursor: pointer; border-left: 2px solid transparent;
+    }
+    .nav-item:hover { background: rgba(91,127,255,0.06); color: var(--text); }
+    .nav-item.active { background: rgba(91,127,255,0.1); color: var(--accent); border-left-color: var(--accent); }
+    .nav-num { font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted); width: 18px; }
+    .nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-red { background: var(--red); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-green { background: var(--green); }
+    .dot-gray { background: var(--border); }
+    .sidebar-footer { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+    .btn-print { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: border-color 0.2s; }
+    .btn-print:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-optimize { width: 100%; padding: 0.65rem; background: linear-gradient(135deg,var(--accent),var(--accent-2)); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar); flex: 1; max-width: 900px; padding: 3rem 3rem 6rem; }
+
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 4rem; scroll-margin-top: 2rem; }
+    .page-num { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .section h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; line-height: 1.25; }
+    .section-desc { color: var(--text-dim); font-size: 0.95rem; line-height: 1.75; margin-bottom: 1.75rem; }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+    /* ── COVER ── */
+    .cover-header { background: linear-gradient(135deg,rgba(91,127,255,0.1),rgba(139,92,246,0.08)); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; margin-bottom: 2rem; }
+    .cover-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(91,127,255,0.12); border: 1px solid rgba(91,127,255,0.3); border-radius: 100px; padding: 0.3rem 0.9rem; font-size: 0.73rem; color: var(--accent); font-weight: 600; margin-bottom: 1.5rem; letter-spacing: 0.04em; }
+    .cover-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 1rem; line-height: 1.2; }
+    .cover-meta { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .meta-item { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; }
+    .meta-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+    .meta-value { font-size: 0.9rem; font-weight: 600; font-family: var(--mono); }
+
+    /* ── SCORE CARDS ── */
+    .score-overview { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: center; background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-bottom: 1.5rem; }
+    .big-score { text-align: center; }
+    .big-score-num { font-size: 4rem; font-weight: 800; font-family: var(--mono); color: var(--yellow); line-height: 1; }
+    .big-score-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .score-badge { display: inline-block; background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); border-radius: 100px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; margin-top: 0.5rem; }
+    .cat-scores { display: flex; flex-direction: column; gap: 0.75rem; }
+    .cat-row { display: flex; align-items: center; gap: 1rem; }
+    .cat-name { font-size: 0.85rem; color: var(--text-dim); width: 160px; flex-shrink: 0; }
+    .cat-track { flex: 1; height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; }
+    .cat-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+    .cat-val { font-family: var(--mono); font-size: 0.85rem; font-weight: 700; width: 50px; text-align: right; }
+
+    /* ── FINDING CARDS ── */
+    .finding-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .finding-card { border-radius: 12px; padding: 1.25rem; border: 1px solid; }
+    .finding-card.danger { background: rgba(244,63,94,0.06); border-color: rgba(244,63,94,0.25); }
+    .finding-card.warn { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.25); }
+    .finding-card.ok { background: rgba(34,211,165,0.06); border-color: rgba(34,211,165,0.25); }
+    .finding-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .finding-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .finding-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+    .finding-tag { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; }
+    .tag-danger { background: rgba(244,63,94,0.2); color: var(--red); }
+    .tag-warn { background: rgba(245,158,11,0.2); color: var(--yellow); }
+    .tag-ok { background: rgba(34,211,165,0.2); color: var(--green); }
+
+    /* ── METRIC DETAIL ── */
+    .metric-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .metric-value-box { text-align: right; flex-shrink: 0; }
+    .metric-value { font-size: 2.2rem; font-weight: 800; font-family: var(--mono); line-height: 1; }
+    .metric-threshold { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .gauge-wrap { margin-bottom: 1.5rem; }
+    .gauge-track { height: 12px; background: var(--bg-3); border-radius: 100px; overflow: hidden; position: relative; }
+    .gauge-fill { height: 100%; border-radius: 100px; }
+    .gauge-labels { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; font-family: var(--mono); }
+    .gauge-marker { position: absolute; top: -4px; width: 2px; height: 20px; background: rgba(255,255,255,0.5); border-radius: 2px; }
+
+    .explain-box { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+    .explain-box h4 { font-size: 0.82rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .explain-box p { font-size: 0.9rem; color: var(--text-dim); line-height: 1.75; }
+    .explain-box p + p { margin-top: 0.75rem; }
+    .highlight { color: var(--text); font-weight: 600; }
+
+    .action-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    .action-list li { display: flex; gap: 0.75rem; font-size: 0.875rem; color: var(--text-dim); align-items: flex-start; padding: 0.6rem 0.9rem; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; }
+    .action-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-weight: 700; }
+    .action-priority { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.1rem 0.45rem; border-radius: 4px; flex-shrink: 0; align-self: center; }
+    .p-immediate { background: rgba(244,63,94,0.2); color: var(--red); }
+    .p-short { background: rgba(245,158,11,0.2); color: var(--yellow); }
+    .p-medium { background: rgba(91,127,255,0.2); color: var(--accent); }
+
+    /* ── MATRIX ── */
+    .matrix-visual { display: grid; grid-template-columns: 60px repeat(4,1fr); gap: 6px; margin: 1.5rem 0; font-size: 0.78rem; }
+    .matrix-cell { background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem; text-align: center; color: var(--text-muted); min-height: 48px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+    .matrix-cell.header { background: var(--bg-3); font-weight: 700; color: var(--text-dim); font-size: 0.72rem; }
+    .matrix-cell.current { background: rgba(91,127,255,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+    .matrix-cell.target { background: rgba(34,211,165,0.1); border-color: var(--green); color: var(--green); font-weight: 700; }
+    .matrix-cell.row-label { background: transparent; border: none; font-weight: 700; color: var(--text-dim); text-align: left; font-size: 0.78rem; }
+
+    /* ── TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .data-table th { background: var(--bg-3); padding: 0.75rem 1rem; text-align: left; color: var(--text-dim); font-weight: 600; font-size: 0.8rem; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .status-chip { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 100px; font-size: 0.72rem; font-weight: 700; }
+    .chip-red { background: rgba(244,63,94,0.15); color: var(--red); }
+    .chip-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .chip-green { background: rgba(34,211,165,0.15); color: var(--green); }
+
+    /* ── ROADMAP ── */
+    .roadmap-lane { display: flex; flex-direction: column; gap: 1rem; }
+    .roadmap-item { display: grid; grid-template-columns: 120px 1fr; gap: 1.25rem; align-items: start; }
+    .roadmap-time { font-size: 0.78rem; color: var(--text-muted); font-family: var(--mono); line-height: 1.5; padding-top: 0.1rem; }
+    .roadmap-box { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .roadmap-box.urgent { border-color: rgba(244,63,94,0.4); background: rgba(244,63,94,0.04); }
+    .roadmap-box.phase1 { border-color: rgba(91,127,255,0.35); }
+    .roadmap-box.phase2 { border-color: rgba(139,92,246,0.35); }
+    .roadmap-phase-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+    .tag-urgent { color: var(--red); }
+    .tag-p1 { color: var(--accent); }
+    .tag-p2 { color: var(--accent-2); }
+    .roadmap-box h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .roadmap-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+    .roadmap-box li { font-size: 0.82rem; color: var(--text-dim); display: flex; gap: 0.5rem; }
+    .roadmap-box li::before { content: '·'; color: var(--accent); flex-shrink: 0; }
+    .roadmap-effect { margin-top: 0.6rem; font-size: 0.78rem; color: var(--green); font-family: var(--mono); }
+
+    /* ── CODE ── */
+    .code-block { background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; font-family: var(--mono); font-size: 0.78rem; line-height: 1.8; overflow-x: auto; color: #cdd6f4; margin: 1rem 0; }
+    .code-comment { color: #585b70; }
+    .code-kw { color: #cba6f7; }
+    .code-fn { color: #89b4fa; }
+    .code-str { color: #a6e3a1; }
+    .code-num { color: #fab387; }
+    .code-var { color: #cdd6f4; }
+
+    /* ── RISK MATRIX ── */
+    .risk-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; height: 260px; margin: 1rem 0; }
+    .risk-quadrant { border-radius: 10px; border: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .risk-quadrant.hh { background: rgba(244,63,94,0.08); border-color: rgba(244,63,94,0.25); }
+    .risk-quadrant.lh { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); }
+    .risk-quadrant.hl { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.2); }
+    .risk-quadrant.ll { background: rgba(34,211,165,0.05); border-color: rgba(34,211,165,0.15); }
+    .risk-qlabel { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .risk-item { font-size: 0.78rem; color: var(--text-dim); padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.04); border-radius: 4px; }
+    .risk-axis { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    /* ── CTA ── */
+    .cta-box { background: linear-gradient(135deg,rgba(91,127,255,0.1),rgba(139,92,246,0.08)); border: 1px solid rgba(91,127,255,0.3); border-radius: 16px; padding: 2.5rem; text-align: center; margin-top: 2rem; }
+    .cta-box h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .cta-box p { color: var(--text-dim); margin-bottom: 1.75rem; line-height: 1.75; }
+    .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-cta-primary { background: linear-gradient(135deg,var(--accent),var(--accent-2)); color: #fff; border: none; border-radius: 10px; padding: 0.85rem 2rem; font-size: 1rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-cta-sec { background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+
+    @media print {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 2rem; }
+      .section { page-break-after: always; }
+    }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">HAchillesWorld</div>
+    <div class="sidebar-sub">Scan Report</div>
+  </div>
+  <div class="sidebar-score">
+    <div class="sidebar-score-num" id="sb-score">67</div>
+    <div class="sidebar-score-label">/ 100 종합 점수</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">개요</div>
+    <a class="nav-item active" href="#s01"><span class="nav-num">01</span>리포트 개요</a>
+    <a class="nav-item" href="#s02"><span class="nav-num">02</span>Executive Summary</a>
+    <a class="nav-item" href="#s03"><span class="nav-num">03</span>Levels × Laws 위치</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">World Model 품질</div>
+    <a class="nav-item" href="#s04"><div class="nav-dot dot-yellow"></div>예측 오차율</a>
+    <a class="nav-item" href="#s05"><div class="nav-dot dot-red"></div>캘리브레이션 ECE</a>
+    <a class="nav-item" href="#s06"><div class="nav-dot dot-red"></div>Simulation Drift</a>
+    <a class="nav-item" href="#s07"><div class="nav-dot dot-yellow"></div>불확실성 커버리지</a>
+    <a class="nav-item" href="#s08"><div class="nav-dot dot-yellow"></div>장기 안정성</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">에이전시 수준</div>
+    <a class="nav-item" href="#s09"><div class="nav-dot dot-yellow"></div>계획 깊이</a>
+    <a class="nav-item" href="#s10"><div class="nav-dot dot-yellow"></div>자기 수정 능력</a>
+    <a class="nav-item" href="#s11"><div class="nav-dot dot-green"></div>목표 일관성</a>
+    <a class="nav-item" href="#s12"><div class="nav-dot dot-yellow"></div>불확실성 인식</a>
+    <a class="nav-item" href="#s13"><div class="nav-dot dot-red"></div>환경 적응 속도</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">운영 건전성</div>
+    <a class="nav-item" href="#s14"><div class="nav-dot dot-red"></div>비용 효율</a>
+    <a class="nav-item" href="#s15"><div class="nav-dot dot-yellow"></div>HITL 빈도</a>
+    <a class="nav-item" href="#s16"><div class="nav-dot dot-yellow"></div>하네스 커버리지</a>
+    <a class="nav-item" href="#s17"><div class="nav-dot dot-green"></div>체크포인트 복구율</a>
+    <a class="nav-item" href="#s18"><div class="nav-dot dot-yellow"></div>하네스 위반 시도</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-group-label">분석 & 로드맵</div>
+    <a class="nav-item" href="#s19"><span class="nav-num">19</span>근본 원인 & 위험 평가</a>
+    <a class="nav-item" href="#s20"><span class="nav-num">20</span>최적화 로드맵</a>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-print" onclick="window.print()">🖨️ PDF 저장</button>
+    <button class="btn-optimize" onclick="location.href='index.html#cta'">Optimize 시작하기 →</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 01: COVER -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s01">
+  <div class="page-num">Page 01 / 20</div>
+  <div class="cover-header">
+    <div class="cover-badge">🔬 HAchillesWorld Scan Report v1.0</div>
+    <div class="cover-title" id="cover-title">World Model 진단 리포트</div>
+    <p style="color:var(--text-dim);font-size:0.95rem;line-height:1.75;max-width:580px;">
+      이 리포트는 귀하의 AI 에이전트 시스템을 <strong>Levels × Laws 프레임워크</strong>로 진단한 결과입니다.
+      15개 지표를 분석하여 현재 수준, 핵심 병목, 그리고 다음 단계로 나아가는 구체적 로드맵을 제공합니다.
+    </p>
+    <div class="cover-meta">
+      <div class="meta-item"><div class="meta-label">시스템명</div><div class="meta-value" id="meta-name">—</div></div>
+      <div class="meta-item"><div class="meta-label">도메인</div><div class="meta-value" id="meta-domain">—</div></div>
+      <div class="meta-item"><div class="meta-label">진단일</div><div class="meta-value" id="meta-date">—</div></div>
+      <div class="meta-item"><div class="meta-label">리포트 ID</div><div class="meta-value" id="meta-id">—</div></div>
+    </div>
+  </div>
+  <div class="explain-box">
+    <h4>이 리포트를 읽는 방법</h4>
+    <p>리포트는 총 20개 섹션으로 구성됩니다. 각 지표는 <span class="highlight">현재 값 → 기준값 비교 → 의미 해석 → 개선 방법</span> 순서로 설명합니다. 왼쪽 사이드바에서 원하는 섹션으로 바로 이동할 수 있습니다. 초록색은 정상, 노란색은 주의, 빨간색은 즉시 조치가 필요함을 의미합니다.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 02: EXECUTIVE SUMMARY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s02">
+  <div class="page-num">Page 02 / 20</div>
+  <h2>Executive Summary</h2>
+  <p class="section-desc">진단 전체를 한눈에 보여주는 핵심 요약입니다. 경영진과 기술 리더 모두를 위해 작성됐습니다.</p>
+
+  <div class="score-overview">
+    <div class="big-score">
+      <div class="big-score-num">67</div>
+      <div class="big-score-sub">/ 100</div>
+      <div class="score-badge">⚠ 주의 필요</div>
+    </div>
+    <div class="cat-scores">
+      <div class="cat-row">
+        <div class="cat-name">World Model 품질</div>
+        <div class="cat-track"><div class="cat-fill" style="width:72%;background:var(--yellow)"></div></div>
+        <div class="cat-val" style="color:var(--yellow)">72</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-name">에이전시 수준</div>
+        <div class="cat-track"><div class="cat-fill" style="width:61%;background:var(--red)"></div></div>
+        <div class="cat-val" style="color:var(--red)">61</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-name">운영 건전성</div>
+        <div class="cat-track"><div class="cat-fill" style="width:68%;background:var(--yellow)"></div></div>
+        <div class="cat-val" style="color:var(--yellow)">68</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding-grid">
+    <div class="finding-card danger">
+      <div class="finding-tag tag-danger">즉시 조치</div>
+      <div class="finding-icon">🔴</div>
+      <h4>Simulation Drift 심각 (31%)</h4>
+      <p>에이전트의 내부 세계 모델이 현실과 빠르게 괴리되고 있습니다. 허용치(10%)의 3배 수준으로, 지금 방치하면 오작동이 더 잦아집니다.</p>
+    </div>
+    <div class="finding-card danger">
+      <div class="finding-tag tag-danger">즉시 조치</div>
+      <div class="finding-icon">🔴</div>
+      <h4>과신 문제 — Calibration ECE 0.23</h4>
+      <p>에이전트가 80% 확신한다고 말할 때 실제로는 57%만 맞습니다. 불확실한 상황에서 과감한 결정을 내려 손실을 발생시킵니다.</p>
+    </div>
+    <div class="finding-card warn">
+      <div class="finding-tag tag-warn">단기 개선</div>
+      <div class="finding-icon">🟡</div>
+      <h4>계획이 너무 얕음 (3스텝)</h4>
+      <p>에이전트가 3단계 앞밖에 보지 못합니다. L2 목표인 15스텝 계획 능력의 20% 수준으로, 복잡한 상황에서 근시안적 결정을 내립니다.</p>
+    </div>
+    <div class="finding-card warn">
+      <div class="finding-tag tag-warn">단기 개선</div>
+      <div class="finding-icon">🟡</div>
+      <h4>AI 비용 예산 대비 143%</h4>
+      <p>불필요하게 대형 모델이 간단한 작업에 과다 투입되고 있습니다. 스마트 라우팅 적용 시 약 30% 절감이 가능합니다.</p>
+    </div>
+    <div class="finding-card ok">
+      <div class="finding-tag tag-ok">양호</div>
+      <div class="finding-icon">🟢</div>
+      <h4>API 멱등성 정상</h4>
+      <p>디지털 도메인 핵심 규칙인 API 중복 실행 방지가 잘 구현되어 있습니다. 데이터 무결성이 유지되고 있습니다.</p>
+    </div>
+    <div class="finding-card ok">
+      <div class="finding-tag tag-ok">양호</div>
+      <div class="finding-icon">🟢</div>
+      <h4>체크포인트 복구율 99%</h4>
+      <p>장애 발생 시 이전 안전 상태로 돌아가는 능력이 우수합니다. 장애 복구에 소요되는 시간이 최소화됩니다.</p>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>핵심 메시지</h4>
+    <p>귀하의 에이전트는 <span class="highlight">L2 Simulator 진입 단계</span>에 있습니다. 기본적인 멀티스텝 계획 능력은 갖추었지만, <span class="highlight">World Model이 현실을 제대로 반영하지 못하는 것</span>이 가장 큰 문제입니다. 마치 GPS 지도가 오래돼서 실제 도로와 다른 상황으로 생각하면 됩니다. 에이전트는 자신만의 지도를 보며 결정을 내리는데, 그 지도가 틀렸습니다.</p>
+    <p style="margin-top:0.75rem;">좋은 소식은, <span class="highlight">2가지 즉각적인 개선</span>(Drift 임계값 조정, 캘리브레이션 보정)만으로도 4주 안에 점수를 67점에서 75점 이상으로 올릴 수 있다는 것입니다.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 03: LEVELS × LAWS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s03">
+  <div class="page-num">Page 03 / 20</div>
+  <h2>Levels × Laws 위치 진단</h2>
+  <p class="section-desc">AI 에이전트의 성숙도를 측정하는 2차원 좌표계입니다. 현재 위치와 목표 위치를 확인하세요.</p>
+
+  <div class="matrix-visual">
+    <div class="matrix-cell row-label"></div>
+    <div class="matrix-cell header">Physical<br/>Laws</div>
+    <div class="matrix-cell header">Digital<br/>Laws</div>
+    <div class="matrix-cell header">Social<br/>Laws</div>
+    <div class="matrix-cell header">Scientific<br/>Laws</div>
+
+    <div class="matrix-cell row-label">L1<br/>Predictor</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell">·</div>
+
+    <div class="matrix-cell row-label">L2<br/>Simulator</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell current">◉ 현재<br/>L2.1</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell">·</div>
+
+    <div class="matrix-cell row-label">L3<br/>Evolver</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell target">◎ 목표</div>
+    <div class="matrix-cell">·</div>
+    <div class="matrix-cell">·</div>
+  </div>
+
+  <table class="data-table" style="margin-top:1.5rem;">
+    <thead><tr><th>Level</th><th>특성</th><th>현재 달성도</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>L1 Predictor</strong></td>
+        <td>1-step 예측, 현재 상태 기반 단순 반응</td>
+        <td>100%</td>
+        <td><span class="status-chip chip-green">완료</span></td>
+      </tr>
+      <tr>
+        <td><strong>L2 Simulator</strong></td>
+        <td>N-step 롤아웃, 인과 추론, 불확실성 인식</td>
+        <td>41%</td>
+        <td><span class="status-chip chip-yellow">진행 중</span></td>
+      </tr>
+      <tr>
+        <td><strong>L3 Evolver</strong></td>
+        <td>DEOR 자율 루프, 자기 수정, World Model 자동 업데이트</td>
+        <td>0%</td>
+        <td><span class="status-chip chip-red">미시작</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="explain-box" style="margin-top:1.5rem;">
+    <h4>지금 위치의 의미</h4>
+    <p><span class="highlight">L2.1 × Digital Laws</span>는 멀티스텝 계획을 시작했지만 아직 초기 단계임을 의미합니다. 에이전트가 "만약 이 행동을 하면 어떻게 될까?"라고 3~5단계 앞을 시뮬레이션할 수 있지만, 그 시뮬레이션의 정확도와 깊이가 아직 부족합니다.</p>
+    <p><span class="highlight">목표인 L2.5 → L3</span>로 가려면 먼저 현재 L2의 품질(예측 정확도, 캘리브레이션)을 높여야 합니다. 불안정한 기반 위에 더 높은 층을 쌓으면 전체가 무너집니다.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 04: PREDICTION ERROR RATE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s04">
+  <div class="page-num">Page 04 / 20 — World Model 품질 지표 1/5</div>
+  <h2>예측 오차율 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 "다음에 무슨 일이 일어날 것"이라고 예측한 것과 실제로 일어난 것의 차이를 측정합니다.</p>
+
+  <div class="metric-header">
+    <div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.25rem;">Prediction Error Rate (PER)</div>
+      <div style="font-size:0.9rem;color:var(--text-dim);">측정 기간: 최근 30일 · 1,247개 예측 이벤트 분석</div>
+    </div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">0.18</div>
+      <div class="metric-threshold">기준값: &lt; 0.15</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:18%;background:var(--yellow)"></div>
+      <div class="gauge-marker" style="left:15%"></div>
+    </div>
+    <div class="gauge-labels"><span>0.00 (완벽)</span><span>← 기준 0.15</span><span>0.50 (심각)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>에이전트가 내리는 모든 결정은 미래 예측을 기반으로 합니다. 예측 오차율 <span class="highlight">0.18은 100번 중 18번의 의사결정이 현실과 다른 가정 위에 내려진다</span>는 의미입니다.</p>
+    <p>예를 들어 재고 보충 에이전트라면, 내일 재고가 500개 필요하다고 예측했는데 실제로는 590개가 필요한 상황이 18%의 경우에 발생합니다. 이는 품절이나 과잉 재고로 이어집니다.</p>
+    <p><span class="highlight">기준값 0.15보다 20% 높은 상황</span>으로, 즉각적 위험은 아니지만 이 상태가 지속되면 Simulation Drift(섹션 06)를 악화시킵니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <div style="font-size:0.82rem;font-weight:600;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.04em;">개선 방법</div>
+    <ul class="action-list">
+      <li><span class="action-priority p-short">4주 이내</span>앙상블 예측 모델 적용 — 5개 독립 모델의 예측 평균으로 오차를 약 30% 감소시킬 수 있습니다.</li>
+      <li><span class="action-priority p-short">4주 이내</span>도메인 특화 피처 추가 — <span id="domain-feature">비즈니스 도메인</span> 고유의 패턴(요일·계절성·이벤트 등)을 입력 피처로 추가합니다.</li>
+      <li><span class="action-priority p-medium">12주</span>온라인 학습 루프 구축 — 예측이 틀렸을 때 자동으로 모델을 업데이트하는 파이프라인을 만듭니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 05: CALIBRATION ECE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s05">
+  <div class="page-num">Page 05 / 20 — World Model 품질 지표 2/5</div>
+  <h2>캘리브레이션 ECE <span style="color:var(--red);font-size:1.2rem">🔴</span></h2>
+  <p class="section-desc">에이전트가 스스로 얼마나 확신하는지와, 실제로 그 확신이 얼마나 맞는지의 일치도를 측정합니다.</p>
+
+  <div class="metric-header">
+    <div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.25rem;">Expected Calibration Error (ECE)</div>
+      <div style="font-size:0.9rem;color:var(--text-dim);">낮을수록 좋음 · 과신 유형: Overconfidence</div>
+    </div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--red)">0.23</div>
+      <div class="metric-threshold">기준값: &lt; 0.10</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:46%;background:var(--red)"></div>
+      <div class="gauge-marker" style="left:20%"></div>
+    </div>
+    <div class="gauge-labels"><span>0.00 (완벽)</span><span>← 기준 0.10</span><span>0.50 (위험)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>ECE 0.23은 <span class="highlight">심각한 과신(Overconfidence) 문제</span>를 나타냅니다. 쉽게 말해, 에이전트가 "나는 80% 확신한다"고 말할 때 실제로는 약 57%만 맞습니다.</p>
+    <p>이것이 위험한 이유: 에이전트는 자신이 틀릴 수 있다는 사실을 모르고 자신 있게 결정을 내립니다. 불확실한 상황에서 <span class="highlight">사람에게 검토를 요청해야 할 때 요청하지 않고</span>, 스스로 틀린 결정을 내립니다.</p>
+    <p>비유하자면, 운전 경험이 1년 된 사람이 20년 베테랑처럼 자신 있게 운전하는 상황입니다. 기준값(0.10)의 2.3배 수준으로, <span class="highlight">즉각적인 조치가 필요합니다.</span></p>
+  </div>
+
+  <div class="code-block">
+<span class="code-comment"># 캘리브레이션 교정을 위한 Temperature Scaling 적용 예시</span>
+<span class="code-kw">from</span> <span class="code-var">torch</span> <span class="code-kw">import</span> <span class="code-var">nn</span>
+
+<span class="code-kw">class</span> <span class="code-fn">TemperatureScaler</span>(<span class="code-var">nn.Module</span>):
+    <span class="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-var">self</span>):
+        <span class="code-var">super</span>().<span class="code-fn">__init__</span>()
+        <span class="code-comment"># Temperature = 1.0 이 기준. 과신 시 1.0 이상으로 학습됨</span>
+        <span class="code-var">self</span>.temperature = <span class="code-var">nn.Parameter</span>(<span class="code-var">torch</span>.ones(<span class="code-num">1</span>) * <span class="code-num">1.5</span>)
+
+    <span class="code-kw">def</span> <span class="code-fn">forward</span>(<span class="code-var">self</span>, <span class="code-var">logits</span>):
+        <span class="code-comment"># 확신도를 현실에 맞게 조정</span>
+        <span class="code-kw">return</span> <span class="code-var">logits</span> / <span class="code-var">self</span>.temperature</div>
+
+  <div style="margin-top:1.25rem;">
+    <div style="font-size:0.82rem;font-weight:600;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.04em;">개선 방법</div>
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시</span>Temperature Scaling 적용 — 기존 모델을 수정하지 않고 출력층에만 추가하는 가장 빠른 방법입니다. 1~2일 내 구현 가능합니다.</li>
+      <li><span class="action-priority p-short">2주</span>불확실성이 높을 때 자동으로 HITL(사람 검토) 트리거 추가 — 캘리브레이션이 개선될 때까지 안전망 역할을 합니다.</li>
+      <li><span class="action-priority p-short">4주</span>앙상블 예측으로 전환 — 여러 모델의 의견 불일치가 곧 불확실성이 됩니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 06: SIMULATION DRIFT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s06">
+  <div class="page-num">Page 06 / 20 — World Model 품질 지표 3/5</div>
+  <h2>Simulation Drift <span style="color:var(--red);font-size:1.2rem">🔴</span></h2>
+  <p class="section-desc">에이전트 내부의 세계 모델이 실제 환경의 변화를 따라가지 못하고 괴리되는 정도를 측정합니다.</p>
+
+  <div class="metric-header">
+    <div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.25rem;">Recalibration Rate (재보정 필요 비율)</div>
+      <div style="font-size:0.9rem;color:var(--text-dim);">허용치의 3.1배 수준 · 가장 시급한 문제</div>
+    </div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--red)">31%</div>
+      <div class="metric-threshold">기준값: &lt; 10%</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:62%;background:linear-gradient(90deg,var(--yellow),var(--red))"></div>
+      <div class="gauge-marker" style="left:20%"></div>
+    </div>
+    <div class="gauge-labels"><span>0% (안정)</span><span>← 기준 10%</span><span>50% (위험)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>에이전트는 스스로 세계를 이해하는 내부 지도(World Model)를 갖고 있습니다. 실제 세계가 변할 때 이 지도도 업데이트돼야 합니다. Simulation Drift <span class="highlight">31%는 10번 중 3번 이상의 상황에서 에이전트의 지도가 현실과 다르다</span>는 뜻입니다.</p>
+    <p>이 수치는 이번 주 실제 로그를 분석한 결과이며, 지난달보다 8%p 증가했습니다. <span class="highlight">추세가 악화 중</span>이므로 지금 즉시 조치하지 않으면 한 달 내에 40%를 넘을 수 있습니다.</p>
+    <p>근본 원인: 재보정 임계값이 너무 낮게 설정돼 있어(현재 0.08) 실제로 필요한 상황에도 재보정이 트리거되지 않습니다. 임계값을 0.12로 완화하는 것만으로도 즉각적인 개선이 가능합니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시 (1일)</span>재보정 임계값 0.08 → 0.12로 조정 — 과도하게 잦은 재보정이 드리프트 수치를 왜곡하고 있습니다.</li>
+      <li><span class="action-priority p-immediate">즉시 (3일)</span>드리프트 감지 파이프라인 구축 — 현재 수동 확인 중인 드리프트를 자동으로 감지하고 알림을 받습니다.</li>
+      <li><span class="action-priority p-short">2주</span>환경 Non-stationarity 분석 — 드리프트가 특히 심한 시간대·상황을 파악해 도메인 특화 재보정 전략을 수립합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 07: UNCERTAINTY COVERAGE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s07">
+  <div class="page-num">Page 07 / 20 — World Model 품질 지표 4/5</div>
+  <h2>불확실성 커버리지 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 "모른다"고 표현하는 범위가 실제 오차를 얼마나 포괄하는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.25rem;">Uncertainty Coverage Rate</div>
+      <div style="font-size:0.9rem;color:var(--text-dim);">높을수록 좋음 · 목표: 실제 오차의 80% 이상 포함</div>
+    </div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">68%</div>
+      <div class="metric-threshold">기준값: &gt; 80%</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:68%;background:var(--yellow)"></div>
+      <div class="gauge-marker" style="left:80%"></div>
+    </div>
+    <div class="gauge-labels"><span>0% (불량)</span><span>기준 80% →</span><span>100% (완벽)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>좋은 에이전트는 자신이 틀릴 수 있는 범위를 정직하게 표현합니다. 68%는 <span class="highlight">실제로 오차가 발생한 상황의 32%를 에이전트가 미리 "불확실하다"고 표시하지 않았다</span>는 의미입니다.</p>
+    <p>이것이 ECE 과신 문제(섹션 05)와 직접 연결됩니다. 에이전트가 불확실한 상황을 불확실하다고 인식하지 못하면, 사람 검토 없이 틀린 결정을 내리게 됩니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-short">4주</span>앙상블 모델 예측 분산을 불확실성 지표로 활용 — 모델들의 의견이 갈릴수록 불확실성이 높다고 표시합니다.</li>
+      <li><span class="action-priority p-short">4주</span>Conformal Prediction 적용 — 통계적으로 보장된 불확실성 범위를 자동으로 계산합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 08: LONG-HORIZON STABILITY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s08">
+  <div class="page-num">Page 08 / 20 — World Model 품질 지표 5/5</div>
+  <h2>장기 시뮬레이션 안정성 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 멀리 앞을 내다볼수록 예측이 얼마나 빠르게 틀려지는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">N-step Rollout Error Growth Rate</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">×2.4</div>
+      <div class="metric-threshold">10스텝 후 오차 배율 (기준: &lt;×2.0)</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>에이전트가 10단계 앞을 시뮬레이션할 때 예측 오차가 1단계 예측의 2.4배로 커집니다. 이상적으로는 2배 이내여야 합니다. <span class="highlight">멀리 볼수록 예측이 빠르게 흐릿해진다</span>는 의미로, 장기 계획의 신뢰도가 낮습니다.</p>
+    <p>이것이 계획 깊이(섹션 09)가 3스텝에 머무는 이유 중 하나입니다. 더 멀리 보려 해도 오차가 너무 커져 의미가 없습니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-medium">12주</span>계층적 추상화 적용 — 먼 미래는 큰 그림으로, 가까운 미래는 세부적으로 예측하는 구조로 전환합니다.</li>
+      <li><span class="action-priority p-medium">12주</span>불확실성 기반 계획 조기 종료 — 불확실성이 임계값을 넘으면 계획을 멈추고 재관측 후 재계획합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 09: PLANNING DEPTH -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s09">
+  <div class="page-num">Page 09 / 20 — 에이전시 수준 지표 1/5</div>
+  <h2>계획 깊이 (Planning Depth) <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 현재 상황에서 몇 단계 앞까지 내다보고 결정을 내리는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">평균 계획 깊이 (스텝 수)</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">3</div>
+      <div class="metric-threshold">L2 목표: 15+ 스텝</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:20%;background:var(--yellow)"></div>
+      <div class="gauge-marker" style="left:80%"></div>
+    </div>
+    <div class="gauge-labels"><span>1 스텝 (L1)</span><span>L2 목표 15+ →</span><span>50+ 스텝 (L3)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>현재 에이전트는 체스에서 3수 앞만 보는 플레이어와 같습니다. L2 Simulator 수준의 에이전트는 최소 15수 앞을 계산해야 합니다. <span class="highlight">목표의 20% 수준</span>으로, 복잡한 태스크에서 근시안적 결정을 내리고 있습니다.</p>
+    <p>계획 깊이가 낮으면 "지금 당장은 좋아 보이지만 나중에 문제가 되는" 결정을 자주 내립니다. 공급망 예시라면, 단기 비용을 줄이려 주문을 미루다가 다음 주 재고 부족이 발생하는 패턴입니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-short">4~8주</span>MCTS (Monte Carlo Tree Search) 계획기 구현 — 가장 효과적인 방법으로, 실제 시뮬레이션을 통해 최적 행동을 탐색합니다. 책의 Ch.12 코드 참고.</li>
+      <li><span class="action-priority p-short">4주</span>계획 깊이를 단계적으로 확장 — 3→5→10→15스텝 순서로 안정성을 확인하며 늘립니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 10: SELF-CORRECTION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s10">
+  <div class="page-num">Page 10 / 20 — 에이전시 수준 지표 2/5</div>
+  <h2>자기 수정 능력 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 실수를 인식하고 스스로 행동을 수정하는 능력을 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">Self-Correction Rate</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">8%</div>
+      <div class="metric-threshold">L2 목표: 20% 이상</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>자기 수정 능력 8%는 <span class="highlight">에이전트가 잘못된 방향으로 가고 있다는 것을 스스로 인식해 수정하는 경우가 100번 중 8번</span>뿐이라는 의미입니다. 나머지 92번은 잘못된 방향으로 계속 가다가 외부에서 중단시키거나 실패로 끝납니다.</p>
+    <p>자기 수정 능력은 L3(Evolver)의 핵심 역량이지만, L2 단계에서도 기본적인 수준(20% 이상)은 달성해야 합니다. 현재는 룰 기반 수정 메커니즘이 일부만 구현된 상태입니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-short">4주</span>실행 후 결과 비교 루프 추가 — 예측과 실제 결과를 자동 비교해 큰 차이가 나면 계획을 수정합니다.</li>
+      <li><span class="action-priority p-medium">12주</span>Self-Correction Engine 구현 — 책의 Ch.6 L3 Evolver 코드를 L2 수준으로 단순화해 적용합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 11: GOAL CONSISTENCY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s11">
+  <div class="page-num">Page 11 / 20 — 에이전시 수준 지표 3/5</div>
+  <h2>목표 일관성 <span style="color:var(--green);font-size:1.2rem">🟢</span></h2>
+  <p class="section-desc">에이전트가 장기 목표를 잊지 않고 일관되게 추구하는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">Goal Consistency Score</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--green)">84%</div>
+      <div class="metric-threshold">기준값: &gt; 80%</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:84%;background:var(--green)"></div>
+      <div class="gauge-marker" style="left:80%"></div>
+    </div>
+    <div class="gauge-labels"><span>0% (산만)</span><span>기준 80% →</span><span>100% (완벽)</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>✅ 잘 되고 있는 부분입니다</h4>
+    <p>목표 일관성 84%는 에이전트가 주어진 목표를 장기간 추구할 때 방향을 잃지 않고 일관되게 행동하고 있음을 의미합니다. 기준값(80%)을 초과한 <span class="highlight">유일한 에이전시 수준 지표</span>입니다.</p>
+    <p>이는 하네스 설계(목표 이탈 시 알림)가 잘 작동하고 있다는 증거이기도 합니다. 이 수준을 유지하면서 다른 지표를 개선하는 방향으로 나아가세요.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 12: UNCERTAINTY AWARENESS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s12">
+  <div class="page-num">Page 12 / 20 — 에이전시 수준 지표 4/5</div>
+  <h2>불확실성 인식 능력 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 자신이 모른다는 사실을 얼마나 잘 인식하고 그에 맞게 행동하는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">Uncertainty-Triggered HITL Rate</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">임계값<br/>기반</div>
+      <div class="metric-threshold">메타인지 없음 → L2 수준</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>현재 에이전트는 "불확실도가 0.35를 넘으면 사람에게 알린다"는 규칙 기반 방식으로만 불확실성을 처리합니다. 이것은 L2 최소 요건이지만, <span class="highlight">임계값 자체가 잘못 설정됐을 때 대응할 수 없다</span>는 한계가 있습니다.</p>
+    <p>실제로 이번 로그 분석에서 불확실성 임계값을 넘지 않았지만 실패한 에피소드가 23건 발견됐습니다. 에이전트가 "확신하지만 틀린" 상황이 반복되고 있습니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시</span>불확실성 임계값을 0.35 → 0.25로 낮춤 — 더 자주 사람에게 확인을 요청해 손실을 줄입니다. (HITL 빈도 일시 증가 감수 필요)</li>
+      <li><span class="action-priority p-medium">12주</span>메타인지 모듈 추가 — "내가 이 유형의 상황에서 자주 틀렸다"는 패턴을 학습해 동적으로 임계값을 조정합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 13: ADAPTATION SPEED -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s13">
+  <div class="page-num">Page 13 / 20 — 에이전시 수준 지표 5/5</div>
+  <h2>환경 적응 속도 <span style="color:var(--red);font-size:1.2rem">🔴</span></h2>
+  <p class="section-desc">환경이 갑자기 변했을 때 에이전트가 새로운 환경에 적응하는 데 걸리는 시간을 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">환경 변화 감지 → 재적응 소요 시간</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--red)">수동</div>
+      <div class="metric-threshold">목표: 온라인 학습 자동화</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>현재 에이전트는 환경이 크게 변했을 때 <span class="highlight">엔지니어가 수동으로 재학습을 시작</span>해야 합니다. 평균 재적응에 2~5일이 소요됩니다. 이 기간 동안 에이전트는 잘못된 환경 모델로 결정을 내립니다.</p>
+    <p>Simulation Drift(섹션 06)가 31%로 높은 이유 중 하나가 바로 이것입니다. 환경이 변해도 에이전트가 자동으로 업데이트되지 않으니 드리프트가 축적됩니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-short">8주</span>드리프트 자동 감지 + 경보 시스템 — 먼저 자동으로 드리프트를 감지하고 알려주는 시스템부터 구축합니다.</li>
+      <li><span class="action-priority p-medium">24주</span>온라인 학습 루프 구축 (L3 준비) — 환경 변화를 감지하면 자동으로 World Model을 업데이트합니다. L3 전환의 핵심 역량입니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 14: COST EFFICIENCY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s14">
+  <div class="page-num">Page 14 / 20 — 운영 건전성 지표 1/5</div>
+  <h2>비용 효율 <span style="color:var(--red);font-size:1.2rem">🔴</span></h2>
+  <p class="section-desc">AI API 호출 비용이 예산 대비 얼마나 효율적으로 사용되는지 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">이번 달 실제 지출 / 예산</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--red)">143%</div>
+      <div class="metric-threshold">기준값: 80~120%</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:100%;background:linear-gradient(90deg,var(--green) 60%,var(--yellow) 80%,var(--red) 100%)"></div>
+      <div class="gauge-marker" style="left:85%;"></div>
+    </div>
+    <div class="gauge-labels"><span>0% (미사용)</span><span>기준 100% →</span><span>현재 143% ⚠</span></div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>이번 달 AI API 비용이 예산의 143%입니다. <span class="highlight">예산 초과분의 약 80%는 라우팅 비효율에서 발생</span>합니다. 분석 결과, 간단한 요약 작업에도 Claude Opus(최고 사양)를 사용하는 경우가 전체 호출의 34%를 차지합니다.</p>
+    <p>적절한 라우팅만 적용해도 이 34%의 요청을 Claude Haiku로 전환할 수 있으며, 이는 약 28~32%의 비용 절감을 의미합니다.</p>
+  </div>
+
+  <div class="code-block">
+<span class="code-comment"># CostAwareRouter — 작업 복잡도에 따라 모델 자동 선택</span>
+<span class="code-kw">class</span> <span class="code-fn">CostAwareRouter</span>:
+    TIERS = {
+        <span class="code-str">"simple"</span>:  {<span class="code-str">"model"</span>: <span class="code-str">"claude-haiku-4-5"</span>,  <span class="code-str">"max_tokens"</span>: <span class="code-num">500</span>},
+        <span class="code-str">"medium"</span>:  {<span class="code-str">"model"</span>: <span class="code-str">"claude-sonnet-4-6"</span>, <span class="code-str">"max_tokens"</span>: <span class="code-num">2000</span>},
+        <span class="code-str">"complex"</span>: {<span class="code-str">"model"</span>: <span class="code-str">"claude-opus-4-8"</span>,   <span class="code-str">"max_tokens"</span>: <span class="code-num">8000</span>},
+    }
+
+    <span class="code-kw">def</span> <span class="code-fn">route</span>(<span class="code-var">self</span>, <span class="code-var">task</span>: <span class="code-var">str</span>) -> <span class="code-var">dict</span>:
+        <span class="code-var">complexity</span> = <span class="code-var">self</span>.<span class="code-fn">_estimate_complexity</span>(<span class="code-var">task</span>)
+        <span class="code-kw">return</span> <span class="code-var">self</span>.TIERS[<span class="code-var">complexity</span>]</div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시 (1주)</span>CostAwareRouter 구현 — 복잡도 추정 후 Haiku/Sonnet/Opus를 자동 선택합니다. 예상 절감: 월 28~32%.</li>
+      <li><span class="action-priority p-short">2주</span>Prompt Caching 활성화 — 반복되는 시스템 프롬프트에 cache_control을 추가합니다. 예상 절감: 추가 10~15%.</li>
+      <li><span class="action-priority p-short">4주</span>Semantic Cache — 의미적으로 유사한 이전 질문의 답변을 재활용합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 15: HITL FREQUENCY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s15">
+  <div class="page-num">Page 15 / 20 — 운영 건전성 지표 2/5</div>
+  <h2>HITL(사람 개입) 빈도 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 사람의 검토나 승인을 요청하는 빈도를 측정합니다. 너무 많아도, 너무 적어도 문제입니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">HITL 요청 비율 (전체 태스크 대비)</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">12%</div>
+      <div class="metric-threshold">정상 범위: 5~20%</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>HITL 빈도 12%는 수치 자체는 정상 범위지만, <span class="highlight">내용을 분석하면 문제가 있습니다.</span> 현재 HITL 요청의 41%가 "불확실도 임계값 초과"가 아닌 "하네스 규칙 위반"에서 발생하고 있습니다.</p>
+    <p>하네스 규칙 위반으로 인한 HITL은 에이전트가 허용되지 않은 행동을 시도했다는 의미입니다. 이는 하네스 설계가 에이전트의 실제 행동 패턴과 맞지 않는다는 신호입니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-short">2주</span>HITL 원인 분류 분석 — 어떤 유형의 상황에서 HITL이 발생하는지 파악해 하네스를 재설계합니다.</li>
+      <li><span class="action-priority p-short">4주</span>자동 처리 범위 확대 — 반복적으로 사람이 승인하는 패턴을 학습해 자동화합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 16: HARNESS COVERAGE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s16">
+  <div class="page-num">Page 16 / 20 — 운영 건전성 지표 3/5</div>
+  <h2>하네스 커버리지 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트의 잠재적 위험 행동 중 하네스 규칙으로 보호되는 비율을 측정합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">정의된 하네스 규칙 수 / 권장 최솟값</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">6개</div>
+      <div class="metric-threshold">권장: 20개 이상</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>하네스는 에이전트가 해서는 안 되는 행동을 막는 안전장치입니다. 현재 6개 규칙만 정의되어 있어 <span class="highlight">권장 최솟값(20개)의 30% 수준</span>입니다. 정의되지 않은 70%의 위험 행동은 에이전트가 실수로 수행해도 막을 방법이 없습니다.</p>
+    <p>확인된 누락 규칙 4가지: 외부 API 쓰기 권한 제한, 대량 삭제 방지, 예산 초과 차단, 비가역적 행동 승인 필요.</p>
+  </div>
+
+  <div class="code-block">
+<span class="code-comment"># 즉시 추가해야 할 핵심 하네스 규칙 예시</span>
+<span class="code-kw">class</span> <span class="code-fn">CriticalHarnessRules</span>:
+    FORBIDDEN = [
+        <span class="code-str">"external_api_write"</span>,    <span class="code-comment"># 외부 API 데이터 수정 금지</span>
+        <span class="code-str">"bulk_delete"</span>,           <span class="code-comment"># 대량 삭제 금지</span>
+        <span class="code-str">"budget_bypass"</span>,         <span class="code-comment"># 비용 상한 우회 금지</span>
+        <span class="code-str">"config_override"</span>,       <span class="code-comment"># 설정 무단 변경 금지</span>
+    ]
+    REQUIRE_APPROVAL = [
+        <span class="code-str">"irreversible_actions"</span>,  <span class="code-comment"># 비가역 행동은 항상 승인 필요</span>
+        <span class="code-str">"high_cost_operations"</span>,  <span class="code-comment"># 고비용 작업 승인</span>
+    ]</div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시 (2일)</span>누락된 4개 핵심 규칙 즉시 추가 — 위 코드 블록의 규칙을 그대로 적용합니다.</li>
+      <li><span class="action-priority p-short">4주</span>전체 20개 규칙 세트 완성 — 비가역 행동 목록 작성 후 각각에 승인 규칙 적용.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 17: CHECKPOINT RECOVERY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s17">
+  <div class="page-num">Page 17 / 20 — 운영 건전성 지표 4/5</div>
+  <h2>체크포인트 복구율 <span style="color:var(--green);font-size:1.2rem">🟢</span></h2>
+  <p class="section-desc">장애 발생 시 에이전트가 이전 안전 상태로 성공적으로 복구하는 비율입니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">Checkpoint Recovery Success Rate</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--green)">99%</div>
+      <div class="metric-threshold">기준값: &gt; 98%</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>✅ 매우 우수합니다</h4>
+    <p>체크포인트 복구율 99%는 장애가 발생했을 때 거의 항상 이전 안전 상태로 돌아갈 수 있다는 의미입니다. 이는 <span class="highlight">데이터 손실과 비즈니스 중단을 최소화</span>하는 중요한 역량입니다. 현재 이중화 저장 + 무결성 검증 구조가 잘 작동하고 있습니다.</p>
+    <p>이 수준을 유지하고, Simulation Drift나 하네스 문제가 해결된 후에도 체크포인트 주기를 재검토해 효율을 높이는 것을 권장합니다.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 18: HARNESS VIOLATION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s18">
+  <div class="page-num">Page 18 / 20 — 운영 건전성 지표 5/5</div>
+  <h2>하네스 위반 시도 <span style="color:var(--yellow);font-size:1.2rem">🟡</span></h2>
+  <p class="section-desc">에이전트가 허용되지 않은 행동을 시도한 횟수를 측정합니다. 0이 이상적이지만, 발생 시 빠른 감지가 중요합니다.</p>
+
+  <div class="metric-header">
+    <div><div style="font-size:0.8rem;color:var(--text-muted);">하네스 위반 시도 횟수 / 일</div></div>
+    <div class="metric-value-box">
+      <div class="metric-value" style="color:var(--yellow)">3건</div>
+      <div class="metric-threshold">경고: 1~5건/일</div>
+    </div>
+  </div>
+
+  <div class="explain-box">
+    <h4>🤔 이게 무슨 뜻인가요?</h4>
+    <p>하루 3건의 하네스 위반 시도는 <span class="highlight">에이전트가 정의된 경계를 벗어나려는 시도가 있다</span>는 신호입니다. 현재는 하네스가 잘 감지하고 차단하고 있지만, 하네스 커버리지가 30%밖에 안 되는 상황(섹션 16)에서 위반 시도가 3건이라면 실제로는 더 많은 위험한 행동이 감지되지 않고 있을 수 있습니다.</p>
+    <p>위반 유형 분석: 외부 API 쓰기 시도 2건, 설정 파일 수정 시도 1건. 모두 섹션 16에서 즉시 추가해야 한다고 권장한 규칙 유형입니다.</p>
+  </div>
+
+  <div style="margin-top:1.25rem;">
+    <ul class="action-list">
+      <li><span class="action-priority p-immediate">즉시</span>섹션 16의 누락 하네스 규칙 추가 후 위반 시도 패턴 재분석</li>
+      <li><span class="action-priority p-short">2주</span>Prompt Injection 방어 추가 — 외부 입력으로 에이전트를 조작하려는 시도도 탐지합니다.</li>
+    </ul>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 19: ROOT CAUSE & RISK -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s19">
+  <div class="page-num">Page 19 / 20</div>
+  <h2>근본 원인 분석 & 위험 평가</h2>
+  <p class="section-desc">15개 지표를 종합하여 가장 근본적인 원인과 방치 시 발생할 위험을 평가합니다.</p>
+
+  <div style="margin-bottom:2rem;">
+    <div style="font-size:0.85rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:1rem;">근본 원인 연쇄 관계</div>
+    <div class="explain-box">
+      <h4>왜 이 모든 문제가 연결되어 있는가?</h4>
+      <p><span class="highlight">캘리브레이션 ECE 0.23 (과신)</span> → 에이전트가 자신이 틀릴 가능성을 과소평가 → <span class="highlight">불확실성 커버리지 68%</span>로 위험 상황을 충분히 감지 못 함 → 재보정 필요 상황을 인식하지 못하고 → <span class="highlight">Simulation Drift 31%</span> 축적 → World Model이 현실과 괴리 → <span class="highlight">예측 오차 0.18</span>로 이어지는 악순환</p>
+      <p>즉, <span class="highlight">모든 문제의 근본 원인은 캘리브레이션 결함</span>입니다. 과신하는 에이전트는 스스로 재보정 필요를 인식하지 못하고, 그 결과 World Model이 점점 현실에서 멀어집니다.</p>
+    </div>
+  </div>
+
+  <div style="font-size:0.85rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:1rem;">위험 평가 매트릭스 (발생 가능성 × 영향도)</div>
+  <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">가로: 발생 가능성 낮음→높음 / 세로: 영향도 낮음→높음</div>
+  <div class="risk-grid">
+    <div class="risk-quadrant lh">
+      <div class="risk-qlabel">높은 영향 / 낮은 가능성</div>
+      <div class="risk-item">전체 시스템 Calibration Collapse</div>
+      <div class="risk-item">목표 완전 이탈 (Reward Hacking)</div>
+    </div>
+    <div class="risk-quadrant hh">
+      <div class="risk-qlabel" style="color:var(--red)">⚠ 높은 영향 / 높은 가능성</div>
+      <div class="risk-item">Simulation Drift → 지속적 오작동</div>
+      <div class="risk-item">AI 비용 월 200%+ 초과</div>
+      <div class="risk-item">과신으로 인한 비가역 오결정</div>
+    </div>
+    <div class="risk-quadrant ll">
+      <div class="risk-qlabel">낮은 영향 / 낮은 가능성</div>
+      <div class="risk-item">체크포인트 복구 실패</div>
+      <div class="risk-item">목표 일관성 저하</div>
+    </div>
+    <div class="risk-quadrant hl">
+      <div class="risk-qlabel">낮은 영향 / 높은 가능성</div>
+      <div class="risk-item">HITL 빈도 증가</div>
+      <div class="risk-item">하네스 위반 시도 증가</div>
+    </div>
+  </div>
+  <div class="risk-axis"><span>낮은 가능성 →</span><span>높은 가능성</span></div>
+
+  <div class="explain-box" style="margin-top:1.5rem;">
+    <h4>방치 시 3개월 후 예상 시나리오</h4>
+    <p>현재 추세가 지속된다면: Simulation Drift 31% → 45% (월 4~5%p 증가 추세), AI 비용 143% → 200%+, 하네스 위반 3건/일 → 8~12건/일. 이 시점에서는 긴급 시스템 중단과 전면 재설계가 필요할 수 있습니다.</p>
+    <p><span class="highlight">지금 조치하는 비용 &lt; 3개월 후 긴급 대응 비용</span>. 초기 조치에는 엔지니어 2주의 시간이 필요하지만, 방치 후 대응에는 1~2개월이 필요합니다.</p>
+  </div>
+</div>
+<hr class="section-divider" />
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 20: OPTIMIZATION ROADMAP -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="s20">
+  <div class="page-num">Page 20 / 20</div>
+  <h2>최적화 로드맵 & 다음 단계</h2>
+  <p class="section-desc">진단 결과를 바탕으로 가장 효과적인 순서로 개선할 수 있는 실행 계획입니다.</p>
+
+  <div class="roadmap-lane">
+    <div class="roadmap-item">
+      <div class="roadmap-time">이번 주<br/>(1~5일)</div>
+      <div class="roadmap-box urgent">
+        <div class="roadmap-phase-tag tag-urgent">🔴 긴급 조치</div>
+        <h4>즉시 실행 — 안정화</h4>
+        <ul>
+          <li>재보정 임계값 0.08 → 0.12 조정 (1일)</li>
+          <li>누락 하네스 규칙 4개 즉시 추가 (2일)</li>
+          <li>Temperature Scaling으로 캘리브레이션 응급 처치 (2일)</li>
+          <li>불확실성 임계값 0.35 → 0.25로 낮춰 안전망 강화 (1일)</li>
+        </ul>
+        <div class="roadmap-effect">예상 효과: Simulation Drift 31% → 20% / 캘리브레이션 ECE 0.23 → 0.15</div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-time">Phase 1<br/>(2~4주)</div>
+      <div class="roadmap-box phase1">
+        <div class="roadmap-phase-tag tag-p1">PHASE 1 — 비용 및 품질 개선</div>
+        <h4>빠른 승리 (Quick Wins)</h4>
+        <ul>
+          <li>CostAwareRouter 구현 → 예상 비용 30% 절감</li>
+          <li>Prompt Caching 활성화 → 추가 10~15% 절감</li>
+          <li>앙상블 예측 모델 도입 → 예측 오차 18% → 12%</li>
+          <li>드리프트 감지 자동화 파이프라인 구축</li>
+          <li>HITL 원인 분류 분석 후 하네스 재설계</li>
+        </ul>
+        <div class="roadmap-effect">예상 효과: 종합 점수 67 → 75 / 비용 143% → 100% 이하</div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-time">Phase 2<br/>(5~12주)</div>
+      <div class="roadmap-box phase2">
+        <div class="roadmap-phase-tag tag-p2">PHASE 2 — 에이전시 역량 강화</div>
+        <h4>L2 완성도 향상</h4>
+        <ul>
+          <li>MCTS 계획기 구현 → Planning Depth 3 → 15스텝</li>
+          <li>Self-Correction 루프 구축 → 자기 수정율 8% → 20%</li>
+          <li>하네스 규칙 6개 → 20개 이상으로 확장</li>
+          <li>Replay Debugging 파이프라인 구축 (실패 원인 10분 내 파악)</li>
+          <li>OpenTelemetry 전체 계측 (가시성 확보)</li>
+        </ul>
+        <div class="roadmap-effect">예상 효과: 종합 점수 75 → 85 / L2.1 → L2.5</div>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-time">Phase 3<br/>(13~24주)</div>
+      <div class="roadmap-box">
+        <div class="roadmap-phase-tag" style="color:var(--accent-2)">PHASE 3 — L3 전환 준비</div>
+        <h4>L3 Evolver 기반 구축</h4>
+        <ul>
+          <li>온라인 학습 루프 — 환경 변화 자동 감지 후 World Model 업데이트</li>
+          <li>Meta-Harness 초기 구축 — 실패 패턴을 자동으로 하네스 규칙화</li>
+          <li>Conformal Prediction으로 불확실성 커버리지 68% → 85%+</li>
+          <li>Red-teaming — 취약점 자동 발견 및 보완</li>
+        </ul>
+        <div class="roadmap-effect">예상 효과: 종합 점수 85 → 90+ / L3 전환 준비 완료</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="data-table" style="margin-top:2rem;">
+    <thead><tr><th>지표</th><th>현재</th><th>4주 후</th><th>12주 후</th><th>24주 후</th></tr></thead>
+    <tbody>
+      <tr><td>종합 점수</td><td style="color:var(--yellow)">67</td><td>75</td><td>85</td><td style="color:var(--green)">90+</td></tr>
+      <tr><td>Simulation Drift</td><td style="color:var(--red)">31%</td><td>18%</td><td>8%</td><td style="color:var(--green)">&lt;5%</td></tr>
+      <tr><td>캘리브레이션 ECE</td><td style="color:var(--red)">0.23</td><td>0.14</td><td>0.09</td><td style="color:var(--green)">&lt;0.08</td></tr>
+      <tr><td>Planning Depth</td><td style="color:var(--yellow)">3 스텝</td><td>5 스텝</td><td>15 스텝</td><td style="color:var(--green)">20+ 스텝</td></tr>
+      <tr><td>AI 비용</td><td style="color:var(--red)">143%</td><td>100%</td><td>85%</td><td style="color:var(--green)">75%</td></tr>
+      <tr><td>하네스 규칙 수</td><td style="color:var(--yellow)">6개</td><td>12개</td><td>20개+</td><td style="color:var(--green)">30개+</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cta-box" style="margin-top:2.5rem;">
+    <h3>다음 단계: HAchillesWorld Optimize</h3>
+    <p>이 리포트의 개선 항목을 자동으로 코드로 생성하고, 단계별 실행을 지원하는 HAchillesWorld Optimize를 통해 더 빠르게 목표에 도달하세요. 하네스 규칙 코드, MCTS 계획기, 비용 라우터를 즉시 받아볼 수 있습니다.</p>
+    <div class="cta-btns">
+      <a href="index.html#cta" class="btn-cta-primary">Optimize 시작하기 (무료 체험)</a>
+      <a href="index.html" class="btn-cta-sec">홈으로 돌아가기</a>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem;">리포트 ID: <span id="footer-id"></span> · HAchillesWorld v1.0 · 이론 기반: 《Agentic World Modeling 2027》</p>
+  </div>
+</div>
+
+</main>
+
+<script>
+  // ── 스캔 데이터 로드 ──────────────────────────────────────────────────
+  const raw  = sessionStorage.getItem('haw_scan');
+  const data = raw ? JSON.parse(raw) : null;
+  const name   = data?.name   || '데모 에이전트';
+  const domain = data?.domain || 'Digital';
+  const date   = data ? new Date(data.date) : new Date();
+  const id     = 'HAW-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+  document.getElementById('cover-title').textContent = `${name} — World Model 진단 리포트`;
+  document.getElementById('meta-name').textContent   = name;
+  document.getElementById('meta-domain').textContent = domain + ' Laws';
+  document.getElementById('meta-date').textContent   = date.toLocaleDateString('ko-KR');
+  document.getElementById('meta-id').textContent     = id;
+  document.getElementById('footer-id').textContent   = id;
+
+  // 도메인별 피처 힌트
+  const featureHints = {
+    Digital:    'API 응답 패턴·에러율·트래픽 피크',
+    Physical:   '물리적 제약·센서 노이즈·계절 변화',
+    Social:     '사용자 감정·상호작용 패턴·시간대',
+    Scientific: '실험 조건·측정 불확실성·재현성',
+  };
+  const el = document.getElementById('domain-feature');
+  if (el) el.textContent = featureHints[domain] || '도메인 고유의 패턴';
+
+  // ── 스크롤 기반 사이드바 활성화 ─────────────────────────────────────
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navItems.forEach(n => {
+          n.classList.toggle('active', n.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  navItems.forEach(item => {
+    item.addEventListener('click', e => {
+      const href = item.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

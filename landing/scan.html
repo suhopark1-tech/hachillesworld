@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>무료 Scan 시작 — HAchillesWorld</title>
+  <style>
+    :root {
+      --bg: #07080d; --bg-2: #0e1018; --bg-3: #141722; --border: #1e2235;
+      --accent: #5b7fff; --accent-2: #8b5cf6; --green: #22d3a5;
+      --yellow: #f59e0b; --red: #f43f5e;
+      --text: #e8eaf0; --text-muted: #6b7280; --text-dim: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; }
+
+    .logo { font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2.5rem; text-align: center; }
+    .card { width: 100%; max-width: 560px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; }
+
+    h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .sub { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 2rem; }
+
+    .field { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.5rem; letter-spacing: 0.02em; }
+    input[type=text], input[type=email], select, textarea {
+      width: 100%; padding: 0.8rem 1rem;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    select option { background: var(--bg-3); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .check-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0.9rem; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s; font-size: 0.85rem; color: var(--text-dim); }
+    .check-item:has(input:checked) { border-color: var(--accent); color: var(--text); background: rgba(91,127,255,0.08); }
+    .check-item input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+    .btn-scan { width: 100%; margin-top: 1.75rem; padding: 1rem; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; letter-spacing: 0.01em; }
+    .btn-scan:hover { opacity: 0.9; }
+
+    .notice { margin-top: 1rem; font-size: 0.78rem; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+    /* Loading overlay */
+    #loading { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; }
+    #loading.show { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-steps { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-dim); }
+    .loading-step { display: flex; align-items: center; gap: 0.5rem; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .step-dot.done { background: var(--green); }
+    .step-dot.active { background: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+    .loading-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="logo">HAchillesWorld</div>
+
+<div class="card">
+  <h1>무료 World Model Scan</h1>
+  <p class="sub">기본 정보를 입력하면 AI 에이전트의 현재 Level과 핵심 병목을 진단한 20페이지 리포트를 즉시 생성합니다.</p>
+
+  <form id="scan-form">
+    <div class="field">
+      <label>에이전트 / 시스템 이름 *</label>
+      <input type="text" id="agent-name" placeholder="예: 고객응대 에이전트, 공급망 최적화 봇" required />
+    </div>
+
+    <div class="field">
+      <label>주요 운영 도메인 *</label>
+      <select id="domain" required>
+        <option value="">선택하세요</option>
+        <option value="Digital">Digital Laws — API·소프트웨어·데이터 처리</option>
+        <option value="Physical">Physical Laws — 로봇·제조·물리 환경</option>
+        <option value="Social">Social Laws — 고객·협업·다중 에이전트</option>
+        <option value="Scientific">Scientific Laws — 연구·분석·실험</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>에이전트를 만든 목적 (선택)</label>
+      <textarea id="purpose" placeholder="예: 고객 문의 자동 처리 및 에스컬레이션, 재고 수요 예측 후 자동 발주..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>현재 가장 크게 느끼는 문제 (복수 선택 가능)</label>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" value="drift" /> 예상치 못한 오작동</label>
+        <label class="check-item"><input type="checkbox" value="cost" /> AI 비용 과다</label>
+        <label class="check-item"><input type="checkbox" value="level" /> 수준 향상 방법 모름</label>
+        <label class="check-item"><input type="checkbox" value="debug" /> 실패 원인 파악 어려움</label>
+        <label class="check-item"><input type="checkbox" value="hitl" /> 사람 개입이 너무 잦음</label>
+        <label class="check-item"><input type="checkbox" value="goal" /> 에이전트가 목표 이탈</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>이메일 (리포트 PDF 수신 — 선택)</label>
+      <input type="email" id="email" placeholder="example@company.com" />
+    </div>
+
+    <button type="submit" class="btn-scan">10분 분석 시작 →</button>
+    <p class="notice">신용카드 불필요 · 회원가입 불필요 · 즉시 리포트 생성</p>
+  </form>
+</div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-title" id="loading-title">World Model 분석 중…</div>
+  <div class="loading-steps" id="loading-steps">
+    <div class="loading-step"><div class="step-dot active" id="dot-1"></div><span id="step-1">에이전트 프로파일 분석</span></div>
+    <div class="loading-step"><div class="step-dot" id="dot-2"></div><span id="step-2">Levels × Laws 좌표 진단</span></div>
+    <div class="loading-step"><div class="step-dot" id="dot-3"></div><span id="step-3">World Model 품질 15개 지표 측정</span></div>
+    <div class="loading-step"><div class="step-dot" id="dot-4"></div><span id="step-4">근본 원인 분석</span></div>
+    <div class="loading-step"><div class="step-dot" id="dot-5"></div><span id="step-5">최적화 로드맵 생성</span></div>
+    <div class="loading-step"><div class="step-dot" id="dot-6"></div><span id="step-6">20페이지 리포트 작성</span></div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('scan-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const name   = document.getElementById('agent-name').value.trim();
+    const domain = document.getElementById('domain').value;
+    const purpose = document.getElementById('purpose').value.trim();
+    const email  = document.getElementById('email').value.trim();
+    const pains  = [...document.querySelectorAll('.check-item input:checked')].map(i => i.value);
+
+    // 입력 저장
+    sessionStorage.setItem('haw_scan', JSON.stringify({ name, domain, purpose, email, pains, date: new Date().toISOString() }));
+
+    // 로딩 UI
+    document.getElementById('scan-form').closest('.card').style.display = 'none';
+    document.querySelector('.logo').style.display = 'none';
+    document.getElementById('loading').classList.add('show');
+
+    // 단계별 진행 애니메이션
+    const steps = [
+      { dot: 'dot-1', label: '에이전트 프로파일 분석', delay: 800 },
+      { dot: 'dot-2', label: 'Levels × Laws 좌표 진단', delay: 700 },
+      { dot: 'dot-3', label: 'World Model 품질 15개 지표 측정', delay: 900 },
+      { dot: 'dot-4', label: '근본 원인 분석', delay: 700 },
+      { dot: 'dot-5', label: '최적화 로드맵 생성', delay: 800 },
+      { dot: 'dot-6', label: '20페이지 리포트 작성', delay: 600 },
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      await sleep(steps[i].delay);
+      document.getElementById(steps[i].dot).className = 'step-dot done';
+      if (i + 1 < steps.length) document.getElementById(`dot-${i+2}`).className = 'step-dot active';
+      document.getElementById('loading-title').textContent = steps[i].label + '…';
+    }
+
+    await sleep(400);
+    document.getElementById('loading-title').textContent = '리포트 준비 완료!';
+    await sleep(600);
+    location.href = 'report.html';
+  });
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
