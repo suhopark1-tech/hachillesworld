@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 에이전트에도 "신용 점수"가 필요하다 — arXiv 논문 HAW-TR-001 | HAchillesWorld Blog</title>
+  <meta name="description" content="6개월간 연구한 Levels × Laws 프레임워크를 논문으로 정리했다. HAS 점수 ρ=0.9948, 24주 670→910, 연간 ₩4,400만 절감. 에이전트 배포 준비도를 숫자로 측정하는 방법." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8;
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    /* HERO */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.09),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.08);color:#c4b5fd}
+    .blog-tag-new{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:#fbbf24}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ARTICLE LAYOUT */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:48px 24px 80px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+
+    /* ARTICLE BODY */
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:52px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.08rem;font-weight:800;color:var(--text);margin:30px 0 10px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:#c4b5fd;font-style:italic}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.06);border-radius:0 8px 8px 0;color:var(--muted)}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:44px 0}
+    .article-body a{color:var(--accent2)}
+
+    /* CODE BLOCK */
+    .code-block{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .code-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent);display:flex;align-items:center;gap:6px}
+    .code-block pre{padding:20px;font-family:var(--mono);font-size:.83rem;line-height:1.85;color:#ddd6fe;overflow-x:auto;margin:0}
+
+    /* STAT CARDS */
+    .stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin:28px 0}
+    .stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+    .stat-val{font-family:var(--mono);font-size:1.5rem;font-weight:900;color:var(--accent);line-height:1}
+    .stat-label{font-size:.74rem;color:var(--muted);margin-top:6px;line-height:1.4}
+
+    /* TABLE */
+    .table-wrap{overflow-x:auto;margin:24px 0}
+    .data-table{width:100%;border-collapse:collapse;font-size:.875rem}
+    .data-table th{background:var(--bg3);padding:10px 16px;text-align:left;font-size:.74rem;font-weight:700;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:#cbd5e1;vertical-align:top}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(139,92,246,.03)}
+    .td-good{color:var(--accent3);font-weight:700}
+    .td-accent{color:#c4b5fd;font-weight:700}
+
+    /* AXIS CARDS */
+    .axis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+    @media(max-width:600px){.axis-grid{grid-template-columns:1fr}}
+    .axis-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px}
+    .axis-card-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+    .axis-card h4{font-size:1rem;font-weight:900;color:var(--text);margin-bottom:8px}
+    .axis-card p{font-size:.85rem;color:var(--muted);line-height:1.6;margin:0}
+
+    /* RESULT BANNER */
+    .result-banner{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.06));border:1px solid rgba(139,92,246,.35);border-radius:14px;padding:28px 32px;margin:28px 0;text-align:center}
+    .result-rho{font-family:var(--mono);font-size:2.6rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:8px}
+    .result-desc{font-size:.9rem;color:var(--muted)}
+    .result-desc strong{color:var(--text)}
+
+    /* TIMELINE */
+    .timeline{display:flex;flex-direction:column;gap:0;margin:24px 0;position:relative}
+    .timeline::before{content:'';position:absolute;left:26px;top:26px;bottom:26px;width:2px;background:linear-gradient(to bottom,var(--accent),rgba(139,92,246,.1))}
+    .tl-item{display:flex;gap:18px;align-items:flex-start;padding:0 0 26px}
+    .tl-item:last-child{padding-bottom:0}
+    .tl-num{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(139,92,246,.05));border:2px solid rgba(139,92,246,.4);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.85rem;font-weight:900;color:var(--accent);flex-shrink:0;position:relative;z-index:1}
+    .tl-content{padding-top:10px;flex:1}
+    .tl-period{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+    .tl-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:5px}
+    .tl-desc{font-size:.84rem;color:var(--muted);line-height:1.55}
+
+    /* CTA */
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(6,182,212,.05));border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.35rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    /* RELATED */
+    .related-posts{margin:48px 0 0}
+    .related-posts h3{font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
+    .related-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:600px){.related-grid{grid-template-columns:1fr}}
+    .related-card{display:flex;gap:12px;align-items:flex-start;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:border-color .2s;text-decoration:none}
+    .related-card:hover{border-color:var(--accent);text-decoration:none}
+    .related-arrow{font-size:1rem;flex-shrink:0;margin-top:2px;color:var(--accent)}
+    .related-card-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.4}
+    .related-card-desc{font-size:.76rem;color:var(--muted)}
+
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.08s}.delay-2{animation-delay:.16s}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- HERO -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag blog-tag-new">★ arXiv 논문</span>
+      <span class="blog-tag">#AI에이전트</span>
+      <span class="blog-tag">#WorldModel</span>
+      <span class="blog-tag">#에이전트평가</span>
+      <span class="blog-tag">#HAS</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      AI 에이전트에도<br/>"신용 점수"가 필요하다
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      arXiv 논문으로 정리한 Levels × Laws 프레임워크 — HAW-TR-001
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,000자 · 12분 읽기</span>
+      <span style="color:#c4b5fd">◈ 연구 리뷰</span>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLE -->
+<div class="article-layout">
+
+  <!-- MAIN BODY -->
+  <article class="article-body">
+
+    <p>며칠 전, 나는 6개월간 연구한 내용을 논문으로 정리했다.</p>
+
+    <p>제목은 <strong>"Levels × Laws: A Practical Framework for Evaluating and Improving Agentic AI World Model Quality"</strong> — 기술 보고서 HAW-TR-001이다.</p>
+
+    <p>논문을 쓰면서 가장 많이 받은 질문이 있었다.</p>
+
+    <blockquote><em>"그래서, 에이전트 점수가 높으면 실제로 비즈니스 성과도 좋아지나요?"</em></blockquote>
+
+    <p>솔직히 말하면, 이 질문에 완벽히 답하는 것이 논문의 핵심 과제였다. 오늘은 그 여정을 정리해본다.</p>
+
+    <hr/>
+
+    <h2 id="why">왜 에이전트 평가 프레임워크가 필요한가</h2>
+
+    <p>2026년 현재, Fortune 500 기업의 68%가 LLM 기반 에이전트를 프로덕션에 배포하고 있다. 그러나 현재 가용한 평가 도구 — LangSmith, Arize AI, Weights &amp; Biases — 는 모두 같은 한계를 가진다.</p>
+
+    <p><strong>"무슨 일이 일어났는가"는 알려주지만, "왜 그런 결정을 했는가"는 알려주지 않는다.</strong></p>
+
+    <p>에이전트가 잘못된 결정을 내렸을 때, 우리는 보통 이렇게 생각한다: 코드 버그? 프롬프트 문제? 그런데 실제 원인은 훨씬 깊은 곳에 있었다.</p>
+
+    <p>에이전트의 <strong>World Model</strong> — 환경의 동역학, 인과 구조, 제약 조건에 대한 내부 모델 — 이 현실과 괴리되어 있었던 것이다. 나는 이 현상을 <strong>World Model Degradation</strong>이라고 이름 붙였고, 논문에서 프로덕션 에이전트 장애의 주요 원인으로 규명했다.</p>
+
+    <hr/>
+
+    <h2 id="framework">프레임워크의 핵심: 두 개의 축</h2>
+
+    <p>Levels × Laws 프레임워크는 모든 AI 에이전트를 두 가지 축으로 위치시킨다.</p>
+
+    <div class="axis-grid">
+      <div class="axis-card">
+        <div class="axis-card-label">Levels 축</div>
+        <h4>에이전트가 얼마나 깊이 생각하는가</h4>
+        <p>L1(반응형) → L2(시뮬레이션) → L3(자율 진화). 핵심 지표는 <strong>Planning Depth</strong> — MCTS로 유의미하게 선행 예측할 수 있는 최대 단계 수.</p>
+      </div>
+      <div class="axis-card">
+        <div class="axis-card-label">Laws 축</div>
+        <h4>어느 세계에서 작동하는가</h4>
+        <p>Physical(뉴턴 역학) · Digital(API 계약) · Social(화용론) · Scientific(도메인 인과). 도메인이 에이전트가 따라야 할 "법칙"을 결정한다.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-head">▸ Planning Depth 3의 현실</div>
+      <pre>Depth 3이 본 것:   발주 → 입고 → 재고 충족
+Depth 3이 못 본 것: → 리드타임 중 가격 29.6% 급등
+                   → 실제 비용 ₩6.25M (예측 ₩4.82M)
+                   → ₩1.43M 비용 초과</pre>
+    </div>
+
+    <p>두 축의 조합으로 에이전트의 위치가 결정된다. 예컨대 <strong>L2.3 × DigLaw</strong>는 디지털 환경에서 Planning Depth 14 수준으로 운용되는 에이전트다.</p>
+
+    <hr/>
+
+    <h2 id="metrics">15개 지표와 HAS 점수</h2>
+
+    <p>프레임워크는 세 범주 <strong>15개 진단 지표</strong>를 형식적으로 정의한다.</p>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>범주</th>
+            <th>주요 지표</th>
+            <th>측정 내용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-accent">A. WMQ</td>
+            <td>SDR, ECE, PA, ODR, WMUL</td>
+            <td>예측이 현실에서 얼마나 벗어나는가</td>
+          </tr>
+          <tr>
+            <td class="td-accent">B. ALM</td>
+            <td>PD, SCR, CA, GAR, AS</td>
+            <td>에이전트가 얼마나 깊이, 정확하게 계획하는가</td>
+          </tr>
+          <tr>
+            <td class="td-accent">C. OHM</td>
+            <td>LCR, HC, HR, IRT, SU</td>
+            <td>운영 효율과 안정성</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>이 15개를 하나의 숫자로 집계한 것이 <strong>HAchilles Agent Score(HAS)</strong> — [0, 1000] 범위의 에이전트 배포 준비도 지수다. FICO 신용 점수처럼, 점수 범위마다 명확한 의미가 있다.</p>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>점수</th><th>등급</th><th>의미</th></tr></thead>
+        <tbody>
+          <tr><td class="td-good">900–1000</td><td>A+</td><td>L3 인증 — 자율 운용 가능</td></tr>
+          <tr><td style="color:#a78bfa">700–799</td><td>B</td><td>L2 운용 — 감독 하 배포</td></tr>
+          <tr><td style="color:#fbbf24">500–599</td><td>D</td><td>L1 관리 — 개발/테스트 전용</td></tr>
+          <tr><td style="color:#f87171">&lt; 400</td><td>F-</td><td>위험 — 배포 불가</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr/>
+
+    <h2 id="validation">논문의 핵심 주장: HAS는 품질을 제대로 측정하는가</h2>
+
+    <p>이를 검증하기 위해 <strong>횡단면 시뮬레이션 연구</strong>를 설계했다 — n=24개 에이전트(6개 도메인 × 4개 품질 수준), 실제 품질 정보를 사용하지 않고 에피소드 로그로부터 HAS를 계산한 뒤 실제 품질과의 상관관계를 측정했다.</p>
+
+    <div class="result-banner">
+      <div class="result-rho">ρ = 0.9948</div>
+      <div class="result-desc">Spearman ρ(HAS, 실제 품질) &nbsp;|&nbsp; <strong>p &lt; 0.0001</strong> &nbsp;|&nbsp; 95% CI [0.9692, 1.0000]</div>
+    </div>
+
+    <p>더 인상적인 것은 <strong>도메인별 결과</strong>였다.</p>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>도메인</th><th>Spearman ρ</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td>공급망</td><td class="td-good">1.000</td><td>완벽 순위 정렬</td></tr>
+          <tr><td>고객 서비스</td><td class="td-good">1.000</td><td>완벽 순위 정렬</td></tr>
+          <tr><td>금융</td><td class="td-good">1.000</td><td>완벽 순위 정렬</td></tr>
+          <tr><td>코드 생성</td><td class="td-good">1.000</td><td>완벽 순위 정렬</td></tr>
+          <tr><td>연구/분석</td><td class="td-good">1.000</td><td>완벽 순위 정렬</td></tr>
+          <tr><td><strong>의료</strong></td><td class="td-good"><strong>1.000</strong></td><td><strong>완벽 순위 정렬</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>6개 도메인 모두, 단 한 번의 순위 역전도 없었다. 의료 도메인처럼 규제상 자율성 상한이 낮은 환경에서도 HAS가 품질 순위를 정확히 반영한다는 것은 프레임워크의 범용성을 보여준다.</p>
+
+    <hr/>
+
+    <h2 id="shapley">Shapley 분석: 어떤 지표가 가장 중요한가</h2>
+
+    <p>15개 지표 중 어느 것이 품질 예측에 가장 많이 기여하는가? Shapley 값 분석 결과:</p>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>순위</th><th>지표</th><th>기여도</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>LLM 비용 비율 (LCR)</td><td class="td-accent">15.2%</td></tr>
+          <tr><td>2</td><td>하네스 커버리지 (HC)</td><td class="td-accent">15.1%</td></tr>
+          <tr><td>3</td><td>목표 달성률 (GAR)</td><td class="td-accent">14.4%</td></tr>
+          <tr><td>4</td><td><strong>계획 깊이 (PD)</strong></td><td class="td-accent"><strong>14.0%</strong></td></tr>
+          <tr><td>5</td><td>자율성 점수 (AS)</td><td class="td-accent">11.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>상위 4개 지표가 세 범주(OHM, OHM, ALM, ALM)에 고르게 분포한다. 어느 한 범주가 전체를 지배하지 않는다 — 즉, <strong>균형 잡힌 개선이 핵심</strong>이다.</p>
+
+    <hr/>
+
+    <h2 id="casestudy">24주 실증 사례: HAS 670 → 910</h2>
+
+    <p>한국 중견 제조사 A사의 공급망 에이전트를 24주간 추적했다. 시작 시점: <strong>L2.3 × DigLaw</strong>, HAS = 670.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-num">01</div>
+        <div class="tl-content">
+          <div class="tl-period">1–8주</div>
+          <div class="tl-title">교정 & 자기 수정</div>
+          <div class="tl-desc">ECE 교정, 자기 수정 루프 활성화, 하네스 확장</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-num">02</div>
+        <div class="tl-content">
+          <div class="tl-period">9–16주</div>
+          <div class="tl-title">계획 깊이 확장</div>
+          <div class="tl-desc">MCTS 통합 (Planning Depth 5→16), 반사실적 추론 추가</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-num">03</div>
+        <div class="tl-content">
+          <div class="tl-period">17–24주</div>
+          <div class="tl-title">자율 진화 전환</div>
+          <div class="tl-desc">메타-하네스 자동화, 온라인 학습, 신경망 롤아웃</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-head">▸ 24주 후 결과</div>
+      <pre>HAS: 670 → 910  (L3 × DigLaw 인증)
+
+주요 변화:
+  Planning Depth:   3  → 22
+  Calibration ECE:  0.23 → 0.05
+  Harness Coverage: 6개 → 34개
+  주문 이행률:      87.3% → 94.6%
+  연간 총 절감:     ₩4,400만 (≈ $33,000)</pre>
+    </div>
+
+    <p>특히 11주차 에피소드(EP-3204)가 인상적이었다. Planning Depth 16에서 200번의 MCTS 롤아웃으로 대규모 주문을 계획하던 중, 자기 수정 모듈이 장중 시장 변동을 감지하고 자동으로 단계적 주문으로 전환했다. 그 결과 <strong>₩830만 원의 손실을 방지</strong>했다.</p>
+
+    <p>PD가 높아도 SCR(자기 수정율)이 낮으면 무용지물이다. 지표 간 상호의존성이 HAS 복합 채점의 설계 이유다.</p>
+
+    <hr/>
+
+    <h2 id="limits">한계와 앞으로의 과제</h2>
+
+    <p>시뮬레이션 연구에서 ρ = 0.9948은 합성 데이터에서 얻은 수치다. 실제 프로덕션 환경의 상관관계는 더 낮을 것이다 — 조직 요인, 시장 충격, 측정 오류가 개입하기 때문이다. 신용 점수 문헌의 유사 사례를 참고하면 실제 ρ는 <strong>[0.55, 0.75]</strong> 범위로 예상한다.</p>
+
+    <p>이를 검증하는 것이 다음 단계다. 2026년 3–4분기 중 <strong>HAW-STUDY-001</strong> — 5개+ 도메인, 25개+ 실제 프로덕션 에이전트를 대상으로 한 전향적 연구를 진행할 예정이다.</p>
+
+    <hr/>
+
+    <h2 id="gap">논문이 채우고자 한 공백</h2>
+
+    <p>LeCun(2022)의 JEPA, Hafner et al.(2023)의 DreamerV3 — 학술 세계의 World Model 이론은 훌륭하다. 그러나 이 이론들은 "어떻게 에이전트를 만들 것인가"에 집중하지, "현재 배포된 에이전트가 얼마나 잘 작동하는가"를 측정하지 않는다.</p>
+
+    <p>우리의 프레임워크는 이 간극을 채우기 위한 것이다. 아키텍처를 바꾸지 않아도 된다. 기존 에이전트에 계측을 추가하고, 15개 지표를 측정하고, HAS를 계산하면 된다.</p>
+
+    <p><strong>"이 에이전트, 지금 배포해도 되는가?"</strong> — 이 질문에 숫자로 답할 수 있어야 한다고 생각한다.</p>
+
+    <hr/>
+
+    <!-- CTA -->
+    <div class="article-cta">
+      <h3>논문 전문 읽기 / 직접 진단하기</h3>
+      <p>HAW-TR-001 전문(영문·한글)과 오픈소스 SDK가 공개되어 있습니다.<br/>지금 바로 에이전트 HAS 점수를 측정해보세요.</p>
+      <div class="cta-btns">
+        <a href="scan.html" class="btn-primary">무료 Scan 시작</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank" class="btn-secondary">논문 & SDK (GitHub)</a>
+      </div>
+    </div>
+
+    <!-- RELATED -->
+    <div class="related-posts">
+      <h3>관련 글</h3>
+      <div class="related-grid">
+        <a href="blog-world-model.html" class="related-card">
+          <div class="related-arrow">→</div>
+          <div>
+            <div class="related-card-title">당신의 AI 에이전트, 왜 실패하는지 알고 있나요?</div>
+            <div class="related-card-desc">World Model Degradation 실전 케이스</div>
+          </div>
+        </a>
+        <a href="blog-mcts-planning-depth.html" class="related-card">
+          <div class="related-arrow">→</div>
+          <div>
+            <div class="related-card-title">AI는 몇 수 앞을 보는가? MCTS Planning Depth</div>
+            <div class="related-card-desc">비유 중심의 기초 개념 설명</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </article>
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h4>목차</h4>
+    <ul class="toc-list">
+      <li><a href="#why">왜 평가 프레임워크가 필요한가</a></li>
+      <li><a href="#framework">두 개의 축: Levels × Laws</a></li>
+      <li><a href="#metrics">15개 지표와 HAS 점수</a></li>
+      <li><a href="#validation">HAS는 제대로 측정하는가</a></li>
+      <li><a href="#shapley">Shapley 분석</a></li>
+      <li><a href="#casestudy">24주 실증 사례</a></li>
+      <li><a href="#limits">한계와 다음 과제</a></li>
+      <li><a href="#gap">논문이 채우고자 한 공백</a></li>
+    </ul>
+  </aside>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      기술 보고서 HAW-TR-001 기반 &nbsp;·&nbsp; 이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  // TOC active highlight
+  const headings = document.querySelectorAll('h2[id]');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => {
+          l.style.color = l.getAttribute('href') === '#' + e.target.id ? 'var(--text)' : '';
+          l.style.borderColor = l.getAttribute('href') === '#' + e.target.id ? 'var(--accent)' : '';
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  headings.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>
