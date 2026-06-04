@@ -9,7 +9,8 @@ import httpx
 
 from hachillesworld.core.config import settings
 from hachillesworld.core.models import (
-    AgentEvent, DiagnosticReport, LawsDomain, Level,
+    AgentEvent,
+    DiagnosticReport,
 )
 
 
@@ -29,12 +30,14 @@ class HAchillesWorldClient:
         base_url: str | None = None,
         timeout: float = 30.0,
     ) -> None:
-        self._api_key   = api_key or settings.api_key
-        self._base_url  = (base_url or settings.api_base_url).rstrip("/")
-        self._http      = httpx.Client(
+        self._api_key = api_key or settings.api_key
+        self._base_url = (base_url or settings.api_base_url).rstrip("/")
+        self._http = httpx.Client(
             base_url=self._base_url,
-            headers={"Authorization": f"Bearer {self._api_key}",
-                     "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            },
             timeout=timeout,
         )
         self._event_buffer: list[AgentEvent] = []
@@ -52,6 +55,7 @@ class HAchillesWorldClient:
         API 서버가 없는 로컬 환경에서는 로컬 엔진을 사용한다.
         """
         from hachillesworld.scan.engine import ScanEngine
+
         engine = ScanEngine(config=config or {})
         return engine.run(logs=logs or [], agent_name=agent_name)
 
@@ -80,12 +84,14 @@ class HAchillesWorldClient:
         payload: dict[str, Any] | None = None,
     ) -> None:
         """단순 이벤트 추적 헬퍼."""
-        self.emit(AgentEvent(
-            agent_name=agent_name,
-            event_type=event_type,
-            timestamp=time.time(),
-            payload=payload or {},
-        ))
+        self.emit(
+            AgentEvent(
+                agent_name=agent_name,
+                event_type=event_type,
+                timestamp=time.time(),
+                payload=payload or {},
+            )
+        )
 
     def __enter__(self) -> "HAchillesWorldClient":
         return self

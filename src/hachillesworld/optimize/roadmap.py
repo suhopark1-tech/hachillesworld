@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from hachillesworld.core.models import (
-    DiagnosticReport, Level, LawsDomain,
-    OptimizationRoadmap, RoadmapPhase,
+    DiagnosticReport,
+    Level,
+    OptimizationRoadmap,
+    RoadmapPhase,
 )
 
 
@@ -21,7 +23,9 @@ class RoadmapGenerator:
     _PHASE_TEMPLATES: dict[str, list[dict]] = {
         "L1→L2": [
             {
-                "phase": 1, "name": "즉각적 안정화", "weeks": 4,
+                "phase": 1,
+                "name": "즉각적 안정화",
+                "weeks": 4,
                 "tasks": [
                     "재보정 임계값 검토 및 최적화",
                     "ECE 측정 파이프라인 구축",
@@ -32,7 +36,9 @@ class RoadmapGenerator:
                 "score_delta": 12.0,
             },
             {
-                "phase": 2, "name": "L2 핵심 역량 구축", "weeks": 8,
+                "phase": 2,
+                "name": "L2 핵심 역량 구축",
+                "weeks": 8,
                 "tasks": [
                     "앙상블 역학 모델 구현 (EnsembleDynamics)",
                     "MCTS 계획기 구현 (계획 깊이 5→20스텝)",
@@ -44,7 +50,9 @@ class RoadmapGenerator:
                 "score_delta": 18.0,
             },
             {
-                "phase": 3, "name": "L2 심화 및 운영 안정화", "weeks": 8,
+                "phase": 3,
+                "name": "L2 심화 및 운영 안정화",
+                "weeks": 8,
                 "tasks": [
                     "Replay Debugging 파이프라인 구축",
                     "OpenTelemetry 전체 계측",
@@ -58,7 +66,9 @@ class RoadmapGenerator:
         ],
         "L2→L3": [
             {
-                "phase": 1, "name": "L3 기반 준비", "weeks": 6,
+                "phase": 1,
+                "name": "L3 기반 준비",
+                "weeks": 6,
                 "tasks": [
                     "Self-Correction Engine 프로토타입 구현",
                     "EWC(Elastic Weight Consolidation) 적용",
@@ -69,7 +79,9 @@ class RoadmapGenerator:
                 "score_delta": 8.0,
             },
             {
-                "phase": 2, "name": "자율 루프 구현", "weeks": 10,
+                "phase": 2,
+                "name": "자율 루프 구현",
+                "weeks": 10,
                 "tasks": [
                     "온라인 학습 루프 구현",
                     "World Model 자동 업데이트 파이프라인",
@@ -81,7 +93,9 @@ class RoadmapGenerator:
                 "score_delta": 15.0,
             },
             {
-                "phase": 3, "name": "L3 검증 및 안전 보강", "weeks": 8,
+                "phase": 3,
+                "name": "L3 검증 및 안전 보강",
+                "weeks": 8,
                 "tasks": [
                     "L3 에이전트 Red-teaming",
                     "Reward Hacking 방어 검증",
@@ -107,11 +121,11 @@ class RoadmapGenerator:
             target_level: 목표 Level ("L2" 또는 "L3"). None이면 자동 결정.
         """
         current = report.level.value
-        target  = target_level or self._auto_target(report.level)
-        key     = f"{current}→{target}"
+        target = target_level or self._auto_target(report.level)
+        key = f"{current}→{target}"
 
         templates = self._PHASE_TEMPLATES.get(key, self._default_phases(report))
-        phases    = [
+        phases = [
             RoadmapPhase(
                 phase_number=t["phase"],
                 name=t["name"],
@@ -137,13 +151,15 @@ class RoadmapGenerator:
 
     def print_roadmap(self, roadmap: OptimizationRoadmap) -> None:
         """터미널에 로드맵을 출력한다."""
-        print(f"\n{'━'*60}")
-        print(f"  HAchillesWorld Optimize — 로드맵")
-        print(f"  {roadmap.from_level} → {roadmap.to_level}  ({roadmap.laws_domain.value.title()} Laws)")
+        print(f"\n{'━' * 60}")
+        print("  HAchillesWorld Optimize — 로드맵")
+        print(
+            f"  {roadmap.from_level} → {roadmap.to_level}  ({roadmap.laws_domain.value.title()} Laws)"
+        )
         print(f"  총 기간: {roadmap.estimated_duration_weeks}주")
         if roadmap.estimated_cost_saving_usd > 0:
             print(f"  예상 비용 절감: ${roadmap.estimated_cost_saving_usd:,.0f}/년")
-        print(f"{'━'*60}")
+        print(f"{'━' * 60}")
 
         for phase in roadmap.phases:
             print(f"\n  Phase {phase.phase_number}: {phase.name} ({phase.duration_weeks}주)")
@@ -152,7 +168,7 @@ class RoadmapGenerator:
                 marker = "★" if task in phase.priority_tasks else "•"
                 print(f"    {marker} {task}")
 
-        print(f"\n{'━'*60}\n")
+        print(f"\n{'━' * 60}\n")
 
     @staticmethod
     def _auto_target(current: Level) -> str:
@@ -173,7 +189,9 @@ class RoadmapGenerator:
     def _default_phases(report: DiagnosticReport) -> list[dict]:
         return [
             {
-                "phase": 1, "name": "현황 최적화", "weeks": 6,
+                "phase": 1,
+                "name": "현황 최적화",
+                "weeks": 6,
                 "tasks": [f"개선: {r}" for r in report.recommendations[:5]],
                 "priority": [],
                 "score_delta": 10.0,

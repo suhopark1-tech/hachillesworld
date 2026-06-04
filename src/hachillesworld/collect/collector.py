@@ -8,9 +8,8 @@ import threading
 import time
 import uuid
 from collections import deque
-from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Generator
+from typing import Any
 
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.collect.flush import BatchFlusher
@@ -87,9 +86,7 @@ class EpisodeContext:
 
         max_prediction_error: float | None = None
         if self._predicted_state and self._actual_state:
-            max_prediction_error = _state_distance(
-                self._predicted_state, self._actual_state
-            )
+            max_prediction_error = _state_distance(self._predicted_state, self._actual_state)
 
         record = EpisodeRecord(
             agent_id=self._collector.agent_id,
@@ -329,7 +326,9 @@ class LogCollector:
             daemon=True,
         )
         self._thread.start()
-        logger.info("LogCollector started (agent=%s, interval=%.1fs)", self.agent_id, self._flush_interval)
+        logger.info(
+            "LogCollector started (agent=%s, interval=%.1fs)", self.agent_id, self._flush_interval
+        )
         return self
 
     def stop(self, timeout: float = 10.0) -> None:
@@ -341,7 +340,9 @@ class LogCollector:
         self._flusher.close()
         logger.info(
             "LogCollector stopped (agent=%s, added=%d, flushed=%d)",
-            self.agent_id, self._total_added, self._total_flushed,
+            self.agent_id,
+            self._total_added,
+            self._total_flushed,
         )
 
     def _flush_loop(self) -> None:
@@ -373,6 +374,7 @@ class LogCollector:
 
 
 # ── 내부 유틸리티 ─────────────────────────────────────────────────
+
 
 def _state_distance(predicted: dict[str, Any], actual: dict[str, Any]) -> float:
     """

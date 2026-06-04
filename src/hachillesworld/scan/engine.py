@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from hachillesworld.core.models import (
-    CategoryScore, DiagnosticReport, LawsDomain, Level, MetricScore,
+    CategoryScore,
+    DiagnosticReport,
+    LawsDomain,
+    Level,
+    MetricScore,
 )
 from hachillesworld.scan.metrics import MetricsCalculator
 
@@ -54,7 +58,7 @@ class ScanEngine:
 
         # ── Level 및 Laws 도메인 판정 ─────────────────────────
         level, progress = self._classify_level(wm_metrics, agency_metrics)
-        laws_domain     = self._classify_laws(self.config)
+        laws_domain = self._classify_laws(self.config)
 
         # ── 권장 사항 생성 ─────────────────────────────────────
         all_metrics = wm_metrics + agency_metrics + ops_metrics
@@ -82,14 +86,16 @@ class ScanEngine:
         if not metrics:
             return CategoryScore(name=name, score=0.0)
 
-        ok_weight       = 1.0
-        warning_weight  = 0.5
+        ok_weight = 1.0
+        warning_weight = 0.5
         critical_weight = 0.0
 
         total = sum(
-            ok_weight       if m.status == "ok"       else
-            warning_weight  if m.status == "warning"  else
-            critical_weight
+            ok_weight
+            if m.status == "ok"
+            else warning_weight
+            if m.status == "warning"
+            else critical_weight
             for m in metrics
         )
         score = (total / len(metrics)) * 100
@@ -101,9 +107,7 @@ class ScanEngine:
         agency_metrics: list[MetricScore],
     ) -> tuple[Level, float]:
         """지표 기반 Level 자동 판정."""
-        planning_depth = next(
-            (m.value for m in wm_metrics if m.name == "Planning Depth"), 1.0
-        )
+        planning_depth = next((m.value for m in wm_metrics if m.name == "Planning Depth"), 1.0)
         self_correction = next(
             (m.value for m in agency_metrics if m.name == "Self-Correction Rate"), 0.0
         )
@@ -112,13 +116,13 @@ class ScanEngine:
         )
 
         if self_correction >= 0.30 and planning_depth >= 20:
-            level    = Level.L3
+            level = Level.L3
             progress = min(1.0, self_correction / 0.50)
         elif planning_depth >= 5 or uncertainty_ok >= 1.0:
-            level    = Level.L2
+            level = Level.L2
             progress = min(1.0, (planning_depth - 5) / 45) if planning_depth >= 5 else 0.1
         else:
-            level    = Level.L1
+            level = Level.L1
             progress = min(1.0, planning_depth / 5)
 
         return level, round(progress, 2)
@@ -128,12 +132,12 @@ class ScanEngine:
         domain = config.get("laws_domain", "").lower()
         mapping = {
             "physical": LawsDomain.PHYSICAL,
-            "robot":    LawsDomain.PHYSICAL,
-            "digital":  LawsDomain.DIGITAL,
-            "api":      LawsDomain.DIGITAL,
-            "social":   LawsDomain.SOCIAL,
-            "multi":    LawsDomain.SOCIAL,
-            "science":  LawsDomain.SCIENTIFIC,
+            "robot": LawsDomain.PHYSICAL,
+            "digital": LawsDomain.DIGITAL,
+            "api": LawsDomain.DIGITAL,
+            "social": LawsDomain.SOCIAL,
+            "multi": LawsDomain.SOCIAL,
+            "science": LawsDomain.SCIENTIFIC,
             "research": LawsDomain.SCIENTIFIC,
         }
         for key, val in mapping.items():

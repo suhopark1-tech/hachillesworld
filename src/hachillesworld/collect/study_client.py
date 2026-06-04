@@ -8,7 +8,6 @@ from typing import Any
 
 from hachillesworld.collect.collector import EpisodeContext, LogCollector
 from hachillesworld.collect.episode import EpisodeRecord
-from hachillesworld.core.models import AgentEvent
 
 
 class StudyClient:
@@ -144,15 +143,17 @@ class StudyClient:
                     finally:
                         duration_ms = (time.time() - start) * 1000
                         # AgentEvent로 기존 client에도 전달 (하위 호환)
-                        collector.add(EpisodeRecord(
-                            agent_id=collector.agent_id,
-                            study_id=collector.study_id,
-                            domain=collector.domain,
-                            episode_success=(error is None),
-                            goal_achieved=(error is None),
-                            duration_ms=round(duration_ms, 2),
-                            metadata={"method": _name, "error": error},
-                        ))
+                        collector.add(
+                            EpisodeRecord(
+                                agent_id=collector.agent_id,
+                                study_id=collector.study_id,
+                                domain=collector.domain,
+                                episode_success=(error is None),
+                                goal_achieved=(error is None),
+                                duration_ms=round(duration_ms, 2),
+                                metadata={"method": _name, "error": error},
+                            )
+                        )
 
                 setattr(cls, method_name, _wrapped)
 

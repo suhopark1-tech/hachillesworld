@@ -31,8 +31,9 @@ def instrument(client: Any, agent_name: str):
                 continue
 
             @functools.wraps(original)
-            def _wrapped(self: Any, *args: Any, _orig=original,
-                         _name=method_name, **kwargs: Any) -> Any:
+            def _wrapped(
+                self: Any, *args: Any, _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
                 start = time.time()
                 error: str | None = None
                 try:
@@ -43,15 +44,17 @@ def instrument(client: Any, agent_name: str):
                     raise
                 finally:
                     duration_ms = (time.time() - start) * 1000
-                    client.emit(AgentEvent(
-                        agent_name=agent_name,
-                        event_type=_name,
-                        timestamp=start,
-                        payload={
-                            "duration_ms": round(duration_ms, 2),
-                            "error": error,
-                        },
-                    ))
+                    client.emit(
+                        AgentEvent(
+                            agent_name=agent_name,
+                            event_type=_name,
+                            timestamp=start,
+                            payload={
+                                "duration_ms": round(duration_ms, 2),
+                                "error": error,
+                            },
+                        )
+                    )
 
             setattr(cls, method_name, _wrapped)
 

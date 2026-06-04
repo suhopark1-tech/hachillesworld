@@ -11,6 +11,7 @@ from hachillesworld.core.models import AgentEvent
 @dataclass
 class ReplayFrame:
     """재생 프레임 — 단일 스텝의 상태 스냅샷."""
+
     step: int
     event_type: str
     timestamp: float
@@ -22,6 +23,7 @@ class ReplayFrame:
 @dataclass
 class ReplaySession:
     """하나의 에피소드 재생 세션."""
+
     episode_id: str
     agent_name: str
     frames: list[ReplayFrame] = field(default_factory=list)
@@ -51,7 +53,8 @@ class ReplayDebugger:
     ) -> ReplaySession:
         """이벤트 목록으로부터 재생 세션을 구성한다."""
         normalized = [
-            e if isinstance(e, AgentEvent)
+            e
+            if isinstance(e, AgentEvent)
             else AgentEvent(
                 agent_name=e.get("agent_name", "unknown"),
                 event_type=e.get("event_type", "unknown"),
@@ -62,7 +65,7 @@ class ReplayDebugger:
         ]
 
         agent_name = normalized[0].agent_name if normalized else "unknown"
-        frames     = []
+        frames = []
         for i, event in enumerate(normalized):
             frame = ReplayFrame(
                 step=i,
@@ -83,15 +86,15 @@ class ReplayDebugger:
 
     def print_session(self, session: ReplaySession) -> None:
         """재생 세션을 터미널에 출력한다."""
-        print(f"\n{'━'*64}")
+        print(f"\n{'━' * 64}")
         print(f"  Replay Debugger — {session.episode_id}")
         print(f"  에이전트: {session.agent_name}  |  총 스텝: {len(session.frames)}")
         if session.root_cause:
             print(f"  ⚡ 근본 원인: {session.root_cause}")
-        print(f"{'━'*64}")
+        print(f"{'━' * 64}")
 
         for frame in session.frames:
-            marker  = "🔴" if frame.is_anomaly else "  "
+            marker = "🔴" if frame.is_anomaly else "  "
             payload = {k: v for k, v in frame.payload.items() if k != "trace_id"}
             print(f"\n  {marker} Step {frame.step:3d} [{frame.event_type:10s}]")
             if frame.is_anomaly:
@@ -99,9 +102,11 @@ class ReplayDebugger:
             for k, v in list(payload.items())[:4]:
                 print(f"       {k}: {v}")
 
-        print(f"\n  이상 프레임: {len(session.anomaly_frames)}건 / "
-              f"실패 스텝: Step {session.failure_step}")
-        print(f"{'━'*64}\n")
+        print(
+            f"\n  이상 프레임: {len(session.anomaly_frames)}건 / "
+            f"실패 스텝: Step {session.failure_step}"
+        )
+        print(f"{'━' * 64}\n")
 
     @staticmethod
     def _detect_anomaly(frame: ReplayFrame) -> None:
@@ -110,31 +115,27 @@ class ReplayDebugger:
         if frame.event_type == "observe":
             drift = p.get("prediction_error", 0.0)
             if drift > 0.15:
-                frame.is_anomaly   = True
+                frame.is_anomaly = True
                 frame.anomaly_reason = (
                     f"Simulation Drift {drift:.3f} > 0.15 — 재보정 미실행 여부 확인"
                 )
         elif frame.event_type == "plan":
             unc = p.get("uncertainty", 0.0)
             if unc > 0.35:
-                frame.is_anomaly   = True
-                frame.anomaly_reason = (
-                    f"불확실성 {unc:.3f} > 0.35 — HITL 트리거 여부 확인"
-                )
+                frame.is_anomaly = True
+                frame.anomaly_reason = f"불확실성 {unc:.3f} > 0.35 — HITL 트리거 여부 확인"
         elif frame.event_type == "error":
-            frame.is_anomaly   = True
+            frame.is_anomaly = True
             frame.anomaly_reason = p.get("error_message", "오류 발생")
 
     @staticmethod
     def _analyze_root_cause(session: ReplaySession) -> None:
         """가장 이른 이상 프레임을 근본 원인으로 판정한다."""
         if not session.anomaly_frames:
-            session.root_cause  = "명확한 이상 없음 — 추가 조사 필요"
+            session.root_cause = "명확한 이상 없음 — 추가 조사 필요"
             session.failure_step = -1
             return
 
         first = session.anomaly_frames[0]
         session.failure_step = first.step
-        session.root_cause   = (
-            f"Step {first.step} ({first.event_type}): {first.anomaly_reason}"
-        )
+        session.root_cause = f"Step {first.step} ({first.event_type}): {first.anomaly_reason}"

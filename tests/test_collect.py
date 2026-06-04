@@ -19,12 +19,12 @@ from hachillesworld.collect.study_client import StudyClient
 
 # ── EpisodeRecord 테스트 ──────────────────────────────────────────
 
-class TestEpisodeRecord:
 
+class TestEpisodeRecord:
     def test_defaults(self):
         r = EpisodeRecord(agent_id="agent-001")
         assert r.agent_id == "agent-001"
-        assert r.episode_id != ""           # UUID 자동 생성
+        assert r.episode_id != ""  # UUID 자동 생성
         assert r.goal_achieved is True
         assert r.episode_success is True
         assert r.llm_tokens == 0
@@ -81,7 +81,7 @@ class TestEpisodeRecord:
             internal_flag_raised=True,
             correction_source="self",
             error_before_correction=0.30,
-            error_after_correction=0.28,   # 6.7% — 5% 기준 통과하지만 edge case
+            error_after_correction=0.28,  # 6.7% — 5% 기준 통과하지만 edge case
         )
         assert r.is_self_correction(min_improvement=0.10) is False
 
@@ -108,8 +108,8 @@ class TestEpisodeRecord:
 
 # ── _state_distance 테스트 ────────────────────────────────────────
 
-class TestStateDistance:
 
+class TestStateDistance:
     def test_identical_states(self):
         d = _state_distance({"inventory": 820}, {"inventory": 820})
         assert d == 0.0
@@ -135,8 +135,8 @@ class TestStateDistance:
 
 # ── EpisodeContext 테스트 ─────────────────────────────────────────
 
-class TestEpisodeContext:
 
+class TestEpisodeContext:
     def _make_collector(self) -> LogCollector:
         """API 없이 로컬 테스트용 collector."""
         return LogCollector(
@@ -203,7 +203,7 @@ class TestEpisodeContext:
     def test_exception_in_context_sets_failure(self):
         collector = self._make_collector()
         with pytest.raises(ValueError):
-            with collector.episode() as ep:
+            with collector.episode():
                 raise ValueError("agent error")
 
         record = list(collector._buffer)[0]
@@ -227,7 +227,7 @@ class TestEpisodeContext:
             ep.set_confidence(0.72)
 
         record = list(collector._buffer)[0]
-        assert record.confidence == 0.72          # 마지막 값
+        assert record.confidence == 0.72  # 마지막 값
         assert record.confidence_history == [0.80, 0.65, 0.72]
 
     def test_harness_trigger_recorded(self):
@@ -243,8 +243,8 @@ class TestEpisodeContext:
 
 # ── LogCollector 테스트 ───────────────────────────────────────────
 
-class TestLogCollector:
 
+class TestLogCollector:
     def test_add_and_buffer_size(self):
         collector = LogCollector(agent_id="a", api_key="")
         r = EpisodeRecord(agent_id="a")
@@ -329,8 +329,8 @@ class TestLogCollector:
 
 # ── BatchFlusher 테스트 ───────────────────────────────────────────
 
-class TestBatchFlusher:
 
+class TestBatchFlusher:
     def test_successful_flush(self):
         records = [EpisodeRecord(agent_id="a"), EpisodeRecord(agent_id="b")]
 
@@ -386,8 +386,8 @@ class TestBatchFlusher:
 
 # ── StudyClient 테스트 ────────────────────────────────────────────
 
-class TestStudyClient:
 
+class TestStudyClient:
     def _make_client(self) -> StudyClient:
         client = StudyClient(
             study_id="HAW-STUDY-001",

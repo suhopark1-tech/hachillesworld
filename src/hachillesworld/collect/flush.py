@@ -70,12 +70,18 @@ class BatchFlusher:
                     break
                 logger.warning(
                     "Ingest HTTP %d, retrying in %.1fs (attempt %d/%d)",
-                    resp.status_code, delay, attempt, len(_RETRY_DELAYS),
+                    resp.status_code,
+                    delay,
+                    attempt,
+                    len(_RETRY_DELAYS),
                 )
             except (httpx.TimeoutException, httpx.ConnectError) as exc:
                 logger.warning(
                     "Ingest unreachable (%s), retrying in %.1fs (attempt %d/%d)",
-                    exc, delay, attempt, len(_RETRY_DELAYS),
+                    exc,
+                    delay,
+                    attempt,
+                    len(_RETRY_DELAYS),
                 )
 
             time.sleep(delay)

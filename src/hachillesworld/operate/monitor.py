@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
 @dataclass
 class DriftAlert:
     """드리프트 경보 이벤트."""
+
     agent_name: str
     timestamp: float
     drift_value: float
@@ -37,14 +38,14 @@ class DriftMonitor:
         window_size: int = 20,
         alert_rate_threshold: float = 0.20,
     ) -> None:
-        self.agent_name          = agent_name
-        self.threshold           = threshold
-        self.window_size         = window_size
+        self.agent_name = agent_name
+        self.threshold = threshold
+        self.window_size = window_size
         self.alert_rate_threshold = alert_rate_threshold
 
         self._history: deque[float] = deque(maxlen=window_size)
-        self._alert_count  = 0
-        self._total_count  = 0
+        self._alert_count = 0
+        self._total_count = 0
         self.on_alert: Callable[[DriftAlert], None] | None = None
 
     def record(
@@ -75,12 +76,12 @@ class DriftMonitor:
 
     def summary(self) -> dict[str, Any]:
         return {
-            "agent_name":        self.agent_name,
-            "total_records":     self._total_count,
-            "alert_count":       self._alert_count,
+            "agent_name": self.agent_name,
+            "total_records": self._total_count,
+            "alert_count": self._alert_count,
             "recent_drift_rate": round(self.recent_drift_rate(), 4),
-            "is_stable":         self.is_stable(),
-            "threshold":         self.threshold,
+            "is_stable": self.is_stable(),
+            "threshold": self.threshold,
         }
 
     def _maybe_alert(self, drift: float) -> None:

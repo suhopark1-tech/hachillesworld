@@ -12,6 +12,7 @@ from hachillesworld.optimize.harness_generator import HarnessRule
 @dataclass
 class FailurePattern:
     """감지된 실패 패턴."""
+
     pattern_id: str
     description: str
     occurrences: int
@@ -37,11 +38,11 @@ class MetaHarness:
         auto_apply_threshold: int = 10,
         human_review_required: bool = True,
     ) -> None:
-        self.auto_apply_threshold  = auto_apply_threshold
+        self.auto_apply_threshold = auto_apply_threshold
         self.human_review_required = human_review_required
         self._patterns: dict[str, FailurePattern] = {}
         self._applied_rules: list[HarnessRule] = []
-        self._pending_rules: list[HarnessRule]  = []
+        self._pending_rules: list[HarnessRule] = []
 
     def record_failure(self, event: dict[str, Any]) -> None:
         """실패 이벤트를 기록하고 패턴을 업데이트한다."""
@@ -50,7 +51,7 @@ class MetaHarness:
 
         if key in self._patterns:
             self._patterns[key].occurrences += 1
-            self._patterns[key].last_seen    = now
+            self._patterns[key].last_seen = now
         else:
             self._patterns[key] = FailurePattern(
                 pattern_id=key,
@@ -63,10 +64,12 @@ class MetaHarness:
             )
 
         pattern = self._patterns[key]
-        if (pattern.occurrences >= self.auto_apply_threshold
-                and pattern.suggested_rule
-                and pattern.suggested_rule not in self._pending_rules
-                and pattern.suggested_rule not in self._applied_rules):
+        if (
+            pattern.occurrences >= self.auto_apply_threshold
+            and pattern.suggested_rule
+            and pattern.suggested_rule not in self._pending_rules
+            and pattern.suggested_rule not in self._applied_rules
+        ):
             self._pending_rules.append(pattern.suggested_rule)
 
     def get_pending_rules(self) -> list[HarnessRule]:
@@ -92,16 +95,14 @@ class MetaHarness:
 
     def summary(self) -> dict[str, Any]:
         return {
-            "total_patterns":   len(self._patterns),
-            "pending_rules":    len(self._pending_rules),
-            "applied_rules":    len(self._applied_rules),
+            "total_patterns": len(self._patterns),
+            "pending_rules": len(self._pending_rules),
+            "applied_rules": len(self._applied_rules),
             "top_patterns": [
-                {"id": p.pattern_id, "occurrences": p.occurrences,
-                 "description": p.description}
-                for p in sorted(
-                    self._patterns.values(),
-                    key=lambda x: x.occurrences, reverse=True
-                )[:5]
+                {"id": p.pattern_id, "occurrences": p.occurrences, "description": p.description}
+                for p in sorted(self._patterns.values(), key=lambda x: x.occurrences, reverse=True)[
+                    :5
+                ]
             ],
         }
 
@@ -114,14 +115,13 @@ class MetaHarness:
 
     @staticmethod
     def _describe_pattern(event: dict[str, Any]) -> str:
-        payload    = event.get("payload", {})
+        payload = event.get("payload", {})
         event_type = event.get("event_type", "unknown")
         return payload.get("description", f"{event_type} 이벤트에서 반복 실패 감지")
 
     @staticmethod
     def _suggest_rule(key: str, event: dict[str, Any]) -> HarnessRule | None:
         """패턴 키에서 하네스 규칙을 자동 생성한다."""
-        payload = event.get("payload", {})
         if "drift" in key:
             return HarnessRule(
                 rule_id=f"meta_{key.replace(':', '_')}",

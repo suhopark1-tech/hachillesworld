@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -13,7 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-app     = typer.Typer(name="hachillesworld", help="HAchillesWorld — World Model 진단 및 최적화 CLI")
+app = typer.Typer(name="hachillesworld", help="HAchillesWorld — World Model 진단 및 최적화 CLI")
 console = Console()
 
 # ── collect 서브앱 ────────────────────────────────────────────────
@@ -23,8 +22,12 @@ app.add_typer(collect_app, name="collect")
 
 @app.command()
 def scan(
-    logs: Optional[Path] = typer.Option(None, "--logs", "-l", help="에이전트 로그 파일 경로 (JSON)"),
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="에이전트 설정 파일 경로 (JSON)"),
+    logs: Optional[Path] = typer.Option(
+        None, "--logs", "-l", help="에이전트 로그 파일 경로 (JSON)"
+    ),
+    config: Optional[Path] = typer.Option(
+        None, "--config", "-c", help="에이전트 설정 파일 경로 (JSON)"
+    ),
     agent_name: str = typer.Option("unnamed-agent", "--name", "-n", help="에이전트 이름"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="리포트 저장 경로 (JSON)"),
 ) -> None:
@@ -33,7 +36,7 @@ def scan(
 
     console.print(Panel("[bold cyan]HAchillesWorld Scan[/bold cyan]", expand=False))
 
-    log_data    = json.loads(logs.read_text(encoding="utf-8"))    if logs   else []
+    log_data = json.loads(logs.read_text(encoding="utf-8")) if logs else []
     config_data = json.loads(config.read_text(encoding="utf-8")) if config else {}
 
     with HAchillesWorldClient() as client:
@@ -41,7 +44,9 @@ def scan(
 
     # 결과 출력
     console.print(f"\n[bold]에이전트:[/bold] {report.agent_name}")
-    console.print(f"[bold]현재 Level:[/bold] {report.level_label}  ×  {report.laws_domain.value.title()} Laws")
+    console.print(
+        f"[bold]현재 Level:[/bold] {report.level_label}  ×  {report.laws_domain.value.title()} Laws"
+    )
 
     table = Table(title="진단 점수", show_header=True, header_style="bold magenta")
     table.add_column("카테고리", style="cyan")
@@ -49,9 +54,9 @@ def scan(
     table.add_column("상태")
     for cat, score in [
         ("World Model 품질", report.world_model_quality.score),
-        ("에이전시 수준",    report.agency_level.score),
-        ("운영 건전성",      report.operational_health.score),
-        ("종합",             report.composite_score),
+        ("에이전시 수준", report.agency_level.score),
+        ("운영 건전성", report.operational_health.score),
+        ("종합", report.composite_score),
     ]:
         emoji = "🟢" if score >= 80 else "🟡" if score >= 60 else "🔴"
         table.add_row(cat, f"{score:.0f}/100", emoji)
@@ -69,9 +74,9 @@ def scan(
 
     if output:
         data = {
-            "agent_name":      report.agent_name,
-            "level":           report.level_label,
-            "laws_domain":     report.laws_domain.value,
+            "agent_name": report.agent_name,
+            "level": report.level_label,
+            "laws_domain": report.laws_domain.value,
             "composite_score": report.composite_score,
             "recommendations": report.recommendations,
         }
@@ -82,16 +87,17 @@ def scan(
 @app.command()
 def optimize(
     report_file: Path = typer.Argument(..., help="scan 결과 JSON 파일"),
-    target_level: Optional[str] = typer.Option(None, "--target", "-t", help="목표 Level (L2 또는 L3)"),
+    target_level: Optional[str] = typer.Option(
+        None, "--target", "-t", help="목표 Level (L2 또는 L3)"
+    ),
 ) -> None:
     """진단 리포트 기반 최적화 로드맵을 출력한다."""
     from hachillesworld.core.client import HAchillesWorldClient
     from hachillesworld.optimize.roadmap import RoadmapGenerator
-    from hachillesworld.core.models import Level, LawsDomain
 
     console.print(Panel("[bold green]HAchillesWorld Optimize[/bold green]", expand=False))
 
-    data   = json.loads(report_file.read_text(encoding="utf-8"))
+    data = json.loads(report_file.read_text(encoding="utf-8"))
     # 간이 리포트 복원 (실제로는 전체 DiagnosticReport 직렬화 사용)
     client = HAchillesWorldClient()
     report = client.scan(logs=[], config={}, agent_name=data.get("agent_name", "unknown"))
@@ -104,12 +110,14 @@ def optimize(
 def version() -> None:
     """버전 정보를 출력한다."""
     from hachillesworld import __version__
+
     console.print(f"HAchillesWorld v{__version__}")
 
 
 # ══════════════════════════════════════════════════════════════════
 # collect 서브커맨드
 # ══════════════════════════════════════════════════════════════════
+
 
 def _api_key_from_env(explicit: str | None) -> str:
     """명시 인자 → 환경변수 순으로 API 키를 반환한다."""
@@ -128,21 +136,32 @@ def _load_jsonl(path: Path) -> list[dict]:
 
 # ── collect ingest ───────────────────────────────────────────────
 
+
 @collect_app.command("ingest")
 def collect_ingest(
     files: list[Path] = typer.Argument(..., help="JSONL 또는 JSON 로그 파일 경로 (1개 이상)"),
-    api_key: Optional[str] = typer.Option(None, "--api-key", "-k",
-                                           help="API 키 (미지정 시 HACHILLESWORLD_API_KEY 환경변수 사용)"),
-    ingest_url: str = typer.Option("https://ingest.hachillesworld.ai/v1",
-                                    "--url", "-u", help="인제스트 엔드포인트 URL"),
-    agent_id: Optional[str] = typer.Option(None, "--agent-id", "-a",
-                                            help="로그 전체에 적용할 agent_id (미지정 시 파일 내 값 사용)"),
-    domain: Optional[str] = typer.Option(None, "--domain", "-d",
-                                          help="도메인 덮어쓰기 (supply_chain | customer_service | finance | code | research)"),
-    study_id: Optional[str] = typer.Option(None, "--study-id", "-s", help="HAW-STUDY-001 연구 참여 ID"),
+    api_key: Optional[str] = typer.Option(
+        None, "--api-key", "-k", help="API 키 (미지정 시 HACHILLESWORLD_API_KEY 환경변수 사용)"
+    ),
+    ingest_url: str = typer.Option(
+        "https://ingest.hachillesworld.ai/v1", "--url", "-u", help="인제스트 엔드포인트 URL"
+    ),
+    agent_id: Optional[str] = typer.Option(
+        None, "--agent-id", "-a", help="로그 전체에 적용할 agent_id (미지정 시 파일 내 값 사용)"
+    ),
+    domain: Optional[str] = typer.Option(
+        None,
+        "--domain",
+        "-d",
+        help="도메인 덮어쓰기 (supply_chain | customer_service | finance | code | research)",
+    ),
+    study_id: Optional[str] = typer.Option(
+        None, "--study-id", "-s", help="HAW-STUDY-001 연구 참여 ID"
+    ),
     batch_size: int = typer.Option(50, "--batch", "-b", help="배치 크기"),
-    fallback: Optional[Path] = typer.Option(None, "--fallback", "-f",
-                                             help="전송 실패 시 기록할 JSONL 파일 경로"),
+    fallback: Optional[Path] = typer.Option(
+        None, "--fallback", "-f", help="전송 실패 시 기록할 JSONL 파일 경로"
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="전송 없이 유효성 검사 및 통계만 출력"),
 ) -> None:
     """JSONL/JSON 로그 파일을 파싱해 인제스트 엔드포인트로 배치 전송한다."""
@@ -180,7 +199,9 @@ def collect_ingest(
         except (KeyError, TypeError) as exc:
             parse_errors += 1
             if parse_errors <= 3:
-                console.print(f"  [red]파싱 오류:[/red] {exc}  (episode_id={raw.get('episode_id', '?')})")
+                console.print(
+                    f"  [red]파싱 오류:[/red] {exc}  (episode_id={raw.get('episode_id', '?')})"
+                )
 
     if parse_errors:
         console.print(f"  [red]파싱 실패:[/red] {parse_errors}건 (건너뜀)")
@@ -206,7 +227,7 @@ def collect_ingest(
     )
 
     total_sent = 0
-    batches = [records[i:i + batch_size] for i in range(0, len(records), batch_size)]
+    batches = [records[i : i + batch_size] for i in range(0, len(records), batch_size)]
     with typer.progressbar(batches, label="전송 중") as progress:
         for batch in progress:
             total_sent += flusher.flush(batch)
@@ -221,19 +242,25 @@ def collect_ingest(
 
 # ── collect record ───────────────────────────────────────────────
 
+
 @collect_app.command("record")
 def collect_record(
     agent_id: str = typer.Option(..., "--agent-id", "-a", help="에이전트 식별자"),
     domain: str = typer.Option("", "--domain", "-d", help="에이전트 도메인"),
-    confidence: Optional[float] = typer.Option(None, "--confidence", "-c", help="행동 확신도 [0–1]"),
+    confidence: Optional[float] = typer.Option(
+        None, "--confidence", "-c", help="행동 확신도 [0–1]"
+    ),
     goal_achieved: bool = typer.Option(True, "--goal/--no-goal", help="목표 달성 여부"),
     tokens: int = typer.Option(0, "--tokens", "-t", help="LLM 토큰 수"),
-    flag: Optional[str] = typer.Option(None, "--flag", "-f",
-                                        help="내부 플래그 유형 (confidence | prediction | counterfactual)"),
-    correction_source: Optional[str] = typer.Option(None, "--correction",
-                                                     help="수정 출처 (self | harness | hitl)"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o",
-                                           help="기록할 JSONL 파일 (미지정 시 stdout)"),
+    flag: Optional[str] = typer.Option(
+        None, "--flag", "-f", help="내부 플래그 유형 (confidence | prediction | counterfactual)"
+    ),
+    correction_source: Optional[str] = typer.Option(
+        None, "--correction", help="수정 출처 (self | harness | hitl)"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="기록할 JSONL 파일 (미지정 시 stdout)"
+    ),
     api_key: Optional[str] = typer.Option(None, "--api-key", "-k", help="API 키"),
     ingest_url: str = typer.Option("https://ingest.hachillesworld.ai/v1", "--url"),
     send: bool = typer.Option(False, "--send", help="기록 즉시 인제스트 엔드포인트로 전송"),
@@ -282,14 +309,16 @@ def collect_record(
 
 # ── collect replay ───────────────────────────────────────────────
 
+
 @collect_app.command("replay")
 def collect_replay(
     fallback_file: Path = typer.Argument(..., help="재전송할 폴백 JSONL 파일"),
     api_key: Optional[str] = typer.Option(None, "--api-key", "-k"),
     ingest_url: str = typer.Option("https://ingest.hachillesworld.ai/v1", "--url"),
     batch_size: int = typer.Option(50, "--batch", "-b"),
-    delete_on_success: bool = typer.Option(False, "--delete",
-                                            help="전송 성공한 레코드를 파일에서 삭제"),
+    delete_on_success: bool = typer.Option(
+        False, "--delete", help="전송 성공한 레코드를 파일에서 삭제"
+    ),
 ) -> None:
     """폴백 JSONL 파일의 레코드를 인제스트 엔드포인트로 재전송한다."""
     from hachillesworld.collect.episode import EpisodeRecord
@@ -314,7 +343,7 @@ def collect_replay(
 
     total_sent = 0
     failed_raw: list[dict] = []
-    batches = [records[i:i + batch_size] for i in range(0, len(records), batch_size)]
+    batches = [records[i : i + batch_size] for i in range(0, len(records), batch_size)]
 
     with typer.progressbar(batches, label="재전송 중") as progress:
         for i, batch in enumerate(progress):
@@ -322,7 +351,7 @@ def collect_replay(
             total_sent += sent
             if sent < len(batch):
                 # 이 배치에서 실패한 레코드 추적
-                failed_raw.extend(raw_records[i * batch_size: i * batch_size + len(batch)])
+                failed_raw.extend(raw_records[i * batch_size : i * batch_size + len(batch)])
 
     flusher.close()
 
@@ -345,13 +374,16 @@ def collect_replay(
 
 # ── collect stats ────────────────────────────────────────────────
 
+
 @collect_app.command("stats")
 def collect_stats(
     files: list[Path] = typer.Argument(..., help="분석할 JSONL 파일 경로 (1개 이상)"),
-    theta_drift: float = typer.Option(0.15, "--drift-threshold",
-                                       help="예측-관측 괴리 임계값 (분모 판단 기준)"),
-    min_improvement: float = typer.Option(0.05, "--min-improvement",
-                                          help="자기 수정 최소 개선 비율"),
+    theta_drift: float = typer.Option(
+        0.15, "--drift-threshold", help="예측-관측 괴리 임계값 (분모 판단 기준)"
+    ),
+    min_improvement: float = typer.Option(
+        0.05, "--min-improvement", help="자기 수정 최소 개선 비율"
+    ),
     show_episodes: bool = typer.Option(False, "--episodes", help="에피소드 목록 출력"),
 ) -> None:
     """수집된 JSONL 로그 파일의 PD·SCR 관련 통계를 출력한다."""
@@ -377,9 +409,9 @@ def collect_stats(
 
 # ── 공통 출력 헬퍼 ────────────────────────────────────────────────
 
+
 def _print_ingest_stats(records: list) -> None:
     """ingest 전 유효성 및 간단 통계를 출력한다."""
-    from hachillesworld.collect.episode import EpisodeRecord
 
     total = len(records)
     with_agent = sum(1 for r in records if r.agent_id)
@@ -408,7 +440,6 @@ def _print_collect_stats(
     min_improvement: float,
     show_episodes: bool,
 ) -> None:
-    from hachillesworld.collect.episode import EpisodeRecord
     from collections import Counter
 
     total = len(records)
@@ -443,23 +474,16 @@ def _print_collect_stats(
             return "🟢" if val <= good else "🟡" if val <= warn else "🔴"
         return "🟢" if val >= good else "🟡" if val >= warn else "🔴"
 
-    summary.add_row("총 에피소드",              str(total), "")
+    summary.add_row("총 에피소드", str(total), "")
     summary.add_row("SCR 분모 (오류 에피소드)", str(len(denom)), "")
-    summary.add_row("Self-Correction Rate",
-                    f"{scr:.3f}",
-                    _status(scr, 0.25, 0.10))
-    summary.add_row("Goal Achievement Rate",
-                    f"{gar:.3f}",
-                    _status(gar, 0.90, 0.70))
-    summary.add_row("HITL 비율",
-                    f"{hitl_rate:.3f}",
-                    _status(hitl_rate, 0.05, 0.20, lower_is_better=True))
-    summary.add_row("평균 LLM 토큰",
-                    f"{avg_tokens:.0f}", "")
+    summary.add_row("Self-Correction Rate", f"{scr:.3f}", _status(scr, 0.25, 0.10))
+    summary.add_row("Goal Achievement Rate", f"{gar:.3f}", _status(gar, 0.90, 0.70))
+    summary.add_row(
+        "HITL 비율", f"{hitl_rate:.3f}", _status(hitl_rate, 0.05, 0.20, lower_is_better=True)
+    )
+    summary.add_row("평균 LLM 토큰", f"{avg_tokens:.0f}", "")
     if avg_pd is not None:
-        summary.add_row("평균 Planning Depth",
-                        f"{avg_pd:.1f}",
-                        _status(avg_pd, 20, 5))
+        summary.add_row("평균 Planning Depth", f"{avg_pd:.1f}", _status(avg_pd, 20, 5))
     console.print(summary)
 
     # ── 도메인 분포 ───────────────────────────────────────────────
@@ -487,16 +511,14 @@ def _print_collect_stats(
     # ── SCR Wilson 신뢰구간 ───────────────────────────────────────
     if len(denom) >= 10:
         import math
+
         n, p, z = len(denom), scr, 1.96
-        denom_val = 1 + z ** 2 / n
-        center = (p + z ** 2 / (2 * n)) / denom_val
-        margin = z * math.sqrt(p * (1 - p) / n + z ** 2 / (4 * n ** 2)) / denom_val
+        denom_val = 1 + z**2 / n
+        center = (p + z**2 / (2 * n)) / denom_val
+        margin = z * math.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / denom_val
         ci_lo = max(0.0, center - margin)
         ci_hi = min(1.0, center + margin)
-        console.print(
-            f"\n  SCR 95% CI: [{ci_lo:.3f}, {ci_hi:.3f}]"
-            f"  (n_denom={len(denom)})"
-        )
+        console.print(f"\n  SCR 95% CI: [{ci_lo:.3f}, {ci_hi:.3f}]  (n_denom={len(denom)})")
         if len(denom) < 100:
             console.print(
                 f"  [yellow]⚠  분모 {len(denom)}개 — 최소 100개 권장 (신뢰도 낮음)[/yellow]"

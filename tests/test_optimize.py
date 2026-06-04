@@ -2,7 +2,11 @@
 
 import pytest
 from hachillesworld.core.models import (
-    CategoryScore, DiagnosticReport, LawsDomain, Level, MetricScore,
+    CategoryScore,
+    DiagnosticReport,
+    LawsDomain,
+    Level,
+    MetricScore,
 )
 from hachillesworld.optimize.roadmap import RoadmapGenerator
 from hachillesworld.optimize.harness_generator import HarnessGenerator
@@ -15,17 +19,29 @@ def l1_report():
         level=Level.L1,
         level_progress=0.7,
         laws_domain=LawsDomain.DIGITAL,
-        world_model_quality=CategoryScore("World Model 품질", 55.0, [
-            MetricScore("Simulation Drift Rate", 0.25, 0.05, status="critical"),
-            MetricScore("Calibration ECE", 0.22, 0.10, status="critical"),
-        ]),
-        agency_level=CategoryScore("에이전시 수준", 40.0, [
-            MetricScore("Harness Coverage", 3.0, 20.0, status="critical"),
-            MetricScore("Uncertainty Awareness", 0.0, 1.0, status="critical"),
-        ]),
-        operational_health=CategoryScore("운영 건전성", 60.0, [
-            MetricScore("HITL Trigger Rate", 0.28, 0.05, status="critical"),
-        ]),
+        world_model_quality=CategoryScore(
+            "World Model 품질",
+            55.0,
+            [
+                MetricScore("Simulation Drift Rate", 0.25, 0.05, status="critical"),
+                MetricScore("Calibration ECE", 0.22, 0.10, status="critical"),
+            ],
+        ),
+        agency_level=CategoryScore(
+            "에이전시 수준",
+            40.0,
+            [
+                MetricScore("Harness Coverage", 3.0, 20.0, status="critical"),
+                MetricScore("Uncertainty Awareness", 0.0, 1.0, status="critical"),
+            ],
+        ),
+        operational_health=CategoryScore(
+            "운영 건전성",
+            60.0,
+            [
+                MetricScore("HITL Trigger Rate", 0.28, 0.05, status="critical"),
+            ],
+        ),
     )
 
 
@@ -43,7 +59,6 @@ def l2_report():
 
 
 class TestRoadmapGenerator:
-
     def test_l1_to_l2_roadmap(self, l1_report):
         roadmap = RoadmapGenerator().generate(l1_report)
         assert roadmap.from_level.startswith("L1")
@@ -58,7 +73,7 @@ class TestRoadmapGenerator:
 
     def test_total_weeks_sum(self, l1_report):
         roadmap = RoadmapGenerator().generate(l1_report)
-        total   = sum(p.duration_weeks for p in roadmap.phases)
+        total = sum(p.duration_weeks for p in roadmap.phases)
         assert total == roadmap.estimated_duration_weeks
 
     def test_phases_have_tasks(self, l1_report):
@@ -74,7 +89,6 @@ class TestRoadmapGenerator:
 
 
 class TestHarnessGenerator:
-
     def test_generates_rules_for_critical_metrics(self, l1_report):
         spec = HarnessGenerator().generate(l1_report)
         assert len(spec.rules) > 0

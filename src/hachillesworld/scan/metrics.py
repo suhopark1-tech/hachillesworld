@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import numpy as np
@@ -20,7 +19,7 @@ class MetricsCalculator:
     """
 
     def __init__(self, logs: list[dict[str, Any]], config: dict[str, Any]) -> None:
-        self.logs   = logs
+        self.logs = logs
         self.config = config
 
     # ── Category A: World Model 품질 ──────────────────────────
@@ -44,12 +43,12 @@ class MetricsCalculator:
     def calibration_ece(self) -> MetricScore:
         """Expected Calibration Error (낮을수록 좋음, 기준: < 0.10)."""
         confidences = [
-            e["payload"].get("confidence", 0.5)
-            for e in self.logs if e.get("event_type") == "plan"
+            e["payload"].get("confidence", 0.5) for e in self.logs if e.get("event_type") == "plan"
         ]
         actuals = [
             1.0 if e["payload"].get("goal_achieved") else 0.0
-            for e in self.logs if e.get("event_type") == "observe"
+            for e in self.logs
+            if e.get("event_type") == "observe"
         ]
         ece = self._compute_ece(confidences, actuals)
         return MetricScore(
@@ -62,11 +61,11 @@ class MetricsCalculator:
 
     def simulation_drift_rate(self) -> MetricScore:
         """Simulation Drift 발생률 (낮을수록 좋음, 기준: < 5%)."""
-        total     = sum(1 for e in self.logs if e.get("event_type") == "observe")
-        drifted   = sum(
-            1 for e in self.logs
-            if e.get("event_type") == "reflect"
-            and e.get("payload", {}).get("recalibrated")
+        total = sum(1 for e in self.logs if e.get("event_type") == "observe")
+        drifted = sum(
+            1
+            for e in self.logs
+            if e.get("event_type") == "reflect" and e.get("payload", {}).get("recalibrated")
         )
         rate = drifted / total if total > 0 else 0.0
         return MetricScore(
@@ -81,12 +80,13 @@ class MetricsCalculator:
     def uncertainty_coverage(self) -> MetricScore:
         """불확실성이 실제 오차를 포괄하는 비율 (높을수록 좋음, 기준: > 80%)."""
         covered = sum(
-            1 for e in self.logs
+            1
+            for e in self.logs
             if e.get("event_type") == "observe"
             and e.get("payload", {}).get("error_within_uncertainty")
         )
         total = sum(1 for e in self.logs if e.get("event_type") == "observe")
-        rate  = covered / total if total > 0 else 0.0
+        rate = covered / total if total > 0 else 0.0
         return MetricScore(
             name="Uncertainty Coverage",
             value=round(rate, 4),
@@ -100,7 +100,8 @@ class MetricsCalculator:
         """평균 계획 깊이(스텝 수, 높을수록 L2에 가까움)."""
         depths = [
             e["payload"].get("planning_depth", 1)
-            for e in self.logs if e.get("event_type") == "plan"
+            for e in self.logs
+            if e.get("event_type") == "plan"
         ]
         value = float(np.mean(depths)) if depths else 1.0
         # L1: 1스텝, L2: 5~50스텝
@@ -119,7 +120,7 @@ class MetricsCalculator:
     def self_correction_capability(self) -> MetricScore:
         """자기 수정 루프 존재 여부 및 빈도."""
         reflect_events = [e for e in self.logs if e.get("event_type") == "reflect"]
-        corrections    = [e for e in reflect_events if e.get("payload", {}).get("correction_applied")]
+        corrections = [e for e in reflect_events if e.get("payload", {}).get("correction_applied")]
         ratio = len(corrections) / len(reflect_events) if reflect_events else 0.0
         return MetricScore(
             name="Self-Correction Rate",
@@ -134,7 +135,8 @@ class MetricsCalculator:
         """불확실성을 명시적으로 표현하는지 여부."""
         has_uncertainty = any(
             "uncertainty" in e.get("payload", {})
-            for e in self.logs if e.get("event_type") == "plan"
+            for e in self.logs
+            if e.get("event_type") == "plan"
         )
         value = 1.0 if has_uncertainty else 0.0
         return MetricScore(
@@ -148,9 +150,9 @@ class MetricsCalculator:
     def goal_consistency(self) -> MetricScore:
         """목표 유지 일관성 (목표 변경 횟수가 낮을수록 좋음)."""
         goal_changes = sum(
-            1 for e in self.logs
-            if e.get("event_type") == "reflect"
-            and e.get("payload", {}).get("goal_changed")
+            1
+            for e in self.logs
+            if e.get("event_type") == "reflect" and e.get("payload", {}).get("goal_changed")
         )
         total_episodes = max(1, sum(1 for e in self.logs if e.get("event_type") == "plan"))
         rate = goal_changes / total_episodes
@@ -200,9 +202,10 @@ class MetricsCalculator:
     def cost_efficiency(self) -> MetricScore:
         """비용 효율 (예산 대비 사용률)."""
         budget = self.config.get("monthly_budget_usd", 0)
-        spent  = sum(
+        spent = sum(
             e["payload"].get("cost_usd", 0.0)
-            for e in self.logs if "cost_usd" in e.get("payload", {})
+            for e in self.logs
+            if "cost_usd" in e.get("payload", {})
         )
         if budget <= 0:
             ratio = 0.5  # 예산 미설정 → 중립
@@ -219,9 +222,9 @@ class MetricsCalculator:
 
     def hitl_trigger_rate(self) -> MetricScore:
         """인간 개입(HITL) 요청 빈도 (낮을수록 자율화 수준 높음, 기준: < 5%)."""
-        hitl   = sum(1 for e in self.logs if e.get("event_type") == "hitl_request")
-        total  = sum(1 for e in self.logs if e.get("event_type") in ("plan", "execute"))
-        rate   = hitl / total if total > 0 else 0.0
+        hitl = sum(1 for e in self.logs if e.get("event_type") == "hitl_request")
+        total = sum(1 for e in self.logs if e.get("event_type") in ("plan", "execute"))
+        rate = hitl / total if total > 0 else 0.0
         return MetricScore(
             name="HITL Trigger Rate",
             value=round(rate, 4),
@@ -233,9 +236,7 @@ class MetricsCalculator:
 
     def harness_violation_rate(self) -> MetricScore:
         """하네스 위반 시도 횟수 (0이어야 이상적)."""
-        violations = sum(
-            1 for e in self.logs if e.get("event_type") == "harness_violation"
-        )
+        violations = sum(1 for e in self.logs if e.get("event_type") == "harness_violation")
         return MetricScore(
             name="Harness Violation Attempts",
             value=float(violations),
@@ -249,7 +250,8 @@ class MetricsCalculator:
         """체크포인트 복구 성공률 (높을수록 좋음, 기준: > 98%)."""
         recoveries = [
             e["payload"].get("recovery_success")
-            for e in self.logs if e.get("event_type") == "checkpoint_recovery"
+            for e in self.logs
+            if e.get("event_type") == "checkpoint_recovery"
         ]
         rate = sum(recoveries) / len(recoveries) if recoveries else 1.0
         return MetricScore(
@@ -269,16 +271,13 @@ class MetricsCalculator:
         if not confidences or not actuals:
             return 0.0
         bins = np.linspace(0, 1, n_bins + 1)
-        ece  = 0.0
-        n    = len(actuals)
+        ece = 0.0
+        n = len(actuals)
         for i in range(n_bins):
-            in_bin = [
-                (c, a) for c, a in zip(confidences, actuals)
-                if bins[i] <= c < bins[i + 1]
-            ]
+            in_bin = [(c, a) for c, a in zip(confidences, actuals) if bins[i] <= c < bins[i + 1]]
             if not in_bin:
                 continue
             avg_conf = np.mean([c for c, _ in in_bin])
-            avg_acc  = np.mean([a for _, a in in_bin])
+            avg_acc = np.mean([a for _, a in in_bin])
             ece += (len(in_bin) / n) * abs(avg_conf - avg_acc)
         return float(ece)

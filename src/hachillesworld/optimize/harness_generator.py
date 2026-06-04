@@ -11,17 +11,19 @@ from hachillesworld.core.models import DiagnosticReport
 @dataclass
 class HarnessRule:
     """단일 하네스 제약 규칙."""
+
     rule_id: str
-    condition: str          # "IF ..." 형식의 자연어 조건
-    action: str             # "THEN ..." 형식의 대응 행동
-    severity: str           # "hard" | "soft"
-    source: str             # 생성 근거 (진단 지표 이름)
+    condition: str  # "IF ..." 형식의 자연어 조건
+    action: str  # "THEN ..." 형식의 대응 행동
+    severity: str  # "hard" | "soft"
+    source: str  # 생성 근거 (진단 지표 이름)
     generated_code: str = ""
 
 
 @dataclass
 class HarnessSpec:
     """하네스 전체 규칙 세트."""
+
     agent_name: str
     rules: list[HarnessRule] = field(default_factory=list)
     forbidden_actions: list[str] = field(default_factory=list)
@@ -99,7 +101,7 @@ class HarnessGenerator:
 
         # 비용 상한
         spec.budget_caps = {
-            "daily_usd":   50.0,
+            "daily_usd": 50.0,
             "monthly_usd": 1_200.0,
             "per_task_usd": 0.50,
         }

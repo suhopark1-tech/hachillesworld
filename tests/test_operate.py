@@ -9,7 +9,6 @@ from hachillesworld.core.models import AgentEvent
 
 
 class TestDriftMonitor:
-
     def test_no_drift_in_stable_agent(self):
         monitor = DriftMonitor("stable-agent", threshold=0.15)
         for _ in range(20):
@@ -24,7 +23,7 @@ class TestDriftMonitor:
         for _ in range(10):
             monitor.record(
                 predicted={"inventory": 100.0},
-                actual={"inventory": 140.0},   # 40 차이 → drift
+                actual={"inventory": 140.0},  # 40 차이 → drift
             )
         assert not monitor.is_stable()
 
@@ -43,27 +42,36 @@ class TestDriftMonitor:
 
     def test_record_returns_drift_value(self):
         monitor = DriftMonitor("test", threshold=0.15)
-        drift   = monitor.record({"x": 1.0}, {"x": 2.0})
+        drift = monitor.record({"x": 1.0}, {"x": 2.0})
         assert drift == pytest.approx(1.0)
 
     def test_summary_keys(self):
-        monitor  = DriftMonitor("summary-test")
+        monitor = DriftMonitor("summary-test")
         monitor.record({"x": 1.0}, {"x": 1.1})
-        summary  = monitor.summary()
-        assert "agent_name"        in summary
+        summary = monitor.summary()
+        assert "agent_name" in summary
         assert "recent_drift_rate" in summary
-        assert "is_stable"         in summary
+        assert "is_stable" in summary
 
 
 class TestReplayDebugger:
-
     @pytest.fixture
     def episode_events(self):
         return [
-            AgentEvent("agent", "plan",    time.time(), {"planning_depth": 10, "uncertainty": 0.08}),
+            AgentEvent("agent", "plan", time.time(), {"planning_depth": 10, "uncertainty": 0.08}),
             AgentEvent("agent", "execute", time.time(), {"action": "query"}),
-            AgentEvent("agent", "observe", time.time(), {"prediction_error": 0.05, "error_within_uncertainty": True}),
-            AgentEvent("agent", "observe", time.time(), {"prediction_error": 0.40, "error_within_uncertainty": False}),  # 이상
+            AgentEvent(
+                "agent",
+                "observe",
+                time.time(),
+                {"prediction_error": 0.05, "error_within_uncertainty": True},
+            ),
+            AgentEvent(
+                "agent",
+                "observe",
+                time.time(),
+                {"prediction_error": 0.40, "error_within_uncertainty": False},
+            ),  # 이상
             AgentEvent("agent", "reflect", time.time(), {"recalibrated": True}),
         ]
 
@@ -86,7 +94,7 @@ class TestReplayDebugger:
 
     def test_no_anomaly_in_clean_log(self):
         clean = [
-            AgentEvent("agent", "plan",    time.time(), {"uncertainty": 0.05}),
+            AgentEvent("agent", "plan", time.time(), {"uncertainty": 0.05}),
             AgentEvent("agent", "execute", time.time(), {}),
             AgentEvent("agent", "observe", time.time(), {"prediction_error": 0.05}),
         ]
@@ -103,7 +111,6 @@ class TestReplayDebugger:
 
 
 class TestMetaHarness:
-
     def test_records_failure_pattern(self):
         meta = MetaHarness(auto_apply_threshold=3)
         event = {"event_type": "observe:drift", "payload": {"description": "드리프트 반복"}}
@@ -119,7 +126,7 @@ class TestMetaHarness:
         assert len(meta.get_pending_rules()) == 0
 
     def test_approve_rule(self):
-        meta  = MetaHarness(auto_apply_threshold=1)
+        meta = MetaHarness(auto_apply_threshold=1)
         event = {"event_type": "drift", "payload": {}}
         meta.record_failure(event)
         rules = meta.get_pending_rules()
@@ -128,7 +135,7 @@ class TestMetaHarness:
             assert ok
 
     def test_reject_rule(self):
-        meta  = MetaHarness(auto_apply_threshold=1)
+        meta = MetaHarness(auto_apply_threshold=1)
         event = {"event_type": "drift", "payload": {}}
         meta.record_failure(event)
         rules = meta.get_pending_rules()
@@ -138,9 +145,9 @@ class TestMetaHarness:
             assert len(meta.get_pending_rules()) == 0
 
     def test_summary_structure(self):
-        meta    = MetaHarness()
+        meta = MetaHarness()
         summary = meta.summary()
-        assert "total_patterns"   in summary
-        assert "pending_rules"    in summary
-        assert "applied_rules"    in summary
-        assert "top_patterns"     in summary
+        assert "total_patterns" in summary
+        assert "pending_rules" in summary
+        assert "applied_rules" in summary
+        assert "top_patterns" in summary

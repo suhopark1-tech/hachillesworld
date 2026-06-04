@@ -21,14 +21,12 @@ class EpisodeRecord:
     # ── 식별자 ──────────────────────────────────────────────────
     agent_id: str
     episode_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
-    study_id: str | None = None          # HAW-STUDY-001 참여 시 설정
-    domain: str = ""                     # supply_chain | customer_service | ...
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    study_id: str | None = None  # HAW-STUDY-001 참여 시 설정
+    domain: str = ""  # supply_chain | customer_service | ...
 
     # ── SCR 조건 1: 내부 플래그 ─────────────────────────────────
-    confidence: float | None = None      # 행동 확신도 [0, 1]
+    confidence: float | None = None  # 행동 확신도 [0, 1]
     internal_flag_raised: bool = False
     flag_types: list[str] = field(default_factory=list)
     # 가능한 값: "confidence" | "prediction" | "counterfactual"
@@ -50,14 +48,14 @@ class EpisodeRecord:
     # ── PD 측정: 예측-관측 쌍 ────────────────────────────────────
     predicted_next_state: dict[str, Any] | None = None
     actual_next_state: dict[str, Any] | None = None
-    max_prediction_error: float | None = None   # 정규화 거리 [0, 1]
-    planning_depth_used: int | None = None      # 이 에피소드에서 사용한 계획 깊이
+    max_prediction_error: float | None = None  # 정규화 거리 [0, 1]
+    planning_depth_used: int | None = None  # 이 에피소드에서 사용한 계획 깊이
 
     # ── 에피소드 결과 ─────────────────────────────────────────────
     goal_achieved: bool = True
     episode_success: bool = True
     infrastructure_failure: bool = False
-    ood_flagged: bool = False           # Out-of-Distribution 입력 여부
+    ood_flagged: bool = False  # Out-of-Distribution 입력 여부
 
     # ── 운영 건전성 ───────────────────────────────────────────────
     hitl_required: bool = False
@@ -166,7 +164,6 @@ class EpisodeRecord:
         if self.error_before_correction <= 0:
             return False
         improvement = (
-            (self.error_before_correction - self.error_after_correction)
-            / self.error_before_correction
-        )
+            self.error_before_correction - self.error_after_correction
+        ) / self.error_before_correction
         return improvement >= min_improvement
