@@ -279,5 +279,5 @@ class MetricsCalculator:
                 continue
             avg_conf = np.mean([c for c, _ in in_bin])
             avg_acc = np.mean([a for _, a in in_bin])
-            ece += (len(in_bin) / n) * abs(avg_conf - avg_acc)
+            ece += float((len(in_bin) / n) * abs(avg_conf - avg_acc))
         return float(ece)

@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from hachillesworld.collect.episode import EpisodeRecord
 
 import typer
 from rich.console import Console
@@ -124,13 +127,14 @@ def _api_key_from_env(explicit: str | None) -> str:
     return explicit or os.environ.get("HACHILLESWORLD_API_KEY", "")
 
 
-def _load_jsonl(path: Path) -> list[dict]:
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     """JSONL(한 줄 = 한 오브젝트) 또는 JSON 배열 파일을 로드한다."""
     text = path.read_text(encoding="utf-8").strip()
     if not text:
         return []
     if text.startswith("["):
-        return json.loads(text)
+        data: list[dict[str, Any]] = json.loads(text)
+        return data
     return [json.loads(line) for line in text.splitlines() if line.strip()]
 
 
@@ -171,7 +175,7 @@ def collect_ingest(
     console.print(Panel("[bold cyan]HAchillesWorld Collect — Ingest[/bold cyan]", expand=False))
 
     # ── 파일 로드 ─────────────────────────────────────────────────
-    raw_records: list[dict] = []
+    raw_records: list[dict[str, Any]] = []
     for fp in files:
         if not fp.exists():
             console.print(f"[red]파일 없음:[/red] {fp}")
@@ -342,7 +346,7 @@ def collect_replay(
     flusher = BatchFlusher(api_key=key, ingest_url=ingest_url)
 
     total_sent = 0
-    failed_raw: list[dict] = []
+    failed_raw: list[dict[str, Any]] = []
     batches = [records[i : i + batch_size] for i in range(0, len(records), batch_size)]
 
     with typer.progressbar(batches, label="재전송 중") as progress:
@@ -410,7 +414,7 @@ def collect_stats(
 # ── 공통 출력 헬퍼 ────────────────────────────────────────────────
 
 
-def _print_ingest_stats(records: list) -> None:
+def _print_ingest_stats(records: list[EpisodeRecord]) -> None:
     """ingest 전 유효성 및 간단 통계를 출력한다."""
 
     total = len(records)
@@ -435,7 +439,7 @@ def _print_ingest_stats(records: list) -> None:
 
 
 def _print_collect_stats(
-    records: list,
+    records: list[EpisodeRecord],
     theta_drift: float,
     min_improvement: float,
     show_episodes: bool,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from hachillesworld.core.models import (
     DiagnosticReport,
     Level,
@@ -20,7 +22,7 @@ class RoadmapGenerator:
     """
 
     # 각 Level 전환별 표준 태스크 템플릿
-    _PHASE_TEMPLATES: dict[str, list[dict]] = {
+    _PHASE_TEMPLATES: dict[str, list[dict[str, Any]]] = {
         "L1→L2": [
             {
                 "phase": 1,
@@ -186,7 +188,7 @@ class RoadmapGenerator:
         return 0.0
 
     @staticmethod
-    def _default_phases(report: DiagnosticReport) -> list[dict]:
+    def _default_phases(report: DiagnosticReport) -> list[dict[str, Any]]:
         return [
             {
                 "phase": 1,

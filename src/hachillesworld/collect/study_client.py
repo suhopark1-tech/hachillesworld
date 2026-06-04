@@ -97,7 +97,7 @@ class StudyClient:
                 def _wrapped_execute(
                     self_agent: Any,
                     *args: Any,
-                    _orig=original,
+                    _orig: Any = original,
                     **kwargs: Any,
                 ) -> Any:
                     with collector.episode() as ep:
@@ -128,8 +128,8 @@ class StudyClient:
                 def _wrapped(
                     self_agent: Any,
                     *args: Any,
-                    _orig=original,
-                    _name=method_name,
+                    _orig: Any = original,
+                    _name: str = method_name,
                     **kwargs: Any,
                 ) -> Any:
                     start = time.time()

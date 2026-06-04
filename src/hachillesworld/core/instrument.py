@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import functools
 import time
-from typing import Any
+from typing import Any, Callable
 
 from hachillesworld.core.models import AgentEvent
 
 
-def instrument(client: Any, agent_name: str):
+def instrument(client: Any, agent_name: str) -> Callable[[type], type]:
     """
     에이전트 클래스에 HAchillesWorld 계측을 자동 추가하는 클래스 데코레이터.
 
@@ -32,7 +32,11 @@ def instrument(client: Any, agent_name: str):
 
             @functools.wraps(original)
             def _wrapped(
-                self: Any, *args: Any, _orig=original, _name=method_name, **kwargs: Any
+                self: Any,
+                *args: Any,
+                _orig: Any = original,
+                _name: str = method_name,
+                **kwargs: Any,
             ) -> Any:
                 start = time.time()
                 error: str | None = None

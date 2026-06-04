@@ -117,7 +117,7 @@ class MetaHarness:
     def _describe_pattern(event: dict[str, Any]) -> str:
         payload = event.get("payload", {})
         event_type = event.get("event_type", "unknown")
-        return payload.get("description", f"{event_type} 이벤트에서 반복 실패 감지")
+        return str(payload.get("description", f"{event_type} 이벤트에서 반복 실패 감지"))
 
     @staticmethod
     def _suggest_rule(key: str, event: dict[str, Any]) -> HarnessRule | None:

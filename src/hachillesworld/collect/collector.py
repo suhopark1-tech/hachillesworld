@@ -76,7 +76,7 @@ class EpisodeContext:
         self._start_time = time.time()
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         duration_ms = (time.time() - self._start_time) * 1000
 
         if exc_type is not None:
@@ -123,7 +123,6 @@ class EpisodeContext:
             metadata=self._metadata,
         )
         self._collector.add(record)
-        return False  # 예외를 억제하지 않는다
 
     # ── 데이터 설정 메서드 ────────────────────────────────────────
 
