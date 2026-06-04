@@ -72,13 +72,17 @@ jobs:
           cache: pip
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install "ruff==0.15.15"
 
       - name: Check
         run: ruff check src/ tests/
 
       - name: Format check
         run: ruff format --check src/ tests/
+
+      - name: Debug format diff (on failure)
+        if: failure()
+        run: ruff format --diff src/ tests/ || true
 
   # ── 타입 검사 ────────────────────────────────────────────────────
   typecheck:
