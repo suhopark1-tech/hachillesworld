@@ -26,10 +26,16 @@ app.add_typer(collect_app, name="collect")
 @app.command()
 def scan(
     logs: Path | None = typer.Option(
-        None, "--logs", "-l", help="에이전트 로그 파일 경로 (JSON)",
+        None,
+        "--logs",
+        "-l",
+        help="에이전트 로그 파일 경로 (JSON)",
     ),
     config: Path | None = typer.Option(
-        None, "--config", "-c", help="에이전트 설정 파일 경로 (JSON)",
+        None,
+        "--config",
+        "-c",
+        help="에이전트 설정 파일 경로 (JSON)",
     ),
     agent_name: str = typer.Option("unnamed-agent", "--name", "-n", help="에이전트 이름"),
     output: Path | None = typer.Option(None, "--output", "-o", help="리포트 저장 경로 (JSON)"),
@@ -92,7 +98,10 @@ def scan(
 def optimize(
     report_file: Path = typer.Argument(..., help="scan 결과 JSON 파일"),
     target_level: str | None = typer.Option(
-        None, "--target", "-t", help="목표 Level (L2 또는 L3)",
+        None,
+        "--target",
+        "-t",
+        help="목표 Level (L2 또는 L3)",
     ),
 ) -> None:
     """진단 리포트 기반 최적화 로드맵을 출력한다."""
@@ -146,13 +155,22 @@ def _load_jsonl(path: Path) -> list[dict[str, Any]]:
 def collect_ingest(
     files: list[Path] = typer.Argument(..., help="JSONL 또는 JSON 로그 파일 경로 (1개 이상)"),
     api_key: str | None = typer.Option(
-        None, "--api-key", "-k", help="API 키 (미지정 시 HACHILLESWORLD_API_KEY 환경변수 사용)",
+        None,
+        "--api-key",
+        "-k",
+        help="API 키 (미지정 시 HACHILLESWORLD_API_KEY 환경변수 사용)",
     ),
     ingest_url: str = typer.Option(
-        "https://ingest.hachillesworld.ai/v1", "--url", "-u", help="인제스트 엔드포인트 URL",
+        "https://ingest.hachillesworld.ai/v1",
+        "--url",
+        "-u",
+        help="인제스트 엔드포인트 URL",
     ),
     agent_id: str | None = typer.Option(
-        None, "--agent-id", "-a", help="로그 전체에 적용할 agent_id (미지정 시 파일 내 값 사용)",
+        None,
+        "--agent-id",
+        "-a",
+        help="로그 전체에 적용할 agent_id (미지정 시 파일 내 값 사용)",
     ),
     domain: str | None = typer.Option(
         None,
@@ -161,11 +179,17 @@ def collect_ingest(
         help="도메인 덮어쓰기 (supply_chain | customer_service | finance | code | research)",
     ),
     study_id: str | None = typer.Option(
-        None, "--study-id", "-s", help="HAW-STUDY-001 연구 참여 ID",
+        None,
+        "--study-id",
+        "-s",
+        help="HAW-STUDY-001 연구 참여 ID",
     ),
     batch_size: int = typer.Option(50, "--batch", "-b", help="배치 크기"),
     fallback: Path | None = typer.Option(
-        None, "--fallback", "-f", help="전송 실패 시 기록할 JSONL 파일 경로",
+        None,
+        "--fallback",
+        "-f",
+        help="전송 실패 시 기록할 JSONL 파일 경로",
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="전송 없이 유효성 검사 및 통계만 출력"),
 ) -> None:
@@ -253,18 +277,29 @@ def collect_record(
     agent_id: str = typer.Option(..., "--agent-id", "-a", help="에이전트 식별자"),
     domain: str = typer.Option("", "--domain", "-d", help="에이전트 도메인"),
     confidence: float | None = typer.Option(
-        None, "--confidence", "-c", help="행동 확신도 [0–1]",
+        None,
+        "--confidence",
+        "-c",
+        help="행동 확신도 [0–1]",
     ),
     goal_achieved: bool = typer.Option(True, "--goal/--no-goal", help="목표 달성 여부"),
     tokens: int = typer.Option(0, "--tokens", "-t", help="LLM 토큰 수"),
     flag: str | None = typer.Option(
-        None, "--flag", "-f", help="내부 플래그 유형 (confidence | prediction | counterfactual)",
+        None,
+        "--flag",
+        "-f",
+        help="내부 플래그 유형 (confidence | prediction | counterfactual)",
     ),
     correction_source: str | None = typer.Option(
-        None, "--correction", help="수정 출처 (self | harness | hitl)",
+        None,
+        "--correction",
+        help="수정 출처 (self | harness | hitl)",
     ),
     output: Path | None = typer.Option(
-        None, "--output", "-o", help="기록할 JSONL 파일 (미지정 시 stdout)",
+        None,
+        "--output",
+        "-o",
+        help="기록할 JSONL 파일 (미지정 시 stdout)",
     ),
     api_key: str | None = typer.Option(None, "--api-key", "-k", help="API 키"),
     ingest_url: str = typer.Option("https://ingest.hachillesworld.ai/v1", "--url"),
@@ -322,7 +357,9 @@ def collect_replay(
     ingest_url: str = typer.Option("https://ingest.hachillesworld.ai/v1", "--url"),
     batch_size: int = typer.Option(50, "--batch", "-b"),
     delete_on_success: bool = typer.Option(
-        False, "--delete", help="전송 성공한 레코드를 파일에서 삭제",
+        False,
+        "--delete",
+        help="전송 성공한 레코드를 파일에서 삭제",
     ),
 ) -> None:
     """폴백 JSONL 파일의 레코드를 인제스트 엔드포인트로 재전송한다."""
@@ -384,10 +421,14 @@ def collect_replay(
 def collect_stats(
     files: list[Path] = typer.Argument(..., help="분석할 JSONL 파일 경로 (1개 이상)"),
     theta_drift: float = typer.Option(
-        0.15, "--drift-threshold", help="예측-관측 괴리 임계값 (분모 판단 기준)",
+        0.15,
+        "--drift-threshold",
+        help="예측-관측 괴리 임계값 (분모 판단 기준)",
     ),
     min_improvement: float = typer.Option(
-        0.05, "--min-improvement", help="자기 수정 최소 개선 비율",
+        0.05,
+        "--min-improvement",
+        help="자기 수정 최소 개선 비율",
     ),
     show_episodes: bool = typer.Option(False, "--episodes", help="에피소드 목록 출력"),
 ) -> None:
@@ -483,7 +524,9 @@ def _print_collect_stats(
     summary.add_row("Self-Correction Rate", f"{scr:.3f}", _status(scr, 0.25, 0.10))
     summary.add_row("Goal Achievement Rate", f"{gar:.3f}", _status(gar, 0.90, 0.70))
     summary.add_row(
-        "HITL 비율", f"{hitl_rate:.3f}", _status(hitl_rate, 0.05, 0.20, lower_is_better=True),
+        "HITL 비율",
+        f"{hitl_rate:.3f}",
+        _status(hitl_rate, 0.05, 0.20, lower_is_better=True),
     )
     summary.add_row("평균 LLM 토큰", f"{avg_tokens:.0f}", "")
     if avg_pd is not None:

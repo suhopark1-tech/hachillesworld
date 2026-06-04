@@ -108,10 +108,12 @@ class ScanEngine:
         """지표 기반 Level 자동 판정."""
         planning_depth = next((m.value for m in wm_metrics if m.name == "Planning Depth"), 1.0)
         self_correction = next(
-            (m.value for m in agency_metrics if m.name == "Self-Correction Rate"), 0.0,
+            (m.value for m in agency_metrics if m.name == "Self-Correction Rate"),
+            0.0,
         )
         uncertainty_ok = next(
-            (m.value for m in agency_metrics if m.name == "Uncertainty Awareness"), 0.0,
+            (m.value for m in agency_metrics if m.name == "Uncertainty Awareness"),
+            0.0,
         )
 
         if self_correction >= 0.30 and planning_depth >= 20:
