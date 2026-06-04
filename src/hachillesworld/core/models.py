@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class Level(str, Enum):
+class Level(StrEnum):
     """Levels × Laws 분류 체계의 역량 레벨."""
 
     L1 = "L1"  # Predictor: 단일 스텝 예측
@@ -15,7 +15,7 @@ class Level(str, Enum):
     L3 = "L3"  # Evolver:   자율 루프·자기 수정
 
 
-class LawsDomain(str, Enum):
+class LawsDomain(StrEnum):
     """에이전트가 작동하는 지배 법칙 도메인."""
 
     PHYSICAL = "physical"  # 로봇·자율주행·물리 세계
