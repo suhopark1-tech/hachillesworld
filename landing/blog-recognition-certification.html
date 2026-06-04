@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 에이전트 — 인정과 인증 | HAchillesWorld Blog</title>
+  <meta name="description" content="에이전트를 배포하기 전에 우리는 무엇을 인정해야 하는가. 그리고 무엇을 인증해야 하는가. 자동차 안전 등급처럼, AI 에이전트에도 표준 인증이 필요하다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+      --gold:#f59e0b; --gold-light:#fbbf24; --gold-dim:rgba(245,158,11,.12);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    /* HERO — gold theme */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(245,158,11,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(245,158,11,.07),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fcd34d}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ARTICLE LAYOUT */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:48px 24px 80px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--gold);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+
+    /* ARTICLE BODY */
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:52px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.08rem;font-weight:800;color:var(--text);margin:30px 0 10px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:#fcd34d;font-style:italic}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--gold);padding:14px 20px;margin:24px 0;background:var(--gold-dim);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body blockquote strong{color:var(--gold-light)}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:44px 0}
+    .article-body a{color:var(--accent2)}
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:1px 6px;border-radius:4px;color:#fcd34d}
+
+    /* COMPARISON TABLE */
+    .table-wrap{overflow-x:auto;margin:24px 0}
+    .data-table{width:100%;border-collapse:collapse;font-size:.875rem}
+    .data-table th{background:var(--bg3);padding:10px 16px;text-align:left;font-size:.74rem;font-weight:700;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:#cbd5e1;vertical-align:top}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(245,158,11,.02)}
+    .td-gold{color:var(--gold-light);font-weight:700}
+    .td-green{color:var(--accent3);font-weight:700}
+    .td-muted{color:var(--muted)}
+
+    /* CERT LEVEL CARDS */
+    .cert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}
+    @media(max-width:640px){.cert-grid{grid-template-columns:1fr}}
+    .cert-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;transition:border-color .2s}
+    .cert-card.silver{border-color:rgba(148,163,184,.3)}
+    .cert-card.gold{border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(245,158,11,.02))}
+    .cert-card.navy{border-color:rgba(99,140,200,.4);background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(30,58,95,.04))}
+    .cert-abbr{font-family:var(--mono);font-size:1.5rem;font-weight:900;margin-bottom:6px}
+    .cert-abbr.silver{color:#cbd5e1}
+    .cert-abbr.gold{color:#fde68a}
+    .cert-abbr.navy{color:#93c5fd}
+    .cert-name{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:8px}
+    .cert-score{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-bottom:10px}
+    .cert-desc{font-size:.77rem;color:var(--muted);line-height:1.55}
+
+    /* ANALOGY CARD */
+    .analogy-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+    @media(max-width:560px){.analogy-row{grid-template-columns:1fr}}
+    .analogy-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px}
+    .analogy-label{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .analogy-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:6px}
+    .analogy-desc{font-size:.82rem;color:var(--muted);line-height:1.55}
+
+    /* PROBLEM BOX */
+    .problem-box{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.18);border-radius:12px;padding:22px 24px;margin:24px 0}
+    .problem-box-head{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fca5a5;margin-bottom:12px}
+    .problem-box p{font-size:.88rem;color:#cbd5e1;margin-bottom:8px}
+    .problem-box p:last-child{margin-bottom:0}
+
+    /* FLOW */
+    .flow-row{display:flex;align-items:center;gap:0;margin:28px 0;flex-wrap:wrap}
+    .flow-step{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;flex:1;min-width:100px}
+    .flow-step-num{font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:4px}
+    .flow-step-label{font-size:.82rem;font-weight:700;color:var(--text)}
+    .flow-step-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+    .flow-arrow{font-size:1.2rem;color:var(--gold);padding:0 8px;flex-shrink:0}
+    @media(max-width:600px){.flow-arrow{display:none}.flow-step{min-width:80px;flex:1 1 40%}}
+
+    /* HIGHLIGHT BOX */
+    .highlight-box{background:var(--gold-dim);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px 24px;margin:28px 0}
+    .highlight-box p{font-size:.92rem;color:var(--text);margin-bottom:0;line-height:1.7}
+    .highlight-box strong{color:var(--gold-light)}
+
+    /* CTA */
+    .article-cta{background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(139,92,246,.05));border:1px solid rgba(245,158,11,.25);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.35rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0a0a0f;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--gold);text-decoration:none}
+
+    /* RELATED */
+    .related-posts{margin:48px 0 0}
+    .related-posts h3{font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
+    .related-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:600px){.related-grid{grid-template-columns:1fr}}
+    .related-card{display:flex;gap:12px;align-items:flex-start;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:border-color .2s;text-decoration:none}
+    .related-card:hover{border-color:var(--gold);text-decoration:none}
+    .related-arrow{font-size:1rem;flex-shrink:0;margin-top:2px;color:var(--gold)}
+    .related-card-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.4}
+    .related-card-desc{font-size:.76rem;color:var(--muted)}
+
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.08s}.delay-2{animation-delay:.16s}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- HERO -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#AI에이전트</span>
+      <span class="blog-tag">#인증</span>
+      <span class="blog-tag">#AgenticAI</span>
+      <span class="blog-tag">#AI거버넌스</span>
+      <span class="blog-tag">#HAS</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      AI 에이전트<br/>— 인정과 인증
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      배포 전에 우리는 무엇을 인정해야 하는가. 그리고 무엇을 인증해야 하는가.
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,200자 · 12분 읽기</span>
+      <span style="color:var(--gold)">◈ 거버넌스 · 실무</span>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLE -->
+<div class="article-layout">
+
+  <article class="article-body">
+
+    <p>얼마 전, 한 대기업 CTO와 대화를 나눴다.</p>
+
+    <p><em>"우리 에이전트가 이제 꽤 잘 작동해요. 이걸 외부 고객 업무에 붙여도 될까요?"</em></p>
+
+    <p>나는 잠시 멈췄다. <strong>"꽤 잘 작동한다"는 것이 무슨 의미인가요?</strong> 내부 테스트에서 잘 됐다는 것인가, 에러 없이 돌아간다는 것인가, 아니면 비즈니스 성과가 기대에 부합한다는 것인가?</p>
+
+    <p>그는 선뜻 대답하지 못했다.</p>
+
+    <p>바로 여기에 문제가 있다. AI 에이전트를 배포하는 사람들 대부분이 <strong>"인정"과 "인증"</strong>을 갖추지 않은 채로 배포 버튼을 누른다.</p>
+
+    <hr/>
+
+    <h2 id="recognition">인정 — 에이전트를 제대로 이해하는 것</h2>
+
+    <p>"인정(認定)"은 어떤 사실을 확인하고 받아들이는 것이다. 에이전트 맥락에서 인정은 두 가지 질문에 답하는 것이다.</p>
+
+    <p><strong>첫째, 이 에이전트는 무엇을 할 수 있는가?</strong></p>
+
+    <p>대부분의 팀은 에이전트가 할 수 있는 것에 집중한다. 그런데 정작 중요한 것은 <strong>할 수 없는 것</strong>을 인정하는 것이다. Planning Depth가 3인 에이전트에게 7일 리드타임의 공급망 결정을 맡기는 것은, 시력 0.1인 사람에게 야간 운전을 허용하는 것과 같다.</p>
+
+    <p><strong>둘째, 이 에이전트는 어느 환경에서 작동하는가?</strong></p>
+
+    <p>공급망에서 ρ=1.000을 기록한 에이전트가 의료 진단 보조에서는 완전히 다른 성능을 낼 수 있다. Laws(지배 법칙)가 다르기 때문이다. 물리 법칙과 API 계약은 다르다. 자연어 화용론과 뉴턴 역학은 다르다.</p>
+
+    <div class="problem-box">
+      <div class="problem-box-head">⚠ 현장에서 자주 보는 "인정 실패" 사례</div>
+      <p>• 내부 테스트 정확도 92% → 프로덕션 배포 → 실제 오류율 23%</p>
+      <p>• 개발 환경 완벽 통과 → 운영 환경 시장 변동 시 연속 실패</p>
+      <p>• "LLM이 GPT-4이니까 괜찮겠지" → World Model Degradation 방치</p>
+    </div>
+
+    <p>인정은 겸손의 문제다. 에이전트의 현재 수준을 직시하는 것. 그리고 그 수준에 맞는 환경에 배치하는 것.</p>
+
+    <hr/>
+
+    <h2 id="certification">인증 — 제3자가 검증한 신뢰</h2>
+
+    <p>"인증(認證)"은 다르다. 인증은 주관적 판단이 아니라 <strong>검증 가능한 기준을 통과했다는 공식 확인</strong>이다.</p>
+
+    <p>우리는 이미 수많은 인증 시스템 속에서 살고 있다.</p>
+
+    <div class="analogy-row">
+      <div class="analogy-card">
+        <div class="analogy-label">신용 점수 (FICO)</div>
+        <div class="analogy-title">금융 신뢰도 인증</div>
+        <div class="analogy-desc">300~850점 범위, 대출·계약 결정의 표준 언어. "이 사람은 신뢰할 수 있는가"를 숫자로 만든다.</div>
+      </div>
+      <div class="analogy-card">
+        <div class="analogy-label">자동차 안전 (NCAP)</div>
+        <div class="analogy-title">충돌 안전 등급 인증</div>
+        <div class="analogy-desc">별 1~5개. 소비자는 별점을 보고 안전성을 판단한다. 제조사는 별점을 높이기 위해 설계를 바꾼다.</div>
+      </div>
+      <div class="analogy-card">
+        <div class="analogy-label">의료기기 (FDA/CE)</div>
+        <div class="analogy-title">임상 안전성 인증</div>
+        <div class="analogy-desc">적응증·금기증이 명시된다. "이 기기는 어떤 환자에게, 어떤 조건에서 사용 가능한가"를 정의한다.</div>
+      </div>
+    </div>
+
+    <p>이 세 가지 인증의 공통점은 무엇인가? 모두 <strong>사용 가능 범위를 명확히 정의한다</strong>는 것이다. FICO 620 이하는 "서브프라임"이다. NCAP 별 1개 차량은 고속도로에서 위험하다. FDA 미승인 기기는 임상에 사용할 수 없다.</p>
+
+    <p>그런데 AI 에이전트에는 이런 기준이 없다. 아직은.</p>
+
+    <hr/>
+
+    <h2 id="why-now">지금 인증이 필요한 이유</h2>
+
+    <p>2026년 현재, AI 에이전트 배포는 사실상 무법지대다.</p>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>영역</th>
+            <th>현재 상황</th>
+            <th>필요한 것</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>조달·계약</strong></td>
+            <td class="td-muted">"GPT-4 기반" 외 검증 불가</td>
+            <td class="td-gold">표준화된 성능 지표</td>
+          </tr>
+          <tr>
+            <td><strong>규제·준수</strong></td>
+            <td class="td-muted">EU AI Act, NIST RMF — 기준 모호</td>
+            <td class="td-gold">인증으로 준수 증명</td>
+          </tr>
+          <tr>
+            <td><strong>사고 책임</strong></td>
+            <td class="td-muted">에이전트 실패 시 책임 귀속 불명확</td>
+            <td class="td-gold">인증 수준별 책임 범위 정의</td>
+          </tr>
+          <tr>
+            <td><strong>팀 내 소통</strong></td>
+            <td class="td-muted">개발자·경영진 간 성능 논의 언어 없음</td>
+            <td class="td-gold">공통 점수 체계 (HAS)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>EU AI Act는 고위험 AI 시스템에 적합성 평가를 요구한다. NIST AI RMF는 거버넌스 체계를 요구한다. 그런데 <strong>"우리 에이전트가 고위험인지 아닌지"를 어떻게 판단하는가?</strong> 현재 가용한 도구로는 답하기 어렵다.</p>
+
+    <hr/>
+
+    <h2 id="has">HAS — 에이전트의 신용 점수</h2>
+
+    <p>Levels × Laws 프레임워크의 핵심 출력이 <strong>HAchilles Agent Score(HAS)</strong>다.</p>
+
+    <p>[0, 1000] 범위. 15개 지표를 세 범주(World Model 품질, 에이전시 수준, 운영 건전성)로 집계한다. FICO처럼, 점수 범위마다 의미가 있다.</p>
+
+    <div class="cert-grid">
+      <div class="cert-card silver">
+        <div class="cert-abbr silver">HCP</div>
+        <div class="cert-name">HAchilles Certified Practitioner</div>
+        <div class="cert-score">HAS 600–749 · L1–L2</div>
+        <div class="cert-desc">감독 하 운용 가능. 반복적·예측 가능한 환경에서 보조 역할 적합.</div>
+      </div>
+      <div class="cert-card gold">
+        <div class="cert-abbr gold">HCE</div>
+        <div class="cert-name">HAchilles Certified Expert</div>
+        <div class="cert-score">HAS 750–899 · L2+</div>
+        <div class="cert-desc">독립적 운용 가능. 복잡한 멀티스텝 태스크, 동적 환경 대응 검증 완료.</div>
+      </div>
+      <div class="cert-card navy">
+        <div class="cert-abbr navy">HCAN</div>
+        <div class="cert-name">HAchilles Certified AI Native</div>
+        <div class="cert-score">HAS 900+ · L3</div>
+        <div class="cert-desc">완전 자율 운용 인증. 자기 수정·환경 적응 능력 검증. 최고 등급.</div>
+      </div>
+    </div>
+
+    <p>인증은 단순히 점수가 높다는 의미가 아니다. <strong>어느 환경에서, 어떤 조건 하에, 어느 수준의 감독이 필요한가</strong>를 명시한다. HCAN을 받은 에이전트도 의료 도메인에서는 추가 조건이 붙는다 — 그것이 인증의 정직함이다.</p>
+
+    <hr/>
+
+    <h2 id="process">인정 → 진단 → 개선 → 인증</h2>
+
+    <p>인증은 결승선이 아니다. 출발점은 인정이다.</p>
+
+    <div class="flow-row">
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 1</div>
+        <div class="flow-step-label">인정</div>
+        <div class="flow-step-sub">현재 수준 직시</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 2</div>
+        <div class="flow-step-label">Scan</div>
+        <div class="flow-step-sub">15개 지표 측정</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 3</div>
+        <div class="flow-step-label">Optimize</div>
+        <div class="flow-step-sub">로드맵 실행</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 4</div>
+        <div class="flow-step-label">인증</div>
+        <div class="flow-step-sub">HCP / HCE / HCAN</div>
+      </div>
+    </div>
+
+    <p>A사 공급망 에이전트의 여정이 이것이었다. 처음엔 HAS 670 — <em>"꽤 잘 작동하는 것 같다"</em>는 막연한 인정. 15개 지표로 진단하자 Calibration ECE 0.23, Planning Depth 3이라는 숫자가 드러났다. 24주 최적화 끝에 HAS 910, HCAN 인증.</p>
+
+    <p>인정에서 인증까지의 거리가 명확해졌을 때, 팀은 비로소 방향을 잡을 수 있었다.</p>
+
+    <hr/>
+
+    <h2 id="notjust">인증은 에이전트만을 위한 것이 아니다</h2>
+
+    <p>한 가지 오해가 있다. 인증이 에이전트 자체의 품질 보증이라는 생각이다.</p>
+
+    <p>아니다. 인증은 <strong>에이전트와 환경의 적합성</strong>을 보증한다.</p>
+
+    <blockquote>
+      <strong>같은 에이전트라도 Digital Laws 환경에서는 HCAN, Physical Laws 환경에서는 HCP일 수 있다.</strong><br/>
+      인증은 "이 에이전트가 좋다"가 아니라 "이 에이전트는 이 환경에서 이 수준으로 안전하다"는 말이다.
+    </blockquote>
+
+    <p>의료기기가 "심장 수술에는 적합, 안과 수술에는 미검증"이라고 적시하듯, AI 에이전트 인증도 적용 범위를 명시한다. 이것이 인증의 정직함이고, 인정의 연장선이다.</p>
+
+    <hr/>
+
+    <h2 id="future">앞으로 — 인증이 표준이 될 때</h2>
+
+    <p>2027년이 되면 이런 질문이 일상화될 것이라 생각한다.</p>
+
+    <p><em>"이 에이전트의 HAS 점수는 얼마입니까?"</em><br/>
+    <em>"어떤 Laws 도메인에서 인증받았습니까?"</em><br/>
+    <em>"HITL 비율 요구 사항을 충족합니까?"</em></p>
+
+    <p>구매 계약서에 HAS 기준이 들어갈 것이다. 보험사는 HCAN 인증 에이전트에 낮은 프리미엄을 책정할 것이다. 규제 당국은 인증 서류를 요구할 것이다.</p>
+
+    <div class="highlight-box">
+      <p>FICO 점수가 도입되기 전, 금융 신뢰도는 대출 담당자의 <strong>주관적 판단</strong>에 달려 있었다. 표준화 이후, 금융 시장은 비약적으로 성장했다. AI 에이전트 인증도 같은 역할을 할 것이다 — <strong>신뢰의 언어를 표준화</strong>하는 것.</p>
+    </div>
+
+    <p>지금 배포하려는 에이전트를 다시 한번 생각해보자.</p>
+
+    <p>"꽤 잘 작동한다"는 것이 무슨 의미인가? HAS 점수는 얼마인가? 어느 Laws 환경에 배치할 것인가? Planning Depth는 충분한가?</p>
+
+    <p>이 질문들에 답할 수 있을 때 — 그것이 <strong>인정</strong>이고, 그 답이 검증될 때 — 그것이 <strong>인증</strong>이다.</p>
+
+    <hr/>
+
+    <!-- CTA -->
+    <div class="article-cta">
+      <h3>지금 바로 인정에서 시작하세요</h3>
+      <p>10분 안에 에이전트의 HAS 점수를 측정하고,<br/>인증까지의 거리를 숫자로 확인합니다.</p>
+      <div class="cta-btns">
+        <a href="scan.html" class="btn-primary">무료 Scan 시작</a>
+        <a href="cert.html" class="btn-secondary">인증 프로그램 보기</a>
+      </div>
+    </div>
+
+    <!-- RELATED -->
+    <div class="related-posts">
+      <h3>관련 글</h3>
+      <div class="related-grid">
+        <a href="blog-arxiv-paper.html" class="related-card">
+          <div class="related-arrow">→</div>
+          <div>
+            <div class="related-card-title">AI 에이전트에도 "신용 점수"가 필요하다</div>
+            <div class="related-card-desc">HAS 프레임워크와 논문 HAW-TR-001 리뷰</div>
+          </div>
+        </a>
+        <a href="blog-world-model.html" class="related-card">
+          <div class="related-arrow">→</div>
+          <div>
+            <div class="related-card-title">당신의 AI 에이전트, 왜 실패하는지 알고 있나요?</div>
+            <div class="related-card-desc">World Model Degradation 실전 케이스</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+      저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026년 6월<br/>
+      이 글은 《Agentic World Modeling 2027》의 이론적 배경과 현장 경험을 바탕으로 작성되었습니다.
+    </p>
+
+  </article>
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h4>목차</h4>
+    <ul class="toc-list">
+      <li><a href="#recognition">인정 — 제대로 이해하는 것</a></li>
+      <li><a href="#certification">인증 — 제3자가 검증한 신뢰</a></li>
+      <li><a href="#why-now">지금 인증이 필요한 이유</a></li>
+      <li><a href="#has">HAS — 에이전트의 신용 점수</a></li>
+      <li><a href="#process">인정 → 진단 → 개선 → 인증</a></li>
+      <li><a href="#notjust">인증은 적합성 보증</a></li>
+      <li><a href="#future">앞으로 — 인증이 표준이 될 때</a></li>
+    </ul>
+  </aside>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  const headings = document.querySelectorAll('h2[id]');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => {
+          const active = l.getAttribute('href') === '#' + e.target.id;
+          l.style.color = active ? 'var(--gold-light)' : '';
+          l.style.borderColor = active ? 'var(--gold)' : '';
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  headings.forEach(h => obs.observe(h));
+
+  const fadeObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; }
+    });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.cert-card,.analogy-card,.problem-box,.highlight-box,.article-cta,.flow-row').forEach(el => {
+    el.style.opacity='0'; el.style.transform='translateY(16px)';
+    el.style.transition='opacity .5s ease, transform .5s ease';
+    fadeObs.observe(el);
+  });
+</script>
+</body>
+</html>
