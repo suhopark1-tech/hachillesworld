@@ -115,8 +115,8 @@ ignore = [
     "ARG",
     # global statement
     "PLW0603",
-    # isinstance with union types
-    "UP038",
+    # import inside function – intentional lazy loading in CLI
+    "PLC0415",
     # Stub file annotations
     "PYI036",
     # __enter__ return type Self suggestion

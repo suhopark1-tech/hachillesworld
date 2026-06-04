@@ -322,7 +322,9 @@ class LogCollector:
         )
         self._thread.start()
         logger.info(
-            "LogCollector started (agent=%s, interval=%.1fs)", self.agent_id, self._flush_interval,
+            "LogCollector started (agent=%s, interval=%.1fs)",
+            self.agent_id,
+            self._flush_interval,
         )
         return self
 
@@ -381,7 +383,7 @@ def _state_distance(predicted: dict[str, Any], actual: dict[str, Any]) -> float:
     diffs: list[float] = []
     for k in common_keys:
         p, a = predicted[k], actual[k]
-        if isinstance(p, (int, float)) and isinstance(a, (int, float)):
+        if isinstance(p, int | float) and isinstance(a, int | float):
             scale = max(abs(float(a)), abs(float(p)), 1.0)
             diffs.append(abs(float(p) - float(a)) / scale)
     if not diffs:

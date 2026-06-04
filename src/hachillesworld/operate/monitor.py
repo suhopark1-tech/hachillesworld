@@ -110,6 +110,6 @@ class DriftMonitor:
         diffs = []
         for k in common_keys:
             p, a = predicted[k], actual[k]
-            if isinstance(p, (int, float)) and isinstance(a, (int, float)):
+            if isinstance(p, int | float) and isinstance(a, int | float):
                 diffs.append(abs(float(p) - float(a)))
         return sum(diffs) / len(diffs) if diffs else 0.0
