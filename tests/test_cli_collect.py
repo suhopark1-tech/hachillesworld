@@ -504,7 +504,7 @@ class TestCollectStats:
             ),
             # 분모 포함, 하네스 수정 (SCR 제외)
             _make_episode(
-                goal_achieved=False, internal_flag_raised=True, correction_source="harness"
+                goal_achieved=False, internal_flag_raised=True, correction_source="harness",
             ),
             # 분모 포함, 수정 없음
             _make_episode(max_prediction_error=0.20),

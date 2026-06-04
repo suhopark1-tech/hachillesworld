@@ -1,6 +1,7 @@
 """Optimize 모듈 테스트."""
 
 import pytest
+
 from hachillesworld.core.models import (
     CategoryScore,
     DiagnosticReport,
@@ -8,8 +9,8 @@ from hachillesworld.core.models import (
     Level,
     MetricScore,
 )
-from hachillesworld.optimize.roadmap import RoadmapGenerator
 from hachillesworld.optimize.harness_generator import HarnessGenerator
+from hachillesworld.optimize.roadmap import RoadmapGenerator
 
 
 @pytest.fixture

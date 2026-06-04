@@ -100,7 +100,8 @@ class DiagnosticReport:
         score = self.composite_score
         emoji = "🟢" if score >= 80 else "🟡" if score >= 60 else "🔴"
         return (
-            f"{emoji} [{self.agent_name}] {self.level_label} × {self.laws_domain.value.title()} Laws\n"
+            f"{emoji} [{self.agent_name}] {self.level_label}"
+            f" × {self.laws_domain.value.title()} Laws\n"
             f"   종합 점수: {score:.0f}/100 | "
             f"WM품질: {self.world_model_quality.score:.0f} | "
             f"에이전시: {self.agency_level.score:.0f} | "

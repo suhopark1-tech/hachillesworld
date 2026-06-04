@@ -68,8 +68,7 @@ class GeneratedHarness:
 
 
 class HarnessGenerator:
-    """
-    진단 리포트의 임계값 위반 지표로부터 하네스 규칙을 자동 생성한다.
+    """진단 리포트의 임계값 위반 지표로부터 하네스 규칙을 자동 생성한다.
 
     사용 예:
         report = client.scan(...)

@@ -1,8 +1,13 @@
-"""
-HAchillesWorld 전체 플로우 로컬 테스트
+"""HAchillesWorld 전체 플로우 로컬 테스트
 index → scan → report → optimize_report → operate → cert → blog
 """
-import threading, http.server, time, sys, os
+
+import http.server
+import os
+import sys
+import threading
+import time
+
 from playwright.sync_api import sync_playwright
 
 LANDING = os.path.join(os.path.dirname(__file__), "landing")
@@ -11,30 +16,42 @@ BASE = f"http://localhost:{PORT}"
 
 passed = failed = 0
 
+
 def ok(step, msg):
-    global passed; passed += 1
+    global passed
+    passed += 1
     print(f"  ✅ [{step}] {msg}")
 
+
 def ng(step, msg):
-    global failed; failed += 1
+    global failed
+    failed += 1
     print(f"  ❌ [{step}] {msg}")
 
+
 def check(cond, step, ok_msg, fail_msg=""):
-    if cond: ok(step, ok_msg)
-    else:    ng(step, fail_msg or ok_msg)
+    if cond:
+        ok(step, ok_msg)
+    else:
+        ng(step, fail_msg or ok_msg)
     return cond
+
 
 # ── 로컬 서버 ──────────────────────────────────────────────
 class SilentHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=LANDING, **kw)
-    def log_message(self, *_): pass
+
+    def log_message(self, *_):
+        pass
+
 
 def start_server():
     srv = http.server.HTTPServer(("localhost", PORT), SilentHandler)
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     return srv
+
 
 # ── 테스트 ─────────────────────────────────────────────────
 def run():
@@ -55,8 +72,8 @@ def run():
 
         nav_hrefs = [a.get_attribute("href") or "" for a in page.locator(".nav-links a").all()]
         check("optimize.html" in nav_hrefs, "index", "nav → optimize.html")
-        check("operate.html"  in nav_hrefs, "index", "nav → operate.html")
-        check("blog.html"     in nav_hrefs, "index", "nav → blog.html")
+        check("operate.html" in nav_hrefs, "index", "nav → operate.html")
+        check("blog.html" in nav_hrefs, "index", "nav → blog.html")
 
         cta = page.locator("a.nav-cta").get_attribute("href") or ""
         check("scan.html" in cta, "index", "CTA 버튼 → scan.html")
@@ -84,15 +101,25 @@ def run():
         try:
             page.wait_for_url(f"{BASE}/report.html", timeout=12000)
             ok("scan→report", "report.html 이동 성공")
-        except Exception as e:
+        except Exception:
             ng("scan→report", f"이동 실패: {page.url}")
-            browser.close(); srv.shutdown(); return
+            browser.close()
+            srv.shutdown()
+            return
 
         # sessionStorage 확인
         ss = page.evaluate("JSON.parse(sessionStorage.getItem('haw_scan') || 'null')")
-        check(ss is not None,                              "scan", "sessionStorage 저장됨")
-        check(ss and ss.get("name") == "공급망 최적화 에이전트", "scan", f"name: {ss.get('name') if ss else '?'}")
-        check(ss and ss.get("domain") == "Digital",       "scan", f"domain: {ss.get('domain') if ss else '?'}")
+        check(ss is not None, "scan", "sessionStorage 저장됨")
+        check(
+            ss and ss.get("name") == "공급망 최적화 에이전트",
+            "scan",
+            f"name: {ss.get('name') if ss else '?'}",
+        )
+        check(
+            ss and ss.get("domain") == "Digital",
+            "scan",
+            f"domain: {ss.get('domain') if ss else '?'}",
+        )
 
         # ══════════════════════════════════════════════════
         # 3. report.html — 스캔 결과 리포트
@@ -103,8 +130,11 @@ def run():
 
         cover = page.locator(".cover-title")
         cover_text = cover.inner_text() if cover.count() > 0 else ""
-        check("공급망" in cover_text or "에이전트" in cover_text,
-              "report", f"에이전트명 반영: {cover_text[:40]}")
+        check(
+            "공급망" in cover_text or "에이전트" in cover_text,
+            "report",
+            f"에이전트명 반영: {cover_text[:40]}",
+        )
 
         sec_count = page.locator(".page-num").count()
         check(sec_count >= 15, "report", f"섹션 수: {sec_count}개 (15+)")
@@ -119,7 +149,9 @@ def run():
             ok("report→opt", "optimize_report.html 이동 성공")
         except:
             ng("report→opt", f"이동 실패: {page.url}")
-            browser.close(); srv.shutdown(); return
+            browser.close()
+            srv.shutdown()
+            return
 
         # ══════════════════════════════════════════════════
         # 4. optimize_report.html — 최적화 리포트
@@ -130,8 +162,11 @@ def run():
 
         meta = page.locator("#meta-name")
         meta_text = meta.inner_text() if meta.count() > 0 else ""
-        check("공급망" in meta_text or "에이전트" in meta_text,
-              "opt_report", f"에이전트명 반영: {meta_text}")
+        check(
+            "공급망" in meta_text or "에이전트" in meta_text,
+            "opt_report",
+            f"에이전트명 반영: {meta_text}",
+        )
 
         p_count = page.locator(".page-num").count()
         check(p_count >= 15, "opt_report", f"섹션 수: {p_count}개")
@@ -145,7 +180,9 @@ def run():
             ok("opt→operate", "operate.html 이동 성공")
         except:
             ng("opt→operate", f"이동 실패: {page.url}")
-            browser.close(); srv.shutdown(); return
+            browser.close()
+            srv.shutdown()
+            return
 
         # ══════════════════════════════════════════════════
         # 5. operate.html — 운영 대시보드
@@ -156,15 +193,28 @@ def run():
 
         agent_el = page.locator("#tb-agent")
         agent_text = agent_el.inner_text() if agent_el.count() > 0 else ""
-        check("공급망" in agent_text or "에이전트" in agent_text,
-              "operate", f"상단바 에이전트명: {agent_text}")
+        check(
+            "공급망" in agent_text or "에이전트" in agent_text,
+            "operate",
+            f"상단바 에이전트명: {agent_text}",
+        )
 
-        for kid, label in [("tb-drift","Drift"),("tb-ece","ECE"),("tb-score","Score"),("tb-cost","비용")]:
+        for kid, label in [
+            ("tb-drift", "Drift"),
+            ("tb-ece", "ECE"),
+            ("tb-score", "Score"),
+            ("tb-cost", "비용"),
+        ]:
             el = page.locator(f"#{kid}")
             val = el.inner_text() if el.count() > 0 else ""
             check(val != "", "operate", f"KPI {label}: {val}")
 
-        for sid, label in [("s-p1","Phase1"),("s-p2","Phase2"),("s-p3","Phase3"),("s-l3cert","L3인증")]:
+        for sid, label in [
+            ("s-p1", "Phase1"),
+            ("s-p2", "Phase2"),
+            ("s-p3", "Phase3"),
+            ("s-l3cert", "L3인증"),
+        ]:
             check(page.locator(f"#{sid}").count() > 0, "operate", f"{label} 섹션 존재")
 
         drift_before = page.locator("#tb-drift").inner_text()
@@ -186,16 +236,22 @@ def run():
 
         nav_cert = page.locator(".nav-links a").all()
         cert_hrefs = [a.get_attribute("href") or "" for a in nav_cert]
-        check("index.html" in cert_hrefs or any("index" in h for h in cert_hrefs),
-              "cert", "홈 링크 존재")
+        check(
+            "index.html" in cert_hrefs or any("index" in h for h in cert_hrefs),
+            "cert",
+            "홈 링크 존재",
+        )
 
         # ══════════════════════════════════════════════════
         # 7. Blog 플로우 — 목록 → 글 1 → 글 2
         # ══════════════════════════════════════════════════
         print("\n[7/7] Blog 플로우 — 목록 → 아티클")
         page.goto(f"{BASE}/blog.html", wait_until="domcontentloaded")
-        check("Blog" in page.title() or "HAchillesWorld" in page.title(),
-              "blog", f"타이틀: {page.title()}")
+        check(
+            "Blog" in page.title() or "HAchillesWorld" in page.title(),
+            "blog",
+            f"타이틀: {page.title()}",
+        )
 
         cards = page.locator("a.post-card").all()
         check(len(cards) >= 2, "blog", f"포스트 카드 수: {len(cards)}개 (2+)")
@@ -203,13 +259,20 @@ def run():
         # 카드 href 확인
         card_hrefs = [c.get_attribute("href") or "" for c in cards]
         check(any("blog-mcts" in h for h in card_hrefs), "blog", "MCTS 글 카드 링크 존재")
-        check(any("blog-world-model" in h for h in card_hrefs), "blog", "World Model 글 카드 링크 존재")
+        check(
+            any("blog-world-model" in h for h in card_hrefs),
+            "blog",
+            "World Model 글 카드 링크 존재",
+        )
 
         # blog-mcts-planning-depth.html 직접 접근
         page.goto(f"{BASE}/blog-mcts-planning-depth.html", wait_until="domcontentloaded")
         mcts_h1 = page.locator("h1").first.inner_text()
-        check("MCTS" in mcts_h1 or "Planning" in mcts_h1 or "수" in mcts_h1,
-              "blog-mcts", f"MCTS 글 h1: {mcts_h1[:50]}")
+        check(
+            "MCTS" in mcts_h1 or "Planning" in mcts_h1 or "수" in mcts_h1,
+            "blog-mcts",
+            f"MCTS 글 h1: {mcts_h1[:50]}",
+        )
 
         toc_items = page.locator(".toc-list li").count()
         check(toc_items >= 5, "blog-mcts", f"TOC 항목 수: {toc_items}개")
@@ -227,8 +290,11 @@ def run():
         # blog-world-model.html
         page.goto(f"{BASE}/blog-world-model.html", wait_until="domcontentloaded")
         wm_h1 = page.locator("h1").first.inner_text()
-        check("에이전트" in wm_h1 or "AI" in wm_h1 or "실패" in wm_h1,
-              "blog-wm", f"World Model 글 h1: {wm_h1[:50]}")
+        check(
+            "에이전트" in wm_h1 or "AI" in wm_h1 or "실패" in wm_h1,
+            "blog-wm",
+            f"World Model 글 h1: {wm_h1[:50]}",
+        )
 
         next_link = page.locator("a[href='blog-mcts-planning-depth.html']")
         check(next_link.count() > 0, "blog-wm", "다음 글 → blog-mcts-planning-depth.html 링크 존재")
@@ -254,8 +320,11 @@ def run():
 
         print("\n  [🔍 프로브] 존재하지 않는 페이지 → 404 처리")
         resp = page.goto(f"{BASE}/nonexistent.html")
-        check(resp is None or resp.status in [200, 404],
-              "404-probe", f"없는 페이지 응답 상태: {resp.status if resp else 'no resp'}")
+        check(
+            resp is None or resp.status in [200, 404],
+            "404-probe",
+            f"없는 페이지 응답 상태: {resp.status if resp else 'no resp'}",
+        )
 
         browser.close()
     srv.shutdown()
@@ -266,6 +335,7 @@ def run():
     print(f"  {status}  —  {passed} 통과 / {failed} 실패  (총 {total}건)")
     print("═" * 56)
     sys.exit(0 if failed == 0 else 1)
+
 
 if __name__ == "__main__":
     run()

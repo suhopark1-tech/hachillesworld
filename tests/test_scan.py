@@ -1,10 +1,10 @@
 """Scan 모듈 테스트."""
 
 import pytest
-from hachillesworld.core.models import Level, LawsDomain
+
+from hachillesworld.core.models import LawsDomain, Level
 from hachillesworld.scan.engine import ScanEngine
 from hachillesworld.scan.metrics import MetricsCalculator
-
 
 # ── 공통 픽스처 ───────────────────────────────────────────────
 

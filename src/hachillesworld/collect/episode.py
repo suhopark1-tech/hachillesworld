@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
 @dataclass
 class EpisodeRecord:
-    """
-    에이전트 에피소드 1회 실행의 완전한 로그 단위.
+    """에이전트 에피소드 1회 실행의 완전한 로그 단위.
 
     HAW-STUDY-001 JSON 스키마와 1:1 대응한다.
     SCR 계산(조건 1·2·3)과 PD 측정(예측-관측 쌍)에 필요한
@@ -21,7 +20,7 @@ class EpisodeRecord:
     # ── 식별자 ──────────────────────────────────────────────────
     agent_id: str
     episode_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     study_id: str | None = None  # HAW-STUDY-001 참여 시 설정
     domain: str = ""  # supply_chain | customer_service | ...
 
@@ -107,11 +106,11 @@ class EpisodeRecord:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "EpisodeRecord":
+    def from_dict(cls, d: dict[str, Any]) -> EpisodeRecord:
         return cls(
             agent_id=d["agent_id"],
             episode_id=d.get("episode_id", str(uuid.uuid4())),
-            timestamp=d.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            timestamp=d.get("timestamp", datetime.now(UTC).isoformat()),
             study_id=d.get("study_id"),
             domain=d.get("domain", ""),
             confidence=d.get("confidence"),

@@ -11,8 +11,7 @@ from hachillesworld.collect.episode import EpisodeRecord
 
 
 class StudyClient:
-    """
-    HAW-STUDY-001 횡단 타당도 연구 참여자를 위한 클라이언트.
+    """HAW-STUDY-001 횡단 타당도 연구 참여자를 위한 클라이언트.
 
     LogCollector를 내부적으로 사용하지만 인터페이스를 연구 참여에 최적화한다:
     - `@instrument` 데코레이터로 기존 에이전트에 3줄로 계측 추가
@@ -71,8 +70,7 @@ class StudyClient:
     # ── @instrument 데코레이터 ────────────────────────────────────
 
     def instrument(self, cls: type) -> type:
-        """
-        에이전트 클래스에 자동 계측을 추가하는 클래스 데코레이터.
+        """에이전트 클래스에 자동 계측을 추가하는 클래스 데코레이터.
 
         plan / execute / observe / reflect 메서드를 래핑해
         호출 시간, 오류, 토큰 수(있는 경우)를 자동 수집한다.
@@ -152,7 +150,7 @@ class StudyClient:
                                 goal_achieved=(error is None),
                                 duration_ms=round(duration_ms, 2),
                                 metadata={"method": _name, "error": error},
-                            )
+                            ),
                         )
 
                 setattr(cls, method_name, _wrapped)
@@ -194,8 +192,8 @@ class StudyClient:
 
     # ── 컨텍스트 매니저 ──────────────────────────────────────────
 
-    def __enter__(self) -> "StudyClient":
+    def __enter__(self) -> StudyClient:
         return self
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: object) -> None:
         self.close()

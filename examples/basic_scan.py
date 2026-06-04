@@ -1,5 +1,4 @@
-"""
-예제: 기본 Scan 사용법
+"""예제: 기본 Scan 사용법
 
 에이전트 로그를 진단해 리포트를 출력하고,
 최적화 로드맵을 자동 생성한다.
@@ -10,36 +9,44 @@
     python examples/basic_scan.py
 """
 
-import time
 from hachillesworld import HAchillesWorldClient
-from hachillesworld.optimize.roadmap import RoadmapGenerator
 from hachillesworld.optimize.harness_generator import HarnessGenerator
+from hachillesworld.optimize.roadmap import RoadmapGenerator
 
 
 def make_sample_logs(level: str = "L2") -> list[dict]:
     """진단 데모용 샘플 로그 생성."""
-    base_depth  = {"L1": 1, "L2": 12, "L3": 35}.get(level, 12)
-    base_error  = {"L1": 0.25, "L2": 0.09, "L3": 0.04}.get(level, 0.09)
-    recalib     = {"L1": True, "L2": False, "L3": False}.get(level, False)
+    base_depth = {"L1": 1, "L2": 12, "L3": 35}.get(level, 12)
+    base_error = {"L1": 0.25, "L2": 0.09, "L3": 0.04}.get(level, 0.09)
+    recalib = {"L1": True, "L2": False, "L3": False}.get(level, False)
 
     logs = []
     for i in range(20):
         logs += [
-            {"event_type": "plan", "payload": {
-                "planning_depth": base_depth + (i % 5),
-                "confidence": 0.78,
-                "uncertainty": 0.10 + (i % 3) * 0.03,
-            }},
+            {
+                "event_type": "plan",
+                "payload": {
+                    "planning_depth": base_depth + (i % 5),
+                    "confidence": 0.78,
+                    "uncertainty": 0.10 + (i % 3) * 0.03,
+                },
+            },
             {"event_type": "execute", "payload": {"action": f"action_{i}"}},
-            {"event_type": "observe", "payload": {
-                "prediction_error": base_error + (i % 4) * 0.01,
-                "error_within_uncertainty": base_error < 0.15,
-                "goal_achieved": i % 5 == 4,
-            }},
-            {"event_type": "reflect", "payload": {
-                "recalibrated": recalib and i % 7 == 0,
-                "correction_applied": level == "L3" and i % 8 == 0,
-            }},
+            {
+                "event_type": "observe",
+                "payload": {
+                    "prediction_error": base_error + (i % 4) * 0.01,
+                    "error_within_uncertainty": base_error < 0.15,
+                    "goal_achieved": i % 5 == 4,
+                },
+            },
+            {
+                "event_type": "reflect",
+                "payload": {
+                    "recalibrated": recalib and i % 7 == 0,
+                    "correction_applied": level == "L3" and i % 8 == 0,
+                },
+            },
         ]
     return logs
 
@@ -59,7 +66,7 @@ def main():
     # ── 1. Scan: 진단 ─────────────────────────────────────────
     print("\n[1/3] 진단 실행 중...")
     client = HAchillesWorldClient()
-    logs   = make_sample_logs(level="L2")
+    logs = make_sample_logs(level="L2")
     report = client.scan(logs=logs, config=agent_config, agent_name="demo-agent")
 
     print(report.summary())

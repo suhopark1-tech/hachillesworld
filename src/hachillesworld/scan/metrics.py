@@ -10,8 +10,7 @@ from hachillesworld.core.models import MetricScore
 
 
 class MetricsCalculator:
-    """
-    로그와 설정으로부터 15개 진단 지표를 계산한다.
+    """로그와 설정으로부터 15개 진단 지표를 계산한다.
 
     Category A (5개): World Model 품질
     Category B (5개): 에이전시 수준
@@ -274,7 +273,11 @@ class MetricsCalculator:
         ece = 0.0
         n = len(actuals)
         for i in range(n_bins):
-            in_bin = [(c, a) for c, a in zip(confidences, actuals) if bins[i] <= c < bins[i + 1]]
+            in_bin = [
+                (c, a)
+                for c, a in zip(confidences, actuals, strict=False)
+                if bins[i] <= c < bins[i + 1]
+            ]
             if not in_bin:
                 continue
             avg_conf = np.mean([c for c, _ in in_bin])

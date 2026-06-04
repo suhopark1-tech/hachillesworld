@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import functools
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from hachillesworld.core.models import AgentEvent
 
 
 def instrument(client: Any, agent_name: str) -> Callable[[type], type]:
-    """
-    에이전트 클래스에 HAchillesWorld 계측을 자동 추가하는 클래스 데코레이터.
+    """에이전트 클래스에 HAchillesWorld 계측을 자동 추가하는 클래스 데코레이터.
 
     계측 대상 메서드: plan / execute / observe / reflect
     나머지 메서드는 원본 그대로 유지된다.
@@ -57,7 +57,7 @@ def instrument(client: Any, agent_name: str) -> Callable[[type], type]:
                                 "duration_ms": round(duration_ms, 2),
                                 "error": error,
                             },
-                        )
+                        ),
                     )
 
             setattr(cls, method_name, _wrapped)

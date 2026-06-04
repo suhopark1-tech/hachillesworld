@@ -6,9 +6,9 @@ from hachillesworld.collect.flush import BatchFlusher
 from hachillesworld.collect.study_client import StudyClient
 
 __all__ = [
-    "EpisodeRecord",
-    "EpisodeContext",
-    "LogCollector",
     "BatchFlusher",
+    "EpisodeContext",
+    "EpisodeRecord",
+    "LogCollector",
     "StudyClient",
 ]

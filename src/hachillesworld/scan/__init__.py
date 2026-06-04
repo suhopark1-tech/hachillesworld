@@ -3,4 +3,4 @@
 from hachillesworld.scan.engine import ScanEngine
 from hachillesworld.scan.metrics import MetricsCalculator
 
-__all__ = ["ScanEngine", "MetricsCalculator"]
+__all__ = ["MetricsCalculator", "ScanEngine"]

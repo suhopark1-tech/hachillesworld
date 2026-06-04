@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
@@ -21,8 +22,7 @@ class DriftAlert:
 
 
 class DriftMonitor:
-    """
-    에이전트의 Simulation Drift를 실시간으로 감시한다.
+    """에이전트의 Simulation Drift를 실시간으로 감시한다.
     임계값 초과 시 콜백(on_alert)을 호출한다.
 
     사용 예:

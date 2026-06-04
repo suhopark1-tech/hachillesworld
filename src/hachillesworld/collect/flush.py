@@ -19,8 +19,7 @@ _RETRY_DELAYS = (1.0, 2.0, 4.0)  # 지수 백오프: 1 → 2 → 4초
 
 
 class BatchFlusher:
-    """
-    EpisodeRecord 배치를 인제스트 엔드포인트로 전송한다.
+    """EpisodeRecord 배치를 인제스트 엔드포인트로 전송한다.
 
     전송 실패 시 지수 백오프로 최대 3회 재시도한다.
     모든 재시도 소진 시 fallback_path JSONL 파일에 기록한다.
@@ -46,8 +45,7 @@ class BatchFlusher:
         )
 
     def flush(self, records: list[EpisodeRecord]) -> int:
-        """
-        records를 인제스트 엔드포인트로 전송한다.
+        """records를 인제스트 엔드포인트로 전송한다.
         반환값: 성공적으로 전송된 레코드 수 (실패 시 0).
         """
         if not records:
@@ -104,7 +102,7 @@ class BatchFlusher:
     def close(self) -> None:
         self._http.close()
 
-    def __enter__(self) -> "BatchFlusher":
+    def __enter__(self) -> BatchFlusher:
         return self
 
     def __exit__(self, *_: object) -> None:

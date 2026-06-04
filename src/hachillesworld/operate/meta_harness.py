@@ -23,8 +23,7 @@ class FailurePattern:
 
 
 class MetaHarness:
-    """
-    에이전트의 반복 실패 패턴을 자동 감지하고
+    """에이전트의 반복 실패 패턴을 자동 감지하고
     새 하네스 규칙을 제안·적용하는 Meta-Harness.
 
     사용 예:

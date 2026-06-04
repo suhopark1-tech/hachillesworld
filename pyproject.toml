@@ -48,6 +48,96 @@ hachillesworld = "hachillesworld.cli:app"
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Docstrings – Korean codebase, not enforced
+    "D",
+    # Type annotations – mypy strict already covers this
+    "ANN",
+    # Print – intentional in scripts, examples, CLI
+    "T201",
+    # Assert – used in tests
+    "S101",
+    # Magic numbers – common in data/config
+    "PLR2004",
+    # Trailing comma – conflicts with ruff formatter
+    "COM812", "COM819",
+    # Private member access – intentional internal use
+    "SLF001",
+    # Boolean typed positional arguments
+    "FBT",
+    # zip() without strict= parameter
+    "B905",
+    # Standard random – no cryptographic use here
+    "S311",
+    # os.path vs pathlib – deferred refactor
+    "PTH",
+    # Korean Unicode characters in strings/comments – intentional
+    "RUF001", "RUF002", "RUF003",
+    # Naming conventions – matrix/data variables
+    "N803", "N806",
+    # Function call in default argument – Typer/FastAPI pattern
+    "B008",
+    # Complexity limits
+    "PLR0912", "PLR0913", "PLR0915", "C901",
+    # Implicit namespace package – examples/ is standalone
+    "INP001",
+    # datetime without timezone – not required
+    "DTZ",
+    # TYPE_CHECKING import restructure – deferred
+    "TC",
+    # Exception/try style
+    "EM", "TRY003", "TRY300", "TRY400",
+    # Return style
+    "RET504", "RET505",
+    # Simplification style
+    "SIM103", "SIM108", "SIM117",
+    # try-except-pass
+    "S110",
+    # Modernization (non-critical)
+    "FURB",
+    # Commented-out code
+    "ERA001",
+    # yield from refactor
+    "UP028",
+    # Mutable class variable annotation
+    "RUF012",
+    # __all__ not sorted
+    "RUF022",
+    # pytest style
+    "PT011", "PT018",
+    # Preference rules
+    "RUF005", "RUF015",
+    # Blind except
+    "BLE001",
+    # Unused arguments
+    "ARG",
+    # global statement
+    "PLW0603",
+    # isinstance with union types
+    "UP038",
+    # Stub file annotations
+    "PYI036",
+    # __enter__ return type Self suggestion
+    "PYI034",
+    # Optional[X] vs X | None style
+    "UP007", "UP037",
+    # Multiple imports on one line
+    "E401",
+    # Bare except
+    "E722",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# HTML/CSS templates and data scripts with long string literals
+"validation/run_study.py" = ["E501"]
+"validation/sample_data.py" = ["E501"]
+"make_full_pdf.py" = ["E501"]
+"screenshot_all.py" = ["E501"]
+"screenshot_cert.py" = ["E501"]
+"screenshot_cert_sections.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

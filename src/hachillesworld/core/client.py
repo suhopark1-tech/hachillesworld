@@ -15,8 +15,7 @@ from hachillesworld.core.models import (
 
 
 class HAchillesWorldClient:
-    """
-    HAchillesWorld 플랫폼 클라이언트.
+    """HAchillesWorld 플랫폼 클라이언트.
 
     사용 예:
         client = HAchillesWorldClient(api_key="haw-...")
@@ -50,8 +49,7 @@ class HAchillesWorldClient:
         config: dict[str, Any] | None = None,
         agent_name: str = "unnamed-agent",
     ) -> DiagnosticReport:
-        """
-        에이전트 로그와 설정을 분석해 진단 리포트를 반환한다.
+        """에이전트 로그와 설정을 분석해 진단 리포트를 반환한다.
         API 서버가 없는 로컬 환경에서는 로컬 엔진을 사용한다.
         """
         from hachillesworld.scan.engine import ScanEngine
@@ -90,12 +88,12 @@ class HAchillesWorldClient:
                 event_type=event_type,
                 timestamp=time.time(),
                 payload=payload or {},
-            )
+            ),
         )
 
-    def __enter__(self) -> "HAchillesWorldClient":
+    def __enter__(self) -> HAchillesWorldClient:
         return self
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: object) -> None:
         self.flush()
         self._http.close()

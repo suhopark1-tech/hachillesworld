@@ -13,8 +13,7 @@ from hachillesworld.core.models import (
 
 
 class RoadmapGenerator:
-    """
-    진단 리포트를 입력받아 단계별 최적화 로드맵을 생성한다.
+    """진단 리포트를 입력받아 단계별 최적화 로드맵을 생성한다.
 
     사용 예:
         report = client.scan(logs=logs, config=config)
@@ -115,12 +114,12 @@ class RoadmapGenerator:
         report: DiagnosticReport,
         target_level: str | None = None,
     ) -> OptimizationRoadmap:
-        """
-        진단 리포트 기반 최적화 로드맵 생성.
+        """진단 리포트 기반 최적화 로드맵 생성.
 
         Args:
             report: Scan 결과 리포트
             target_level: 목표 Level ("L2" 또는 "L3"). None이면 자동 결정.
+
         """
         current = report.level.value
         target = target_level or self._auto_target(report.level)
@@ -156,7 +155,8 @@ class RoadmapGenerator:
         print(f"\n{'━' * 60}")
         print("  HAchillesWorld Optimize — 로드맵")
         print(
-            f"  {roadmap.from_level} → {roadmap.to_level}  ({roadmap.laws_domain.value.title()} Laws)"
+            f"  {roadmap.from_level} → {roadmap.to_level}"
+            f"  ({roadmap.laws_domain.value.title()} Laws)",
         )
         print(f"  총 기간: {roadmap.estimated_duration_weeks}주")
         if roadmap.estimated_cost_saving_usd > 0:
@@ -197,5 +197,5 @@ class RoadmapGenerator:
                 "tasks": [f"개선: {r}" for r in report.recommendations[:5]],
                 "priority": [],
                 "score_delta": 10.0,
-            }
+            },
         ]

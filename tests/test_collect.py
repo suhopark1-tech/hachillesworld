@@ -16,7 +16,6 @@ from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.collect.flush import BatchFlusher
 from hachillesworld.collect.study_client import StudyClient
 
-
 # ── EpisodeRecord 테스트 ──────────────────────────────────────────
 
 

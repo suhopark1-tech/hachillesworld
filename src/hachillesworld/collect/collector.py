@@ -8,7 +8,7 @@ import threading
 import time
 import uuid
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from hachillesworld.collect.episode import EpisodeRecord
@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class EpisodeContext:
-    """
-    `with collector.episode()` 블록 안에서 에피소드 데이터를 누적한다.
+    """`with collector.episode()` 블록 안에서 에피소드 데이터를 누적한다.
     `__exit__` 시 EpisodeRecord를 완성해 LogCollector 버퍼에 추가한다.
 
     사용 예:
@@ -34,7 +33,7 @@ class EpisodeContext:
 
     def __init__(
         self,
-        collector: "LogCollector",
+        collector: LogCollector,
         episode_id: str | None = None,
         initial_state: dict[str, Any] | None = None,
     ) -> None:
@@ -72,7 +71,7 @@ class EpisodeContext:
 
     # ── 컨텍스트 매니저 ──────────────────────────────────────────
 
-    def __enter__(self) -> "EpisodeContext":
+    def __enter__(self) -> EpisodeContext:
         self._start_time = time.time()
         return self
 
@@ -91,7 +90,7 @@ class EpisodeContext:
         record = EpisodeRecord(
             agent_id=self._collector.agent_id,
             episode_id=self._episode_id,
-            timestamp=datetime.fromtimestamp(self._start_time, tz=timezone.utc).isoformat(),
+            timestamp=datetime.fromtimestamp(self._start_time, tz=UTC).isoformat(),
             study_id=self._collector.study_id,
             domain=self._collector.domain,
             confidence=self._confidence,
@@ -126,25 +125,24 @@ class EpisodeContext:
 
     # ── 데이터 설정 메서드 ────────────────────────────────────────
 
-    def set_confidence(self, value: float) -> "EpisodeContext":
+    def set_confidence(self, value: float) -> EpisodeContext:
         """행동 확신도 설정. 여러 번 호출하면 마지막 값이 최종 confidence."""
         self._confidence = float(value)
         self._confidence_history.append(float(value))
         return self
 
-    def set_predicted_state(self, state: dict[str, Any]) -> "EpisodeContext":
+    def set_predicted_state(self, state: dict[str, Any]) -> EpisodeContext:
         """에이전트가 예측한 다음 상태."""
         self._predicted_state = state
         return self
 
-    def set_actual_state(self, state: dict[str, Any]) -> "EpisodeContext":
+    def set_actual_state(self, state: dict[str, Any]) -> EpisodeContext:
         """실제 관측된 다음 상태. max_prediction_error는 자동 계산."""
         self._actual_state = state
         return self
 
-    def set_flag(self, flag_type: str) -> "EpisodeContext":
-        """
-        내부 일관성 플래그 추가.
+    def set_flag(self, flag_type: str) -> EpisodeContext:
+        """내부 일관성 플래그 추가.
         flag_type: "confidence" | "prediction" | "counterfactual"
         """
         if flag_type not in self._flag_types:
@@ -159,9 +157,8 @@ class EpisodeContext:
         corrected: str,
         error_before: float | None = None,
         error_after: float | None = None,
-    ) -> "EpisodeContext":
-        """
-        자기 수정 이벤트 기록.
+    ) -> EpisodeContext:
+        """자기 수정 이벤트 기록.
         source: "self" | "harness" | "hitl" | "unknown"
         """
         self._correction_source = source
@@ -179,50 +176,49 @@ class EpisodeContext:
             self._hitl_required = True
         return self
 
-    def set_goal(self, achieved: bool, success: bool | None = None) -> "EpisodeContext":
+    def set_goal(self, achieved: bool, success: bool | None = None) -> EpisodeContext:
         self._goal_achieved = achieved
         self._episode_success = success if success is not None else achieved
         return self
 
-    def add_tool(self, tool_name: str) -> "EpisodeContext":
+    def add_tool(self, tool_name: str) -> EpisodeContext:
         if tool_name not in self._tools_used:
             self._tools_used.append(tool_name)
         return self
 
-    def add_harness_trigger(self, rule_name: str) -> "EpisodeContext":
+    def add_harness_trigger(self, rule_name: str) -> EpisodeContext:
         self._harness_triggers.append(rule_name)
         return self
 
-    def set_tokens(self, count: int) -> "EpisodeContext":
+    def set_tokens(self, count: int) -> EpisodeContext:
         self._llm_tokens += count
         return self
 
-    def set_planning_depth(self, depth: int) -> "EpisodeContext":
+    def set_planning_depth(self, depth: int) -> EpisodeContext:
         self._planning_depth = depth
         return self
 
-    def set_ood(self, flagged: bool = True) -> "EpisodeContext":
+    def set_ood(self, flagged: bool = True) -> EpisodeContext:
         self._ood_flagged = flagged
         return self
 
-    def set_infrastructure_failure(self, failed: bool = True) -> "EpisodeContext":
+    def set_infrastructure_failure(self, failed: bool = True) -> EpisodeContext:
         self._infrastructure_failure = failed
         self._episode_success = not failed
         return self
 
-    def set_human_approval_required(self, required: bool = True) -> "EpisodeContext":
+    def set_human_approval_required(self, required: bool = True) -> EpisodeContext:
         self._human_approval_required = required
         self._hitl_required = required
         return self
 
-    def set_metadata(self, key: str, value: Any) -> "EpisodeContext":
+    def set_metadata(self, key: str, value: Any) -> EpisodeContext:
         self._metadata[key] = value
         return self
 
 
 class LogCollector:
-    """
-    HAchillesWorld 에피소드 로그 수집기.
+    """HAchillesWorld 에피소드 로그 수집기.
 
     스레드 안전 deque 버퍼에 EpisodeRecord를 누적하고,
     백그라운드 스레드가 주기적으로 BatchFlusher를 통해 전송한다.
@@ -314,7 +310,7 @@ class LogCollector:
 
     # ── 백그라운드 flush 스레드 ───────────────────────────────────
 
-    def start(self) -> "LogCollector":
+    def start(self) -> LogCollector:
         """백그라운드 flush 스레드를 시작한다."""
         if self._thread and self._thread.is_alive():
             return self
@@ -326,7 +322,7 @@ class LogCollector:
         )
         self._thread.start()
         logger.info(
-            "LogCollector started (agent=%s, interval=%.1fs)", self.agent_id, self._flush_interval
+            "LogCollector started (agent=%s, interval=%.1fs)", self.agent_id, self._flush_interval,
         )
         return self
 
@@ -365,10 +361,10 @@ class LogCollector:
 
     # ── 컨텍스트 매니저 ──────────────────────────────────────────
 
-    def __enter__(self) -> "LogCollector":
+    def __enter__(self) -> LogCollector:
         return self.start()
 
-    def __exit__(self, *_: Any) -> None:
+    def __exit__(self, *_: object) -> None:
         self.stop()
 
 
@@ -376,8 +372,7 @@ class LogCollector:
 
 
 def _state_distance(predicted: dict[str, Any], actual: dict[str, Any]) -> float:
-    """
-    두 상태 딕셔너리의 정규화 거리를 계산한다.
+    """두 상태 딕셔너리의 정규화 거리를 계산한다.
 
     숫자형 값이 있는 공통 키의 RMSE를 값 범위로 정규화한다.
     키가 없거나 비숫자이면 0.0 반환.

@@ -36,8 +36,7 @@ class ReplaySession:
 
 
 class ReplayDebugger:
-    """
-    저장된 에이전트 이벤트 로그를 단계별로 재생해
+    """저장된 에이전트 이벤트 로그를 단계별로 재생해
     실패 원인을 식별한다.
 
     사용 예:
@@ -104,7 +103,7 @@ class ReplayDebugger:
 
         print(
             f"\n  이상 프레임: {len(session.anomaly_frames)}건 / "
-            f"실패 스텝: Step {session.failure_step}"
+            f"실패 스텝: Step {session.failure_step}",
         )
         print(f"{'━' * 64}\n")
 
