@@ -6,10 +6,24 @@ from hachillesworld.analyze.correlation import (
     HASBusinessCorrelation,
     ShapleyResult,
 )
+from hachillesworld.analyze.study_analysis import (
+    AgentRecord,
+    H1Result,
+    ShapleyWeights,
+    StudyAnalyzer,
+    StudyDataset,
+    SubgroupResult,
+)
 
 __all__ = [
     "HASBusinessCorrelation",
     "CorrelationResult",
     "ShapleyResult",
     "CorrelationReport",
+    "StudyAnalyzer",
+    "StudyDataset",
+    "AgentRecord",
+    "H1Result",
+    "ShapleyWeights",
+    "SubgroupResult",
 ]

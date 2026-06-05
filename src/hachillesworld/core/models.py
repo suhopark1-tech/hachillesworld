@@ -74,11 +74,17 @@ class DiagnosticReport:
 
     @property
     def composite_score(self) -> float:
-        """세 카테고리의 가중 평균 종합 점수 (0~100)."""
+        """세 카테고리의 가중 평균 종합 점수 (0~100).
+
+        가중치는 config.HAS_WEIGHTS를 따른다.
+        HAW-STUDY-001 실증 결과 후 StudyAnalyzer.sdk_weight_update()로 갱신된다.
+        """
+        from hachillesworld.core.config import HAS_WEIGHTS
+
         return (
-            self.world_model_quality.score * 0.40
-            + self.agency_level.score * 0.35
-            + self.operational_health.score * 0.25
+            self.world_model_quality.score * HAS_WEIGHTS["wmq"]
+            + self.agency_level.score * HAS_WEIGHTS["alm"]
+            + self.operational_health.score * HAS_WEIGHTS["ohm"]
         )
 
     @property
