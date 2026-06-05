@@ -20,7 +20,7 @@ client = HAchillesWorldClient(api_key="haw-demo")
 monitor = DriftMonitor("demo-agent", threshold=0.15)
 
 # 드리프트 경보 핸들러 등록
-monitor.on_alert = lambda alert: print(f"\n  ⚡ [Drift Alert] {alert.recommended_action}")
+monitor.add_alert_callback(lambda alert: print(f"\n  ⚡ [Drift Alert] {alert.recommended_action}"))
 
 
 @instrument(client, agent_name="demo-agent")

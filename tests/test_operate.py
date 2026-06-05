@@ -32,7 +32,7 @@ class TestDriftMonitor:
     def test_alert_callback_called(self):
         alerts = []
         monitor = DriftMonitor("alert-agent", threshold=0.10, alert_rate_threshold=0.10)
-        monitor.on_alert = alerts.append
+        monitor.add_alert_callback(alerts.append)
 
         for _ in range(5):
             monitor.record(

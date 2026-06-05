@@ -10,6 +10,18 @@ from typing import Any
 
 
 @dataclass
+class DriftValue:
+    """단일 타임스텝의 예측-관측 괴리 기록. PAT-005 §9.2."""
+
+    predicted: dict[str, Any]
+    actual: dict[str, Any]
+    value: float
+    exceeded_threshold: bool
+    timestamp: float
+    step_index: int = 0
+
+
+@dataclass
 class DriftAlert:
     """드리프트 경보 이벤트."""
 
@@ -19,15 +31,17 @@ class DriftAlert:
     threshold: float
     recent_rate: float
     recommended_action: str
+    cause: str = "unknown"
+    recalibration_strategy: str = ""
 
 
 class DriftMonitor:
     """에이전트의 Simulation Drift를 실시간으로 감시한다.
-    임계값 초과 시 콜백(on_alert)을 호출한다.
+    임계값 초과 시 등록된 모든 콜백(alert_callbacks)을 호출한다.
 
     사용 예:
         monitor = DriftMonitor(agent_name="my-agent", threshold=0.15)
-        monitor.on_alert = lambda alert: print(alert.recommended_action)
+        monitor.add_alert_callback(lambda alert: print(alert.recommended_action))
         monitor.record(predicted=pred_state, actual=actual_state)
     """
 
@@ -44,25 +58,48 @@ class DriftMonitor:
         self.alert_rate_threshold = alert_rate_threshold
 
         self._history: deque[float] = deque(maxlen=window_size)
+        self._drift_log: list[DriftValue] = []
         self._alert_count = 0
         self._total_count = 0
-        self.on_alert: Callable[[DriftAlert], None] | None = None
+        self._step_index = 0
+        self.alert_callbacks: list[Callable[[DriftAlert], None]] = []
+
+    def add_alert_callback(self, cb: Callable[[DriftAlert], None]) -> None:
+        """드리프트 경보 콜백을 추가한다. 복수 등록 지원."""
+        self.alert_callbacks.append(cb)
 
     def record(
         self,
         predicted: dict[str, Any],
         actual: dict[str, Any],
     ) -> float:
-        """예측-현실 괴리를 기록하고 드리프트 값을 반환한다."""
+        """예측-관측 괴리를 기록하고 드리프트 값을 반환한다."""
         drift = self._compute_drift(predicted, actual)
         self._history.append(drift)
         self._total_count += 1
 
-        if drift > self.threshold:
+        exceeded = drift > self.threshold
+        self._drift_log.append(
+            DriftValue(
+                predicted=predicted,
+                actual=actual,
+                value=round(drift, 6),
+                exceeded_threshold=exceeded,
+                timestamp=time.time(),
+                step_index=self._step_index,
+            )
+        )
+        self._step_index += 1
+
+        if exceeded:
             self._alert_count += 1
             self._maybe_alert(drift)
 
         return drift
+
+    def get_drift_log(self) -> list[DriftValue]:
+        """전체 드리프트 이력 반환. DriftCausalClassifier·Replay Debugger 연동용."""
+        return list(self._drift_log)
 
     def recent_drift_rate(self) -> float:
         """최근 윈도우에서 임계값 초과 비율."""
@@ -82,11 +119,12 @@ class DriftMonitor:
             "recent_drift_rate": round(self.recent_drift_rate(), 4),
             "is_stable": self.is_stable(),
             "threshold": self.threshold,
+            "window_size": self.window_size,
         }
 
     def _maybe_alert(self, drift: float) -> None:
         rate = self.recent_drift_rate()
-        if rate >= self.alert_rate_threshold and self.on_alert:
+        if rate >= self.alert_rate_threshold and self.alert_callbacks:
             alert = DriftAlert(
                 agent_name=self.agent_name,
                 timestamp=time.time(),
@@ -99,7 +137,8 @@ class DriftMonitor:
                     else "재보정 권장: 불확실성 임계값 검토"
                 ),
             )
-            self.on_alert(alert)
+            for cb in self.alert_callbacks:
+                cb(alert)
 
     @staticmethod
     def _compute_drift(predicted: dict[str, Any], actual: dict[str, Any]) -> float:
