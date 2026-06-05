@@ -5,7 +5,7 @@
 | 1-A | Planning Depth → SDK 이전 | ✅ 완료 | 2026-06-05 |
 | 1-B | ODR 자동화 | ✅ 완료 | 2026-06-05 |
 | 1-C | CA 자동화 (LLM-as-Judge) | ✅ 완료 | 2026-06-05 |
-| 1-D | 도메인 임계값 YAML 6개 | ⬜ 미시작 | - |
+| 1-D | 도메인 임계값 YAML 6개 | ✅ 완료 | 2026-06-05 |
 | 1-E | IRT·WMUL 정밀 추적 | ⬜ 미시작 | - |
 | 2-A | DriftCausalClassifier + RecalibrationExecutor | ⬜ 미시작 | - |
 | 2-B | Meta-Harness 충돌감지·검증 강화 | ⬜ 미시작 | - |
