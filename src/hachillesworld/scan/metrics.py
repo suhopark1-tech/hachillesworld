@@ -9,7 +9,15 @@ import numpy as np
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.core.models import MetricScore
 from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
+from hachillesworld.scan.incident_tracker import IncidentTracker
 from hachillesworld.scan.ood_detector import OODDetector
+from hachillesworld.scan.wmul_tracker import WMULTracker
+
+# ── SDK v1.1: 15개 지표 100% 자동화 완성 ─────────────────────────────────
+# WMQ (A): PA, ECE, SDR, ODR, PD
+# ALM (B): SCR, CA, GAR, AS, HC
+# OHM (C): WMUL, IRT, HITL, HR, SU
+# 수동 입력 필요 항목 0개
 
 
 class MetricsCalculator:
@@ -215,6 +223,36 @@ class MetricsCalculator:
             unit="rules",
             status="ok" if rule_count >= 20 else "warning" if rule_count >= 5 else "critical",
             description="적용 중인 하네스 제약 규칙 수. 20개 이상 권장.",
+        )
+
+    def incident_recovery_time(self) -> MetricScore:
+        """IRT — 인시던트 발생~회복 평균 시간 (낮을수록 좋음, 기준: < 5분)."""
+        tracker = IncidentTracker()
+        result = tracker.compute_irt(self.episodes, self.logs)
+        value = round(result.irt_minutes, 2)
+        status = "ok" if value < 5.0 else "warning" if value < 10.0 else "critical"
+        return MetricScore(
+            name="Incident Recovery Time",
+            value=value,
+            threshold=5.0,
+            unit="minutes",
+            status=status,
+            description=f"인시던트 평균 회복 시간 (n={result.n_incidents}).",
+        )
+
+    def world_model_update_latency(self) -> MetricScore:
+        """WMUL — SDR 초과→ECE 회복까지 레이턴시 (낮을수록 좋음, 기준: < 24시간)."""
+        tracker = WMULTracker()
+        result = tracker.compute_wmul(self.episodes, self.logs)
+        value = round(result.wmul_hours, 2)
+        status = "ok" if value < 24.0 else "warning" if value < 72.0 else "critical"
+        return MetricScore(
+            name="WM Update Latency",
+            value=value,
+            threshold=24.0,
+            unit="hours",
+            status=status,
+            description=f"SDR 초과→ECE 회복 평균 레이턴시 (n={result.n_drift_events}).",
         )
 
     # ── Category C: 운영 건전성 ───────────────────────────────

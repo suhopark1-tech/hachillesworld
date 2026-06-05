@@ -83,8 +83,8 @@ class ScanEngine:
 
         # ── Category C: 운영 건전성 ───────────────────────────
         ops_metrics = [
-            calc.recalibration_frequency(),
-            calc.cost_efficiency(),
+            calc.world_model_update_latency(),   # WMUL — SDR→ECE 회복 레이턴시
+            calc.incident_recovery_time(),        # IRT  — 인시던트 회복 시간
             calc.hitl_trigger_rate(),
             calc.harness_violation_rate(),
             calc.checkpoint_recovery_rate(),
