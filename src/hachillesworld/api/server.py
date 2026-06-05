@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from hachillesworld.api.routers import group, operate, scan, study
+from hachillesworld.api.routers import compliance, group, operate, scan, study
 from hachillesworld.api.state import AppState
 
 _API_KEY: str = os.getenv("HAW_API_KEY", "dev-key-insecure")
@@ -52,6 +52,7 @@ app.include_router(scan.router, prefix="/v1", dependencies=_auth)
 app.include_router(operate.router, prefix="/v1", dependencies=_auth)
 app.include_router(study.router, prefix="/v1", dependencies=_auth)
 app.include_router(group.router, prefix="/v1", dependencies=_auth)
+app.include_router(compliance.router, prefix="/v1", dependencies=_auth)
 
 
 @app.get("/health", tags=["meta"])

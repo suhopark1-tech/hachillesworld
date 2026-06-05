@@ -53,6 +53,9 @@ class AppState:
         )
         self.latest_reports[agent_id] = report
 
+    def get_latest_report(self, agent_id: str) -> DiagnosticReport | None:
+        return self.latest_reports.get(agent_id)
+
     def get_has_timeseries(
         self,
         agent_id: str,
