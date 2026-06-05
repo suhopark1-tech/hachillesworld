@@ -1,6 +1,12 @@
 """Module 3: HAchillesWorld Operate — 운영 인텔리전스."""
 
-from hachillesworld.operate.meta_harness import MetaHarness
+from hachillesworld.operate.harness_validator import HarnessRuleValidator, ValidationResult
+from hachillesworld.operate.meta_harness import (
+    AuditEntry,
+    ConflictReport,
+    HarnessConflictDetector,
+    MetaHarness,
+)
 from hachillesworld.operate.monitor import DriftAlert, DriftMonitor, DriftValue
 from hachillesworld.operate.recalibrator import (
     CausalClassificationResult,
@@ -21,5 +27,10 @@ __all__ = [
     "RecalibrationResult",
     "DriftToHarnessAdapter",
     "MetaHarness",
+    "HarnessConflictDetector",
+    "ConflictReport",
+    "AuditEntry",
+    "HarnessRuleValidator",
+    "ValidationResult",
     "ReplayDebugger",
 ]

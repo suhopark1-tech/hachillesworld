@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -152,3 +154,74 @@ class HarnessGenerator:
             severity=severity,
             source=metric.name,
         )
+
+
+class LLMHarnessRuleGenerator:
+    """LLM 기반 하네스 규칙 생성기. PAT-004 §13.4.
+
+    실패 컨텍스트 → 규칙 후보 최대 3개 제안 (제안 전용, 자동 적용 없음).
+    반드시 인간 감독자 승인 후 MetaHarness.propose_rule()로 추가할 것.
+    """
+
+    MAX_SUGGESTIONS: int = 3
+
+    def generate(
+        self,
+        failure_context: str,
+        existing_rules: list[HarnessRule],
+        anthropic_client: Any,
+    ) -> list[HarnessRule]:
+        """실패 컨텍스트로부터 하네스 규칙 후보를 최대 3개 반환한다.
+
+        반환된 규칙은 제안 상태이며, MetaHarness에 자동 추가되지 않는다.
+        """
+        existing_summary = "\n".join(
+            f"- {r.rule_id}: {r.condition} → {r.action} [{r.severity}]" for r in existing_rules
+        )
+        prompt = (
+            f"다음 AI 에이전트 실패 컨텍스트에 대한 안전 하네스 규칙을 "
+            f"{self.MAX_SUGGESTIONS}개 제안하시오.\n"
+            f"각 규칙을 JSON 배열로 반환: "
+            f'[{{"condition": "IF ...", "action": "THEN ...", "severity": "hard|soft"}}]\n\n'
+            f"실패 컨텍스트:\n{failure_context}\n\n"
+            f"기존 규칙:\n{existing_summary or '없음'}"
+        )
+
+        try:
+            response = anthropic_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = response.content[0].text
+            return self._parse_rules(raw)
+        except Exception:
+            return []
+
+    def _parse_rules(self, raw: str) -> list[HarnessRule]:
+        """LLM 응답에서 HarnessRule 목록을 파싱한다."""
+        match = re.search(r"\[.*?\]", raw, re.DOTALL)
+        if not match:
+            return []
+        try:
+            data = json.loads(match.group())
+        except json.JSONDecodeError:
+            return []
+
+        rules: list[HarnessRule] = []
+        for i, item in enumerate(data[: self.MAX_SUGGESTIONS]):
+            if not isinstance(item, dict):
+                continue
+            severity = item.get("severity", "soft")
+            if severity not in ("hard", "soft"):
+                severity = "soft"
+            rules.append(
+                HarnessRule(
+                    rule_id=f"llm_suggestion_{i + 1}",
+                    condition=str(item.get("condition", "")),
+                    action=str(item.get("action", "")),
+                    severity=severity,
+                    source="LLMHarnessRuleGenerator (제안 전용 — 인간 승인 필수)",
+                )
+            )
+        return rules
