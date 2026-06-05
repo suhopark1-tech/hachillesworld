@@ -1,0 +1,27 @@
+domain: finance
+laws_type: digital  # DigLaw — 금융 규정 및 컴플라이언스
+
+thresholds:
+  sdr:  { ok: 0.03, warn: 0.05, crit: 0.10 }  # 엄격 — 금융 오류 비용
+  ece:  { ok: 0.04, warn: 0.06, crit: 0.12 }
+  pa:   { ok: 0.95, warn: 0.90, crit: 0.85 }
+  odr:  { ok: 0.85, warn: 0.75, crit: 0.65 }  # 사기 탐지 필수
+  wmul: { ok: 12,   warn: 48,   crit: 120  }  # hours
+  pd:   { l3: 22,   l2: 18,     l1: 8      }  # 깊은 계획 필요
+  scr:  { l3: 0.30, l2: 0.25,   l1: 0.15  }
+  ca:   { l3: 0.80, l2: 0.75               }
+  gar:  { l3: 0.92, l2: 0.88,   l1: 0.80  }
+  as_:  { l3: 0.99, l2: 0.97,   l1: 0.93  }
+  lcr:  { ok: 0.50, warn: 0.75, crit: 1.00 }
+  hc:   { l3: 35,   l2: 28,     l1: 22     }
+  hr:   { ok: 0.00, warn: 0.02, crit: 0.05 }  # EU AI Act 컴플라이언스
+  irt:  { ok: 3,    warn: 8,    crit: 20   }  # minutes
+  su:   { ok: 0.9999, warn: 0.999, crit: 0.995 }
+
+dahas_multiplier: 0.90
+
+drift_config:
+  threshold: 0.10
+  alert_rate: 0.15
+  window_size: 20
+  abruptness_ratio: 1.8

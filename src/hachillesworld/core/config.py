@@ -19,10 +19,8 @@ class HAchillesWorldSettings(BaseSettings):
     # 수집 엔드포인트
     ingest_endpoint: str = "https://ingest.hachillesworld.ai/v1"
 
-    # 진단 기본값
-    scan_drift_threshold: float = 0.15
-    scan_ece_threshold: float = 0.10
-    scan_recalibration_threshold: float = 0.05  # 5% 이하 정상
+    # 진단 기본값 — 도메인별 임계값은 scan/domains/{domain}.yaml 참조
+    default_domain: str = "supply_chain"  # 자동 감지 실패 시 fallback 도메인
 
     # 비용 관련
     monthly_budget_usd: float = 0.0  # 0 = 무제한

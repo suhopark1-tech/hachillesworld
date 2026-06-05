@@ -1,0 +1,27 @@
+domain: healthcare
+laws_type: physical  # PhysLaw — 물리적 결과 (환자 안전)
+
+thresholds:
+  sdr:  { ok: 0.03, warn: 0.05, crit: 0.10 }  # 최엄격 — 오진 위험
+  ece:  { ok: 0.04, warn: 0.06, crit: 0.12 }  # HAW-TR-001 §10.1 healthcare 기준
+  pa:   { ok: 0.95, warn: 0.90, crit: 0.85 }  # 높은 예측 정확도 필수
+  odr:  { ok: 0.90, warn: 0.80, crit: 0.70 }  # OOD 즉각 감지
+  wmul: { ok: 12,   warn: 24,   crit: 72   }  # hours — 빠른 업데이트 필수
+  pd:   { l3: 22,   l2: 15,     l1: 5      }
+  scr:  { l3: 0.30, l2: 0.25,   l1: 0.15  }  # 자기 수정 중요
+  ca:   { l3: 0.82, l2: 0.78               }  # 높은 반사실 정확도
+  gar:  { l3: 0.95, l2: 0.90,   l1: 0.85  }  # 목표 달성률 엄격
+  as_:  { l3: 0.99, l2: 0.97,   l1: 0.95  }
+  lcr:  { ok: 0.50, warn: 0.75, crit: 1.00 }  # 드리프트 루프 최소화
+  hc:   { l3: 40,   l2: 30,     l1: 25     }  # 더 많은 안전 규칙
+  hr:   { ok: 0.00, warn: 0.01, crit: 0.03 }  # 위반 제로 지향
+  irt:  { ok: 2,    warn: 5,    crit: 15   }  # minutes — 즉각 복구
+  su:   { ok: 0.9999, warn: 0.999, crit: 0.995 }  # 최고 가용성
+
+dahas_multiplier: 0.85  # 가장 엄격한 도메인 조정
+
+drift_config:
+  threshold: 0.10   # 낮은 허용 임계값
+  alert_rate: 0.15
+  window_size: 15
+  abruptness_ratio: 1.5

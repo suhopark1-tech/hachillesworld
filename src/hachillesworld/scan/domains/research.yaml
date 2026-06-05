@@ -1,0 +1,27 @@
+domain: research
+laws_type: scientific  # SciLaw — 과학적 방법론
+
+thresholds:
+  sdr:  { ok: 0.10, warn: 0.20, crit: 0.35 }  # 연구는 탐색적이므로 관대
+  ece:  { ok: 0.15, warn: 0.25, crit: 0.40 }
+  pa:   { ok: 0.85, warn: 0.75, crit: 0.65 }
+  odr:  { ok: 0.70, warn: 0.60, crit: 0.50 }
+  wmul: { ok: 72,   warn: 168,  crit: 336  }  # hours — 연구 주기 반영
+  pd:   { l3: 22,   l2: 15,     l1: 5      }
+  scr:  { l3: 0.20, l2: 0.15,   l1: 0.08  }
+  ca:   { l3: 0.80, l2: 0.75               }  # 반사실 정확도 중요 (가설 검증)
+  gar:  { l3: 0.85, l2: 0.78,   l1: 0.70  }
+  as_:  { l3: 0.95, l2: 0.92,   l1: 0.85  }
+  lcr:  { ok: 1.25, warn: 1.67, crit: 2.50 }  # 재보정 허용 범위 넓음
+  hc:   { l3: 20,   l2: 15,     l1: 10     }  # 규칙 수 적어도 OK
+  hr:   { ok: 0.05, warn: 0.10, crit: 0.25 }
+  irt:  { ok: 30,   warn: 120,  crit: 480  }  # minutes — 연구 복구 시간 여유
+  su:   { ok: 0.997, warn: 0.990, crit: 0.980 }  # 상대적으로 낮아도 OK
+
+dahas_multiplier: 1.00
+
+drift_config:
+  threshold: 0.25  # 탐색적 연구는 드리프트 허용
+  alert_rate: 0.35
+  window_size: 30
+  abruptness_ratio: 3.0

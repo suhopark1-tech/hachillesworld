@@ -1,0 +1,27 @@
+domain: customer_service
+laws_type: social  # SocLaw — 사회적 상호작용 규범
+
+thresholds:
+  sdr:  { ok: 0.08, warn: 0.12, crit: 0.20 }  # 상대적으로 관대
+  ece:  { ok: 0.10, warn: 0.15, crit: 0.25 }
+  pa:   { ok: 0.90, warn: 0.85, crit: 0.80 }  # 응답 품질 중심
+  odr:  { ok: 0.75, warn: 0.65, crit: 0.55 }
+  wmul: { ok: 48,   warn: 96,   crit: 240  }  # hours — 상대적으로 여유
+  pd:   { l3: 18,   l2: 12,     l1: 5      }  # 짧은 대화 맥락
+  scr:  { l3: 0.20, l2: 0.15,   l1: 0.08  }
+  ca:   { l3: 0.75, l2: 0.70               }
+  gar:  { l3: 0.88, l2: 0.82,   l1: 0.75  }
+  as_:  { l3: 0.97, l2: 0.95,   l1: 0.90  }  # 고가용성 중요
+  lcr:  { ok: 1.00, warn: 1.25, crit: 1.67 }
+  hc:   { l3: 25,   l2: 20,     l1: 15     }
+  hr:   { ok: 0.05, warn: 0.10, crit: 0.20 }
+  irt:  { ok: 10,   warn: 20,   crit: 60   }  # minutes
+  su:   { ok: 0.999, warn: 0.995, crit: 0.990 }
+
+dahas_multiplier: 1.00
+
+drift_config:
+  threshold: 0.20
+  alert_rate: 0.25
+  window_size: 25
+  abruptness_ratio: 2.5

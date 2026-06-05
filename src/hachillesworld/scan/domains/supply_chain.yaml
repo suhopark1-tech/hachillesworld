@@ -1,0 +1,27 @@
+domain: supply_chain
+laws_type: digital  # DigLaw — 디지털 비즈니스 로직 지배
+
+thresholds:
+  sdr:  { ok: 0.05, warn: 0.08, crit: 0.15 }
+  ece:  { ok: 0.06, warn: 0.10, crit: 0.20 }
+  pa:   { ok: 0.92, warn: 0.88, crit: 0.85 }
+  odr:  { ok: 0.80, warn: 0.70, crit: 0.60 }
+  wmul: { ok: 24,   warn: 72,   crit: 168  }  # hours
+  pd:   { l3: 22,   l2: 15,     l1: 5      }
+  scr:  { l3: 0.25, l2: 0.20,   l1: 0.10  }
+  ca:   { l3: 0.78, l2: 0.73               }
+  gar:  { l3: 0.88, l2: 0.82,   l1: 0.75  }
+  as_:  { l3: 0.97, l2: 0.95,   l1: 0.90  }
+  lcr:  { ok: 0.75, warn: 1.00, crit: 1.43 }
+  hc:   { l3: 30,   l2: 25,     l1: 20     }
+  hr:   { ok: 0.03, warn: 0.05, crit: 0.10 }
+  irt:  { ok: 5,    warn: 10,   crit: 30   }  # minutes
+  su:   { ok: 0.999, warn: 0.995, crit: 0.990 }
+
+dahas_multiplier: 0.95
+
+drift_config:
+  threshold: 0.15
+  alert_rate: 0.20
+  window_size: 20
+  abruptness_ratio: 2.0

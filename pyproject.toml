@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "World Model 진단 및 최적화 플랫폼 — HAchillesWorld"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = { text = "Apache-2.0 (validation/); Proprietary (src/)" }
 authors = [{ name = "박성훈" }]
 keywords = ["world-model", "agent-diagnostics", "agentops", "llm"]
 
@@ -27,6 +27,7 @@ dependencies = [
     "jinja2>=3.1.4",
     "numpy>=1.26.4",
     "scipy>=1.13.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]

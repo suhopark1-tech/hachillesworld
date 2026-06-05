@@ -1,0 +1,27 @@
+domain: code_generation
+laws_type: digital  # DigLaw — 소프트웨어 로직
+
+thresholds:
+  sdr:  { ok: 0.08, warn: 0.15, crit: 0.25 }  # 코드 도메인은 변화 허용
+  ece:  { ok: 0.10, warn: 0.20, crit: 0.30 }
+  pa:   { ok: 0.88, warn: 0.80, crit: 0.70 }
+  odr:  { ok: 0.75, warn: 0.65, crit: 0.55 }
+  wmul: { ok: 48,   warn: 120,  crit: 240  }  # hours
+  pd:   { l3: 25,   l2: 18,     l1: 8      }  # 깊은 코드 계획 필요
+  scr:  { l3: 0.35, l2: 0.25,   l1: 0.15  }  # 자기 수정 매우 중요
+  ca:   { l3: 0.78, l2: 0.73               }
+  gar:  { l3: 0.92, l2: 0.85,   l1: 0.75  }  # 코드 품질/완성도
+  as_:  { l3: 0.97, l2: 0.95,   l1: 0.90  }
+  lcr:  { ok: 1.00, warn: 1.33, crit: 2.00 }
+  hc:   { l3: 25,   l2: 20,     l1: 15     }
+  hr:   { ok: 0.03, warn: 0.05, crit: 0.15 }
+  irt:  { ok: 10,   warn: 30,   crit: 120  }  # minutes
+  su:   { ok: 0.999, warn: 0.995, crit: 0.990 }
+
+dahas_multiplier: 1.00
+
+drift_config:
+  threshold: 0.20
+  alert_rate: 0.30
+  window_size: 30
+  abruptness_ratio: 3.0
