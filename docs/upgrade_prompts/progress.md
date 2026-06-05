@@ -6,7 +6,7 @@
 | 1-B | ODR 자동화 | ✅ 완료 | 2026-06-05 |
 | 1-C | CA 자동화 (LLM-as-Judge) | ✅ 완료 | 2026-06-05 |
 | 1-D | 도메인 임계값 YAML 6개 | ✅ 완료 | 2026-06-05 |
-| 1-E | IRT·WMUL 정밀 추적 | ⬜ 미시작 | - |
+| 1-E | IRT·WMUL 정밀 추적 | ✅ 완료 | 2026-06-05 |
 | 2-A | DriftCausalClassifier + RecalibrationExecutor | ⬜ 미시작 | - |
 | 2-B | Meta-Harness 충돌감지·검증 강화 | ⬜ 미시작 | - |
 | 2-C | Replay Debugger 반사실 분석 | ⬜ 미시작 | - |
