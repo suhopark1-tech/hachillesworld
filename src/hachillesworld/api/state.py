@@ -9,6 +9,7 @@ from typing import Any
 from hachillesworld.core.models import DiagnosticReport
 from hachillesworld.operate.meta_harness import MetaHarness
 from hachillesworld.operate.monitor import DriftMonitor
+from hachillesworld.optimize.multi_agent import AgentDependencyGraph
 
 
 @dataclass
@@ -20,6 +21,15 @@ class AppState:
     meta_harnesses: dict[str, MetaHarness] = field(default_factory=dict)
     study_enrollments: dict[str, dict[str, Any]] = field(default_factory=dict)
     replay_events: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    # Sprint 4-A: 다중 에이전트 지원
+    latest_reports: dict[str, DiagnosticReport] = field(default_factory=dict)
+    groups: dict[str, list[str]] = field(default_factory=dict)  # group_id → agent_ids
+    group_graphs: dict[str, AgentDependencyGraph] = field(default_factory=dict)
+
+    def get_or_create_group_graph(self, group_id: str) -> AgentDependencyGraph:
+        if group_id not in self.group_graphs:
+            self.group_graphs[group_id] = AgentDependencyGraph()
+        return self.group_graphs[group_id]
 
     def get_or_create_drift_monitor(self, agent_id: str) -> DriftMonitor:
         if agent_id not in self.drift_monitors:
@@ -41,6 +51,7 @@ class AppState:
                 "level": report.level_label,
             }
         )
+        self.latest_reports[agent_id] = report
 
     def get_has_timeseries(
         self,

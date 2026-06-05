@@ -108,3 +108,36 @@ class ReportGenerateRequest(BaseModel):
     format: str = "html"
     from_ts: str | None = None
     to_ts: str | None = None
+
+
+# ── 그룹 스키마 ────────────────────────────────────────────────────
+
+
+class GroupCreateRequest(BaseModel):
+    group_id: str
+    agent_ids: list[str]
+
+
+class GroupDependencyRequest(BaseModel):
+    from_agent: str
+    to_agent: str
+    weight: float = 1.0
+
+
+class IndividualAgentScore(BaseModel):
+    agent_name: str
+    composite_score: float
+    level: str
+    level_label: str
+
+
+class GroupHASResponse(BaseModel):
+    group_id: str
+    group_has: float
+    n_agents: int
+    weakest_link: str
+    group_level: str
+    simultaneous_drift_detected: bool
+    dependency_risk: dict[str, float] = Field(default_factory=dict)
+    individual_scores: list[IndividualAgentScore] = Field(default_factory=list)
+    generated_at: str
