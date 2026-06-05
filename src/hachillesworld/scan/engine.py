@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+import anthropic
+
+from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.core.models import (
     CategoryScore,
     DiagnosticReport,
@@ -12,6 +15,7 @@ from hachillesworld.core.models import (
     Level,
     MetricScore,
 )
+from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
 from hachillesworld.scan.metrics import MetricsCalculator
 from hachillesworld.scan.planning_depth import (
     PlanningDepthProber,
@@ -24,8 +28,17 @@ class ScanEngine:
     로그 + 설정 → DiagnosticReport
     """
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any],
+        *,
+        anthropic_api_key: str | None = None,
+    ) -> None:
         self.config = config
+        self._ca_evaluator: CounterfactualEvaluator | None = None
+        if anthropic_api_key:
+            client = anthropic.Anthropic(api_key=anthropic_api_key)
+            self._ca_evaluator = CounterfactualEvaluator(anthropic_client=client)
 
     def run(
         self,
@@ -34,8 +47,14 @@ class ScanEngine:
         *,
         probing_env: ProbingEnvironment | None = None,
         agent_fn: Callable | None = None,
+        episodes: list[EpisodeRecord] | None = None,
     ) -> DiagnosticReport:
-        calc = MetricsCalculator(logs=logs, config=self.config)
+        calc = MetricsCalculator(
+            logs=logs,
+            config=self.config,
+            episodes=episodes,
+            ca_evaluator=self._ca_evaluator,
+        )
 
         # Planning Depth: 행동 프로빙 우선, 없으면 로그 기반
         pd_metric = calc.planning_depth()
@@ -55,7 +74,7 @@ class ScanEngine:
         # ── Category B: 에이전시 수준 ─────────────────────────
         agency_metrics = [
             calc.self_correction_capability(),
-            calc.uncertainty_awareness(),
+            calc.counterfactual_accuracy(),
             calc.goal_consistency(),
             calc.env_adaptation_speed(),
             calc.harness_coverage(),

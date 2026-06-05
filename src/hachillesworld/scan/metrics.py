@@ -6,7 +6,9 @@ from typing import Any
 
 import numpy as np
 
+from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.core.models import MetricScore
+from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
 from hachillesworld.scan.ood_detector import OODDetector
 
 
@@ -18,9 +20,18 @@ class MetricsCalculator:
     Category C (5개): 운영 건전성
     """
 
-    def __init__(self, logs: list[dict[str, Any]], config: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        logs: list[dict[str, Any]],
+        config: dict[str, Any],
+        *,
+        episodes: list[EpisodeRecord] | None = None,
+        ca_evaluator: CounterfactualEvaluator | None = None,
+    ) -> None:
         self.logs = logs
         self.config = config
+        self.episodes: list[EpisodeRecord] = episodes or []
+        self.ca_evaluator = ca_evaluator
 
     # ── Category A: World Model 품질 ──────────────────────────
 
@@ -111,6 +122,21 @@ class MetricsCalculator:
             unit="steps",
             status=status,
             description="에이전트가 내부 시뮬레이션으로 내다보는 평균 스텝 수.",
+        )
+
+    def counterfactual_accuracy(self) -> MetricScore:
+        """Counterfactual Accuracy (CA) — LLM-as-Judge 또는 프록시 (높을수록 좋음, 기준: ≥ 0.73)."""
+        evaluator = self.ca_evaluator or CounterfactualEvaluator()
+        result = evaluator.evaluate(self.episodes)
+        value = round(result.ca_score, 4)
+        status = "ok" if value >= 0.73 else "warning" if value >= 0.60 else "critical"
+        return MetricScore(
+            name="Counterfactual Accuracy",
+            value=value,
+            threshold=0.73,
+            unit="corr",
+            status=status,
+            description=f"반사실 추론 정확도 ({result.method}, n={result.n_evaluated}).",
         )
 
     # ── Category B: 에이전시 수준 ─────────────────────────────
