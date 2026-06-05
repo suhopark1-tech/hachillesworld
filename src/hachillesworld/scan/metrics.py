@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from hachillesworld.core.models import MetricScore
+from hachillesworld.scan.ood_detector import OODDetector
 
 
 class MetricsCalculator:
@@ -76,23 +77,21 @@ class MetricsCalculator:
             description="드리프트 임계값 초과로 재보정이 발생한 스텝 비율.",
         )
 
-    def uncertainty_coverage(self) -> MetricScore:
-        """불확실성이 실제 오차를 포괄하는 비율 (높을수록 좋음, 기준: > 80%)."""
-        covered = sum(
-            1
-            for e in self.logs
-            if e.get("event_type") == "observe"
-            and e.get("payload", {}).get("error_within_uncertainty")
-        )
-        total = sum(1 for e in self.logs if e.get("event_type") == "observe")
-        rate = covered / total if total > 0 else 0.0
+    def odr(self) -> MetricScore:
+        """OOD Detection Rate — OOD 입력 자동 감지율 (높을수록 좋음, 기준: > 0.70).
+
+        OODDetector.proxy_odr()으로 자동 계산한다.
+        우선순위: ood_flagged 이벤트 → uncertainty coverage → confidence proxy
+        """
+        detector = OODDetector()
+        result = detector.proxy_odr(self.logs)
         return MetricScore(
-            name="Uncertainty Coverage",
-            value=round(rate, 4),
-            threshold=0.80,
+            name="OOD Detection Rate",
+            value=round(result.odr, 4),
+            threshold=0.70,
             unit="%",
-            status="ok" if rate > 0.80 else "warning" if rate > 0.60 else "critical",
-            description="예측 불확실성 구간이 실제 오차를 포함한 비율.",
+            status=("ok" if result.odr > 0.70 else "warning" if result.odr > 0.60 else "critical"),
+            description=f"OOD 입력 감지율 ({result.method}, n={result.n_ood_tested}).",
         )
 
     def planning_depth(self) -> MetricScore:

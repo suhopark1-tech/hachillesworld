@@ -47,7 +47,7 @@ class ScanEngine:
             calc.prediction_error_rate(),
             calc.calibration_ece(),
             calc.simulation_drift_rate(),
-            calc.uncertainty_coverage(),
+            calc.odr(),
             pd_metric,
         ]
         wm_score = self._category_score("World Model 품질", wm_metrics)
