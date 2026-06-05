@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from hachillesworld.core.models import (
@@ -12,6 +13,10 @@ from hachillesworld.core.models import (
     MetricScore,
 )
 from hachillesworld.scan.metrics import MetricsCalculator
+from hachillesworld.scan.planning_depth import (
+    PlanningDepthProber,
+    ProbingEnvironment,
+)
 
 
 class ScanEngine:
@@ -22,8 +27,20 @@ class ScanEngine:
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
 
-    def run(self, logs: list[dict[str, Any]], agent_name: str) -> DiagnosticReport:
+    def run(
+        self,
+        logs: list[dict[str, Any]],
+        agent_name: str,
+        *,
+        probing_env: ProbingEnvironment | None = None,
+        agent_fn: Callable | None = None,
+    ) -> DiagnosticReport:
         calc = MetricsCalculator(logs=logs, config=self.config)
+
+        # Planning Depth: 행동 프로빙 우선, 없으면 로그 기반
+        pd_metric = calc.planning_depth()
+        if probing_env is not None and agent_fn is not None:
+            pd_metric = self._probe_planning_depth(agent_fn, probing_env)
 
         # ── Category A: World Model 품질 ──────────────────────
         wm_metrics = [
@@ -31,7 +48,7 @@ class ScanEngine:
             calc.calibration_ece(),
             calc.simulation_drift_rate(),
             calc.uncertainty_coverage(),
-            calc.planning_depth(),
+            pd_metric,
         ]
         wm_score = self._category_score("World Model 품질", wm_metrics)
 
@@ -79,6 +96,37 @@ class ScanEngine:
         )
 
     # ── 내부 메서드 ────────────────────────────────────────────
+
+    def _probe_planning_depth(
+        self,
+        agent_fn: Callable,
+        probing_env: ProbingEnvironment,
+    ) -> MetricScore:
+        """행동 프로빙으로 Planning Depth를 측정하고 MetricScore로 반환한다."""
+        prober = PlanningDepthProber(
+            max_depth=25,
+            n_trials=20,
+            significance_margin=0.05,
+            random_baseline_trials=50,
+        )
+        result = prober.probe_env(agent_fn, probing_env)
+        value = float(result.depth)
+        if value >= 5:
+            status = "ok"
+        elif value >= 2:
+            status = "warning"
+        else:
+            status = "critical"
+        return MetricScore(
+            name="Planning Depth",
+            value=value,
+            threshold=5.0,
+            unit="steps",
+            status=status,
+            description=(
+                f"프로빙 측정: PD={result.depth} ({result.level}), 신뢰도={result.confidence:.2f}"
+            ),
+        )
 
     def _category_score(self, name: str, metrics: list[MetricScore]) -> CategoryScore:
         """지표 목록을 0~100 점수로 변환."""
