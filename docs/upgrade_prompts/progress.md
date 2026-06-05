@@ -10,7 +10,7 @@
 | 2-A | DriftCausalClassifier + RecalibrationExecutor | ✅ 완료 | 2026-06-05 |
 | 2-B | Meta-Harness 충돌감지·검증 강화 | ✅ 완료 | 2026-06-05 |
 | 2-C | Replay Debugger 반사실 분석 | ✅ 완료 | 2026-06-05 |
-| 3-A | HAW API 서버 (FastAPI) | ⬜ 미시작 | - |
+| 3-A | HAW API 서버 (FastAPI) | ✅ 완료 | 2026-06-05 |
 | 3-B | 실시간 대시보드 (Next.js) | ⬜ 미시작 | - |
 | 3-C | HAW-STUDY-001 파이프라인 | ⬜ 미시작 | - |
 | 4-A | 멀티에이전트 지원 | ⬜ 미시작 | - |
