@@ -163,11 +163,12 @@ class TestEUAIActArticleMapping:
         assert eu_report.agent_name == report.agent_name
 
     def test_generated_at_is_iso8601(self) -> None:
-        from datetime import datetime
+        from datetime import datetime, timezone
         eu_report = EUAIActMapper().map_to_articles(_make_report())
-        # ISO 8601 파싱 가능 여부
+        # ISO 8601 파싱 가능 여부 + UTC 타임존 포함 여부 확인
         dt = datetime.fromisoformat(eu_report.generated_at)
-        assert dt.year == 2026
+        assert dt.tzinfo is not None, "generated_at은 timezone-aware여야 합니다"
+        assert dt.year >= 2026, "generated_at 연도가 유효하지 않습니다"
 
 
 # ── HTML 보고서 생성 테스트 ───────────────────────────────────────────
@@ -211,6 +212,28 @@ class TestComplianceReportGeneration:
         html = EUAIActMapper().generate_compliance_report(report, format="html")
         assert "score-bar" in html
         assert "score-fill" in html
+
+    def test_html_contains_legal_notice_banner(self) -> None:
+        """법적 고지 배너가 HTML 상단에 포함되어 있어야 한다."""
+        report = _make_report()
+        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        assert "legal-notice" in html
+        assert "법적 고지" in html
+        assert "법적 효력" in html
+
+    def test_text_contains_legal_warning(self) -> None:
+        """텍스트 형식 보고서에도 법적 경고가 포함되어야 한다."""
+        report = _make_report()
+        txt = EUAIActMapper().generate_compliance_report(report, format="text")
+        assert "참고 자료" in txt
+        assert "법적 컴플라이언스 인증이 아닙니다" in txt
+
+    def test_html_title_reflects_monitoring_purpose(self) -> None:
+        """HTML 제목이 '모니터링 참고 보고서'임을 명시해야 한다."""
+        report = _make_report()
+        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        assert "모니터링" in html
+        assert "참고" in html
 
 
 # ── ISO 42001 체크리스트 테스트 ──────────────────────────────────────

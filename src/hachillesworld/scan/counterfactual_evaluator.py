@@ -1,14 +1,25 @@
-"""Counterfactual Accuracy (CA) 자동 측정 — LLM-as-Judge (HAW-TR-001 §4.2)."""
+"""Counterfactual Accuracy (CA) 자동 측정 — LLM-as-Judge (HAW-TR-001 §4.2).
+
+데이터 전송 고지:
+    LLM Judge 사용 시 에피소드의 predicted_next_state / actual_next_state가
+    Anthropic API 서버로 전송됩니다. 전송 전 DataClassifier를 통해 PII 필드가
+    자동으로 제거됩니다. 민감 데이터 포함 여부는 호출자가 확인해야 합니다.
+
+    외부 API 전송을 원하지 않는 경우 anthropic_client=None으로 초기화하면
+    로컬 프록시 방식으로 CA를 추정합니다.
+"""
 
 from __future__ import annotations
 
 import json
+import warnings
 from dataclasses import dataclass, field
 
 import numpy as np
 from scipy.stats import spearmanr
 
 from hachillesworld.collect.episode import EpisodeRecord
+from hachillesworld.privacy.data_classifier import DataClassifier
 
 
 @dataclass
@@ -42,11 +53,30 @@ class CounterfactualEvaluator:
         model: str = "claude-sonnet-4-6",
         *,
         cache_evaluations: bool = True,
+        pii_filter: bool = True,
+        consent_acknowledged: bool = False,
     ) -> None:
         self._client = anthropic_client
         self._model = model
         self._cache_evaluations = cache_evaluations
+        self._pii_filter = pii_filter
         self._eval_cache: dict[str, float] = {}
+        self._classifier = DataClassifier() if pii_filter else None
+
+        # 외부 API 사용 시 데이터 전송 동의 고지
+        if anthropic_client is not None and not consent_acknowledged:
+            warnings.warn(
+                "\n[HAchillesWorld 데이터 전송 고지]\n"
+                "LLM Judge(CA 측정)를 사용하면 에피소드의 predicted_next_state / "
+                "actual_next_state 데이터가 Anthropic API 서버로 전송됩니다.\n"
+                "PII 자동 필터링이 활성화되어 있습니다(pii_filter=True).\n"
+                "민감 데이터가 없음을 확인했다면 consent_acknowledged=True를 설정하여 "
+                "이 경고를 제거할 수 있습니다.\n"
+                "외부 전송을 원하지 않으면 anthropic_client=None을 사용하세요 "
+                "(프록시 방식으로 CA 추정).",
+                UserWarning,
+                stacklevel=2,
+            )
 
     def evaluate(self, episodes: list[EpisodeRecord]) -> CAResult:
         """에피소드 리스트에서 CA를 계산한다.
@@ -96,9 +126,36 @@ class CounterfactualEvaluator:
         )
 
     def _judge_single(self, ep: EpisodeRecord) -> tuple[float, float]:
-        """단일 에피소드에 대한 LLM Judge 평가. (score, cost_usd) 반환."""
-        predicted_str = json.dumps(ep.predicted_next_state, ensure_ascii=False)
-        actual_str = json.dumps(ep.actual_next_state, ensure_ascii=False)
+        """단일 에피소드에 대한 LLM Judge 평가. (score, cost_usd) 반환.
+
+        Anthropic API 전송 전 DataClassifier로 PII 필드를 자동 제거한다.
+        """
+        predicted_raw = ep.predicted_next_state or {}
+        actual_raw = ep.actual_next_state or {}
+
+        # PII 필터링 — 외부 API 전송 전 개인정보 제거
+        if self._classifier is not None:
+            predicted_clean = self._classifier.sanitize_for_external(predicted_raw)
+            actual_clean = self._classifier.sanitize_for_external(actual_raw)
+
+            # PII 탐지 시 경고
+            classification = self._classifier.classify(predicted_raw)
+            classification_actual = self._classifier.classify(actual_raw)
+            if classification.contains_pii or classification_actual.contains_pii:
+                pii_fields = classification.pii_keys + classification.pii_value_keys
+                warnings.warn(
+                    f"[HAchillesWorld PII 탐지] 에피소드 '{ep.episode_id}'의 "
+                    f"상태 데이터에서 PII 의심 필드({pii_fields})를 탐지했습니다. "
+                    "해당 필드는 [REDACTED]로 대체되어 Anthropic API로 전송됩니다.",
+                    UserWarning,
+                    stacklevel=3,
+                )
+        else:
+            predicted_clean = predicted_raw
+            actual_clean = actual_raw
+
+        predicted_str = json.dumps(predicted_clean, ensure_ascii=False)
+        actual_str = json.dumps(actual_clean, ensure_ascii=False)
         cf_question = ep.metadata.get(
             "cf_question",
             "에이전트가 다른 행동을 선택했다면 결과가 달라졌을까요?",

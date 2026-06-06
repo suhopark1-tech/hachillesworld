@@ -1,4 +1,8 @@
-"""컴플라이언스 엔드포인트 — POST /v1/report/compliance, /v1/report/iso42001."""
+"""컴플라이언스 엔드포인트 — POST /v1/report/compliance, /v1/report/iso42001.
+
+중요: 반환되는 보고서는 EU AI Act·ISO/IEC 42001 관련 지표 모니터링 참고 자료이며
+법적 컴플라이언스 인증 효력이 없습니다.
+"""
 
 from __future__ import annotations
 
@@ -59,7 +63,7 @@ class ISO42001CheckResponse(BaseModel):
 def generate_eu_act_report(
     req: ComplianceReportRequest, request: Request
 ) -> EUAIActReportResponse:
-    """EU AI Act Art.13~15 매핑 보고서 1-click 생성."""
+    """EU AI Act 관련 HAW 지표 모니터링 참고 보고서 생성 (법적 효력 없음)."""
     report = request.app.state.store.get_latest_report(req.agent_id)
     if report is None:
         raise HTTPException(
