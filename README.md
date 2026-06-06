@@ -1,100 +1,232 @@
 # HAchillesWorld
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/releases/tag/v1.0.0)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-39%20passed-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/tree/main/tests)
-[![License](https://img.shields.io/badge/license-Proprietary-lightgrey?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld)
-[![Anthropic](https://img.shields.io/badge/Powered%20by-Claude%20Sonnet%204.6-D97706?style=flat-square&logo=anthropic&logoColor=white)](https://www.anthropic.com)
-[![Framework](https://img.shields.io/badge/Framework-Levels%20%C3%97%20Laws-8B5CF6?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/blob/main/docs/HAchillesWorld_%EA%B8%B0%ED%9A%8D%EC%84%9C.md)
+[![Tests](https://img.shields.io/badge/tests-77%20passed-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/tree/main/tests)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](./LICENSE)
+[![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20Sonnet%204.6-D97706?style=flat-square&logo=anthropic&logoColor=white)](https://www.anthropic.com)
 
-> **"당신의 AI 에이전트는 세계를 얼마나 정확히 이해하고 있는가?"**
-
-**HAchillesWorld**는 AI 에이전트 시스템의 **World Model 품질을 진단하고 최적화하는 플랫폼**이다.  
-기업과 개인의 에이전트를 Levels × Laws 프레임워크로 10분 안에 진단하고, 다음 Level로의 구체적인 로드맵을 제시하며, 실시간 운영을 지원한다.
-
-> World Model diagnosis & optimization platform — AI Agent diagnostics based on Levels × Laws framework.
-
-이론적 기반: 《Agentic World Modeling 2027: The Architecture of Autonomous Intelligence》 — 박성훈
+> **AI 에이전트의 "World Model 품질"을 측정하는 첫 번째 표준화 SDK**
 
 ---
 
-## 3개 모듈
+## 이런 문제가 있으신가요?
 
-| 모듈 | 기능 |
-|------|------|
-| **Scan** | Levels × Laws 자동 진단, 15개 지표, 리포트 생성 |
-| **Optimize** | 맞춤 로드맵 자동 생성, 하네스 코드 생성, 비용 절감 계획 |
-| **Operate** | 실시간 Drift 감지, Replay 디버깅, Meta-Harness 자동화 |
+- 에이전트가 왜 실패하는지 모르겠다
+- 에이전트를 배포해도 되는지 판단 기준이 없다
+- AI 에이전트 성능을 팀원·투자자에게 설명하기 어렵다
+- 논문 재현을 해야 하는데 LLM-as-Judge가 비결정적이다
 
 ---
 
-## 빠른 시작
-
-### 설치
+## HAchillesWorld가 해결합니다
 
 ```bash
 pip install hachillesworld
 ```
 
-### SDK 통합 (5분)
+```python
+from hachillesworld import HAchillesWorldClient
+
+client = HAchillesWorldClient()
+report = client.scan(agent_logs=my_logs, agent_name="MyAgent")
+
+print(report.summary())
+```
+
+출력 예시:
+```
+🟡 [MyAgent] L2.3 × Digital Laws
+   종합 점수: 73/100 (B등급 — 개선 필요, 상위 50%) | 감독 하 운용
+   즉시 조치: Simulation Drift Rate=0.18 (임계 초과) → DriftCausalClassifier 실행 → 원인별 RecalibrationExecutor 적용
+```
+
+다음 조치가 궁금하다면:
 
 ```python
-from hachillesworld import HAchillesWorldClient, instrument
+from hachillesworld.interpret import HASInterpreter
 
-client = HAchillesWorldClient(api_key="haw-...")
+interp = HASInterpreter().interpret(report)
 
-@instrument(client, agent_name="my-agent")
-class MyAgent:
-    def plan(self, state, goal): ...
-    def execute(self, action): ...
+for action in interp.next_actions:
+    print(f"[우선순위 {action.priority}] {action.metric}: {action.action}")
+    print(f"  → 예상 HAS 상승: +{action.estimated_has_gain}점")
 ```
 
-### CLI 진단
+---
+
+## 왜 HAchillesWorld인가?
+
+| 기능 | HAchillesWorld | Evidently AI | Arthur AI | Arize AI |
+|------|:-:|:-:|:-:|:-:|
+| World Model 품질 진단 | ✅ | ❌ | ❌ | ❌ |
+| Levels × Laws 역량 분류 | ✅ | ❌ | ❌ | ❌ |
+| 즉시 실행 가능한 액션 아이템 | ✅ | ❌ | △ | △ |
+| 오프라인 CA 측정 (GDPR 안전) | ✅ | ❌ | ❌ | ❌ |
+| 논문 재현 가능한 Judge | ✅ | ❌ | ❌ | ❌ |
+| HAS 신뢰구간 (95% CI) | ✅ | △ | ❌ | ❌ |
+| MLflow 연동 | ✅ | ✅ | ✅ | ✅ |
+
+---
+
+## 아키텍처
+
+```
+에이전트 로그 / EpisodeRecord
+        │
+        ▼
+   ScanEngine
+        │ 15개 지표 자동 측정
+        ├── World Model 품질 (WMQ, 45%)
+        │   Prediction Error Rate · Calibration ECE · Simulation Drift Rate
+        │   OOD Detection Rate · Planning Depth
+        ├── 에이전시 수준 (ALM, 35%)
+        │   Self-Correction Rate · Counterfactual Accuracy · Goal Consistency
+        │   Env Adaptation Speed · Harness Coverage
+        └── 운영 건전성 (OHM, 20%)
+            WM Update Latency · Incident Recovery Time · HITL Trigger Rate
+            Harness Violation Attempts · Checkpoint Recovery Rate
+        │
+        ▼
+ DiagnosticReport
+  ├── composite_score  (HAS 0~100)
+  ├── has_confidence_interval  (95% CI)
+  ├── summary()        ← 1줄 CLI 출력
+        │
+        ▼
+  HASInterpreter
+  ├── grade            A+ / A / B / C / D
+  ├── deployment_status
+  ├── percentile       상위 몇% (Study-001 기반)
+  └── next_actions     즉시 실행 가능한 액션 아이템 Top 3
+```
+
+---
+
+## 핵심 기능
+
+### 1. Scan — 15개 지표 자동 진단
+
+```python
+from hachillesworld.scan.engine import ScanEngine
+
+engine = ScanEngine(config={"laws_domain": "digital"})
+report = engine.run(logs=agent_logs, agent_name="MyAgent")
+
+print(f"HAS: {report.composite_score:.1f}/100")
+print(f"95% CI: {report.has_confidence_interval}")
+```
+
+### 2. Interpret — 즉시 실행 가능한 액션 아이템
+
+```python
+from hachillesworld.interpret import HASInterpreter
+
+interp = HASInterpreter().interpret(report)
+
+print(f"등급: {interp.grade} ({interp.grade_label})")
+print(f"배포 상태: {interp.deployment_status}")
+print(f"예상 개선폭: +{interp.estimated_improvement:.1f}점")
+
+for action in interp.next_actions:
+    print(f"  [{action.priority}순위] {action.metric} → {action.action}")
+```
+
+### 3. 오프라인 CA 측정 — GDPR 안전
+
+```python
+from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
+
+# 완전 오프라인 (외부 전송 없음)
+evaluator = CounterfactualEvaluator(judge_type="rule")
+
+# 로컬 LLM (Ollama, 재현 가능)
+evaluator = CounterfactualEvaluator(judge_type="local", model="llama3.1:8b")
+
+# Anthropic API (고정확도, 외부 전송)
+evaluator = CounterfactualEvaluator(anthropic_client=client, consent_acknowledged=True)
+```
+
+### 4. MLflow 연동
+
+```python
+from hachillesworld.integrations import MLflowHASLogger
+
+MLflowHASLogger().log_report(report)
+# → MLflow에 has_score, wmq_score, alm_score, ohm_score + 15개 지표 자동 기록
+```
+
+### 5. REST API
 
 ```bash
-hachillesworld scan --logs ./agent_logs/ --config ./agent_config.json
-```
+# 서버 시작
+uvicorn hachillesworld.api.server:app --reload
 
-### OpenTelemetry 브리지
+# 진단
+curl -X POST http://localhost:8000/v1/scan \
+  -H "Authorization: Bearer dev-key-insecure" \
+  -d '{"agent_name": "MyAgent", "logs": [...], "config": {}}'
 
-```yaml
-exporters:
-  hachillesworld:
-    endpoint: "https://ingest.hachillesworld.ai/v1"
-    api_key: "${HACHILLESWORLD_API_KEY}"
-```
+# HAS 해석
+curl -X POST http://localhost:8000/v1/agents/MyAgent/interpret \
+  -H "Authorization: Bearer dev-key-insecure" -d '{}'
 
----
-
-## 프로젝트 구조
-
-```
-HAchillesWorld/
-├── docs/                          # 문서
-│   └── HAchillesWorld_기획서.md
-├── src/hachillesworld/
-│   ├── core/                      # 공통 코어 (모델, 클라이언트, 설정)
-│   ├── scan/                      # Module 1: 진단 엔진
-│   ├── optimize/                  # Module 2: 최적화 엔진
-│   ├── operate/                   # Module 3: 운영 인텔리전스
-│   └── cli.py                     # CLI 진입점
-├── tests/                         # 테스트
-├── examples/                      # 사용 예제
-├── pyproject.toml
-└── requirements.txt
+# 다음 액션 목록
+curl http://localhost:8000/v1/agents/MyAgent/next-actions \
+  -H "Authorization: Bearer dev-key-insecure"
 ```
 
 ---
 
-## 개발 환경 설정
+## 설치
+
+```bash
+# 기본 설치
+pip install hachillesworld
+
+# 로컬 Judge (Ollama) 사용 시
+pip install hachillesworld[local]
+
+# MLflow 연동 시
+pip install hachillesworld mlflow
+
+# PostgreSQL 스토리지 사용 시
+pip install hachillesworld[postgres]
+```
+
+---
+
+## 개발 환경
 
 ```bash
 git clone https://github.com/suhopark1-tech/hachillesworld
 cd HAchillesWorld
 pip install -e ".[dev]"
-pytest
+pytest                    # 전체 테스트
+pytest tests/test_interpreter.py  # 해석 엔진 테스트만
 ```
 
 ---
 
-*HAchillesWorld v0.1.0 — 2026년 6월*
+## 라이선스
+
+이 저장소는 **이중 라이선스(Dual License)** 구조를 채택합니다.
+
+| 구성 요소 | 라이선스 | 범위 |
+|---------|--------|------|
+| **`validation/`** | Apache License 2.0 | HAS 계산 참조 구현 — 자유롭게 사용·수정·배포 가능 |
+| **`src/hachillesworld/`** | Proprietary | 상용 플랫폼 코드 — 별도 상용 라이선스 필요 |
+
+Apache 2.0 전문: [LICENSE](./LICENSE) | NOTICE: [NOTICE](./NOTICE)
+
+상용 플랫폼 라이선스 문의: suhopark1@gmail.com
+
+> **특허 고지**: HAchillesWorld는 이 소프트웨어에 구현된 일부 알고리즘에 대해
+> 특허를 출원하였거나 출원 예정입니다. Apache 2.0 Section 3에 따라, `validation/`
+> 배포본을 그대로 사용하는 경우 해당 특허에 대한 허가가 부여됩니다.
+
+---
+
+이론적 기반: 《Agentic World Modeling 2027: The Architecture of Autonomous Intelligence》 — 박성훈
+
+*HAchillesWorld SDK v2.1 — 2026년 10월*

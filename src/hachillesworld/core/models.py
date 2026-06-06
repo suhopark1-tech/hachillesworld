@@ -34,6 +34,11 @@ class MetricScore:
     unit: str = ""
     status: str = "ok"  # ok | warning | critical
     description: str = ""
+    # v2.1: 측정 신뢰성 필드
+    confidence_lower: float | None = None  # 95% CI 하한
+    confidence_upper: float | None = None  # 95% CI 상한
+    measurement_error: float | None = None  # 측정 표준오차
+    sample_size: int | None = None  # 산출 기반 샘플 수
 
     def __post_init__(self) -> None:
         pass  # status는 각 메트릭 생성자가 명시적으로 설정한다
@@ -71,6 +76,11 @@ class DiagnosticReport:
 
     recommendations: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    # v2.1: 측정 신뢰성 필드
+    has_confidence_interval: tuple[float, float] | None = None  # HAS 95% CI (lower, upper)
+    has_score_version: str = "2.1"  # 가중치 버전 (A-7)
+    measurement_metadata: dict[str, Any] = field(default_factory=dict)
+    not_measured_metrics: list[str] = field(default_factory=list)  # 측정 불가 지표 목록 (A-9)
 
     @property
     def composite_score(self) -> float:
@@ -85,6 +95,17 @@ class DiagnosticReport:
             self.world_model_quality.score * HAS_WEIGHTS["wmq"]
             + self.agency_level.score * HAS_WEIGHTS["alm"]
             + self.operational_health.score * HAS_WEIGHTS["ohm"]
+        )
+
+    def composite_score_at_version(self, version: str) -> float:
+        """특정 가중치 버전으로 HAS 재산출 — 시계열 비교가능성 보장."""
+        from hachillesworld.core.config import get_weights_for_version
+
+        weights = get_weights_for_version(version)
+        return (
+            self.world_model_quality.score * weights["wmq"]
+            + self.agency_level.score * weights["alm"]
+            + self.operational_health.score * weights["ohm"]
         )
 
     @property
@@ -103,17 +124,18 @@ class DiagnosticReport:
         return [m for m in all_metrics if m.status == "critical"]
 
     def summary(self) -> str:
-        score = self.composite_score
-        emoji = "🟢" if score >= 80 else "🟡" if score >= 60 else "🔴"
+        """CLI·로그에 바로 출력할 수 있는 한 줄 요약 (HASInterpreter 기반)."""
+        from hachillesworld.interpret.has_interpreter import HASInterpreter
+
+        interp = HASInterpreter().interpret(self)
+        emoji = "🟢" if interp.grade in ("A+", "A") else "🟡" if interp.grade == "B" else "🔴"
         return (
             f"{emoji} [{self.agent_name}] {self.level_label}"
             f" × {self.laws_domain.value.title()} Laws\n"
-            f"   종합 점수: {score:.0f}/100 | "
-            f"WM품질: {self.world_model_quality.score:.0f} | "
-            f"에이전시: {self.agency_level.score:.0f} | "
-            f"운영: {self.operational_health.score:.0f}\n"
-            f"   즉시 조치 필요: {len(self.critical_issues)}건 | "
-            f"권장 조치: {len(self.recommendations)}건"
+            f"   종합 점수: {self.composite_score:.0f}/100"
+            f" ({interp.grade}등급 — {interp.grade_label},"
+            f" 상위 {interp.percentile:.0f}%) | {interp.deployment_status}\n"
+            f"   즉시 조치: {interp.top_issue}"
         )
 
 

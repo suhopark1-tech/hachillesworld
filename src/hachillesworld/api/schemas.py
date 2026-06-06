@@ -141,3 +141,46 @@ class GroupHASResponse(BaseModel):
     dependency_risk: dict[str, float] = Field(default_factory=dict)
     individual_scores: list[IndividualAgentScore] = Field(default_factory=list)
     generated_at: str
+
+
+# ── HAS 해석 스키마 (Sprint 6-A) ─────────────────────────────────────
+
+
+class ActionItemSchema(BaseModel):
+    priority: int
+    metric: str
+    current_value: float
+    target_value: float
+    action: str
+    estimated_has_gain: float
+    docs_link: str
+
+
+class ComparisonContextSchema(BaseModel):
+    peer_avg_score: float
+    peer_count: int
+    domain: str
+    level: str
+    percentile_rank: float
+
+
+class HASInterpretationSchema(BaseModel):
+    score: float
+    grade: str
+    grade_label: str
+    percentile: float
+    deployment_status: str
+    top_issue: str
+    next_actions: list[ActionItemSchema] = Field(default_factory=list)
+    estimated_improvement: float
+    comparison: ComparisonContextSchema
+
+
+class InterpretRequest(BaseModel):
+    report_id: str | None = None  # 없으면 최신 보고서 사용
+
+
+class NextActionsResponse(BaseModel):
+    agent_id: str
+    actions: list[ActionItemSchema] = Field(default_factory=list)
+    total_estimated_gain: float
