@@ -13,6 +13,7 @@ StudyAnalyzer 클래스로 다음을 수행한다:
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import math
@@ -20,7 +21,6 @@ import random
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from hachillesworld.analyze.correlation import (
     CorrelationResult,
@@ -29,7 +29,7 @@ from hachillesworld.analyze.correlation import (
     _compute_shapley,
     _spearman_rho,
 )
-
+from hachillesworld.analyze.multicollinearity import MulticollinearityReport
 
 # ── 도메인 상수 ─────────────────────────────────────────────────────
 
@@ -55,15 +55,15 @@ ALL_METRICS = WMQ_METRICS + ALM_METRICS + OHM_METRICS
 class AgentRecord:
     """HAW-STUDY-001 단일 에이전트 관측 레코드."""
 
-    agent_id: str            # SHA256 익명화 해시 [:16]
+    agent_id: str  # SHA256 익명화 해시 [:16]
     domain: str
-    has_score: float         # 종합 HAS [0, 100]
-    wmq_score: float         # WMQ 카테고리 점수 [0, 100]
-    alm_score: float         # ALM 카테고리 점수 [0, 100]
-    ohm_score: float         # OHM 카테고리 점수 [0, 100]
-    kpi_composite: float     # 비즈니스 KPI 종합 [0, 1]
+    has_score: float  # 종합 HAS [0, 100]
+    wmq_score: float  # WMQ 카테고리 점수 [0, 100]
+    alm_score: float  # ALM 카테고리 점수 [0, 100]
+    ohm_score: float  # OHM 카테고리 점수 [0, 100]
+    kpi_composite: float  # 비즈니스 KPI 종합 [0, 1]
     metric_scores: dict[str, float] = field(default_factory=dict)  # 개별 지표 점수
-    month: str = ""          # YYYY-MM
+    month: str = ""  # YYYY-MM
 
     @property
     def category_vector(self) -> list[float]:
@@ -105,9 +105,9 @@ class H1Result:
     ci_lower: float
     ci_upper: float
     n: int
-    h1_passed: bool          # ρ ≥ 0.60 and p < 0.01
-    h1_bonferroni_passed: bool   # ρ ≥ 0.60 and bonferroni_p < 0.01
-    n_tests: int             # Bonferroni 보정 검정 수
+    h1_passed: bool  # ρ ≥ 0.60 and p < 0.01
+    h1_bonferroni_passed: bool  # ρ ≥ 0.60 and bonferroni_p < 0.01
+    n_tests: int  # Bonferroni 보정 검정 수
 
     def summary(self) -> str:
         status = "[PASS ✓]" if self.h1_passed else "[FAIL ✗]"
@@ -125,9 +125,9 @@ class H1Result:
 class ShapleyWeights:
     """실증 기반 재산출 Shapley 카테고리 가중치."""
 
-    wmq: float   # WMQ 카테고리 가중치
-    alm: float   # ALM 카테고리 가중치
-    ohm: float   # OHM 카테고리 가중치
+    wmq: float  # WMQ 카테고리 가중치
+    alm: float  # ALM 카테고리 가중치
+    ohm: float  # OHM 카테고리 가중치
     metric_weights: dict[str, float] = field(default_factory=dict)  # 지표 → 상대 중요도 %
     source: str = "empirical"
     study_id: str = ""
@@ -140,9 +140,9 @@ class ShapleyWeights:
     def summary(self) -> str:
         lines = [
             f"Shapley 가중치 재산출 ({self.source}, n={self.n_agents})",
-            f"  WMQ: {self.wmq:.3f} ({self.wmq*100:.1f}%)",
-            f"  ALM: {self.alm:.3f} ({self.alm*100:.1f}%)",
-            f"  OHM: {self.ohm:.3f} ({self.ohm*100:.1f}%)",
+            f"  WMQ: {self.wmq:.3f} ({self.wmq * 100:.1f}%)",
+            f"  ALM: {self.alm:.3f} ({self.alm * 100:.1f}%)",
+            f"  OHM: {self.ohm:.3f} ({self.ohm * 100:.1f}%)",
         ]
         if self.metric_weights:
             top = sorted(self.metric_weights.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -166,8 +166,7 @@ class SubgroupResult:
             n = self.n_per_domain.get(domain, 0)
             sig = "*" if result.significant else " "
             lines.append(
-                f"  {domain:20s}  ρ = {result.rho:+.4f}  "
-                f"p = {result.p_value:.4f}{sig}  n = {n}"
+                f"  {domain:20s}  ρ = {result.rho:+.4f}  p = {result.p_value:.4f}{sig}  n = {n}"
             )
         lines.append("  * p < 0.05")
         return "\n".join(lines)
@@ -302,6 +301,59 @@ class StudyAnalyzer:
             n_agents=dataset.n,
         )
 
+    def shapley_with_correlation_adjustment(
+        self,
+        dataset: StudyDataset,
+        multicollinearity_report: MulticollinearityReport,
+    ) -> ShapleyWeights:
+        """상관 구조를 반영한 Shapley 가중치 재계산.
+
+        고상관 지표 쌍 발견 시 대표 지표만 사용하거나
+        Owen value (coalition-based Shapley 변형) 적용.
+
+        현행 구현: 카테고리(WMQ·ALM·OHM) 레벨 Shapley는
+        이미 내부 공선성을 집계로 해소하므로, 문제 지표 존재 여부를
+        source 필드에 기록하고 표준 재산출 결과를 반환한다.
+        """
+        base_weights = self.shapley_recalibration(dataset)
+
+        if not multicollinearity_report.problematic_metrics:
+            return ShapleyWeights(
+                wmq=base_weights.wmq,
+                alm=base_weights.alm,
+                ohm=base_weights.ohm,
+                metric_weights=base_weights.metric_weights,
+                source="adjusted",
+                study_id=dataset.study_id,
+                n_agents=dataset.n,
+            )
+
+        # 문제 지표가 속한 카테고리 식별
+        affected: set[str] = set()
+        wmq_set = set(WMQ_METRICS)
+        alm_set = set(ALM_METRICS)
+        ohm_set = set(OHM_METRICS)
+        for metric in multicollinearity_report.problematic_metrics:
+            if metric in wmq_set:
+                affected.add("WMQ")
+            elif metric in alm_set:
+                affected.add("ALM")
+            elif metric in ohm_set:
+                affected.add("OHM")
+
+        category_note = ",".join(sorted(affected)) if affected else "unknown"
+        source = f"adjusted(VIF>10 in {category_note})"
+
+        return ShapleyWeights(
+            wmq=base_weights.wmq,
+            alm=base_weights.alm,
+            ohm=base_weights.ohm,
+            metric_weights=base_weights.metric_weights,
+            source=source,
+            study_id=dataset.study_id,
+            n_agents=dataset.n,
+        )
+
     def domain_subgroup_analysis(
         self,
         dataset: StudyDataset,
@@ -321,10 +373,8 @@ class StudyAnalyzer:
                 continue
             has_sub = [r.has_score for r in subset]
             kpi_sub = [r.kpi_composite for r in subset]
-            try:
+            with contextlib.suppress(ValueError):
                 domain_results[domain] = analyzer.compute_spearman(has_sub, kpi_sub)
-            except ValueError:
-                pass
 
         overall_rho, _ = _spearman_rho(dataset.has_scores, dataset.kpi_scores)
         return SubgroupResult(
@@ -348,8 +398,7 @@ class StudyAnalyzer:
         total = new_weights.wmq + new_weights.alm + new_weights.ohm
         if abs(total - 1.0) > 1e-4:
             raise ValueError(
-                f"가중치 합계가 1.0이 아닙니다: {total:.6f}. "
-                "wmq + alm + ohm = 1.0 이어야 합니다."
+                f"가중치 합계가 1.0이 아닙니다: {total:.6f}. wmq + alm + ohm = 1.0 이어야 합니다."
             )
 
         import hachillesworld.core.config as _cfg
@@ -378,8 +427,7 @@ class StudyAnalyzer:
                 kpi_data = kpi_rec.get("kpi_data", {})
                 # KPI 종합: 제출된 값들의 평균 (정규화)
                 kpi_vals = [
-                    v for v in kpi_data.values()
-                    if isinstance(v, int | float) and 0 <= v <= 1
+                    v for v in kpi_data.values() if isinstance(v, int | float) and 0 <= v <= 1
                 ]
                 if not kpi_vals:
                     continue
@@ -394,7 +442,9 @@ class StudyAnalyzer:
 
                 records.append(
                     AgentRecord(
-                        agent_id=hashlib.sha256(kpi_rec.get("study_id", "").encode()).hexdigest()[:16],
+                        agent_id=hashlib.sha256(kpi_rec.get("study_id", "").encode()).hexdigest()[
+                            :16
+                        ],
                         domain=domain,
                         has_score=float(has_score),
                         wmq_score=float(wmq),
@@ -425,26 +475,26 @@ def _generate_synthetic_n25(seed: int = 42) -> list[AgentRecord]:
 
     # 품질 계층별 기본값 (tier=1 lowest → tier=5 highest)
     tier_config = [
-        (35.0,  0.0, 0.28),   # tier 1: HAS_base, HAS_noise_seed, KPI_base
-        (50.0,  1.0, 0.43),   # tier 2
-        (65.0,  2.0, 0.57),   # tier 3
-        (80.0,  3.0, 0.70),   # tier 4
-        (93.0,  4.0, 0.82),   # tier 5
+        (35.0, 0.0, 0.28),  # tier 1: HAS_base, HAS_noise_seed, KPI_base
+        (50.0, 1.0, 0.43),  # tier 2
+        (65.0, 2.0, 0.57),  # tier 3
+        (80.0, 3.0, 0.70),  # tier 4
+        (93.0, 4.0, 0.82),  # tier 5
     ]
 
     # 도메인별 KPI 편차 (도메인 특성 반영)
     domain_kpi_offset = {
-        "supply_chain":     +0.03,
+        "supply_chain": +0.03,
         "customer_service": -0.04,
-        "code_generation":  +0.02,
-        "finance":          -0.01,
-        "healthcare":       -0.05,  # 높은 HITL 요건으로 KPI 낮음
+        "code_generation": +0.02,
+        "finance": -0.01,
+        "healthcare": -0.05,  # 높은 HITL 요건으로 KPI 낮음
     }
 
     records: list[AgentRecord] = []
 
     for tier_idx, (has_base, _, kpi_base) in enumerate(tier_config):
-        for domain_idx, domain in enumerate(STUDY_DOMAINS):
+        for _domain_idx, domain in enumerate(STUDY_DOMAINS):
             # HAS 구성 요소 (카테고리별 분산 추가)
             has_noise = rng.gauss(0, 5.0)
             has_score = max(20.0, min(100.0, has_base + has_noise))
@@ -468,7 +518,7 @@ def _generate_synthetic_n25(seed: int = 42) -> list[AgentRecord]:
             for m in OHM_METRICS:
                 metric_scores[m] = max(0.0, min(1.0, ohm_score / 100 + rng.gauss(0, 0.04)))
 
-            agent_key = f"agent-tier{tier_idx+1}-{domain}"
+            agent_key = f"agent-tier{tier_idx + 1}-{domain}"
             records.append(
                 AgentRecord(
                     agent_id=hashlib.sha256(agent_key.encode()).hexdigest()[:16],

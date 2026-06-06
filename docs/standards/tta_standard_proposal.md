@@ -98,18 +98,51 @@
 
 ## 4. HAS 종합 점수 — 국가 표준 평가 지표 제안
 
-### 4.1 HAS (Holistic Agent Score) 정의
+### 4.1 HAS (Holistic Agent Score) 정의 및 가중치 산출 방법론
 
 ```
 HAS = w_WMQ × WMQ_score + w_ALM × ALM_score + w_OHM × OHM_score
 ```
 
-**HAW-TR-002 실증 가중치** (Shapley 값 기반, n=50 에이전트):
-- w_WMQ = 0.45 (World Model 품질)
-- w_ALM = 0.35 (에이전시 수준)
-- w_OHM = 0.20 (운영 건전성)
-
 각 범주 점수는 소속 지표의 가중 평균 (0~100 정규화).
+
+#### 가. 표준 권고값 (HAW-STUDY-001, n=50, 파일럿 기준)
+
+> **주의**: 본 권고값은 파일럿 연구(n=50) 기반이며, HAW-STUDY-002(n=200 목표) 완료 후 갱신될 수 있다.
+
+| 범주 | 권고 범위 | 중앙값 | 산출 근거 |
+|------|----------|--------|----------|
+| w_WMQ (World Model 품질) | 0.40 ~ 0.50 | 0.45 | HAW-TR-002 Shapley 분석 |
+| w_ALM (에이전시 수준) | 0.30 ~ 0.40 | 0.35 | HAW-TR-002 Shapley 분석 |
+| w_OHM (운영 건전성) | 0.15 ~ 0.25 | 0.20 | HAW-TR-002 Shapley 분석 |
+
+#### 나. 조직별 맞춤 산출 (권장)
+
+최소 n=100 자체 데이터로 Shapley 기반 가중치 산출 가능.
+**HAS 버전 명시**로 시계열 비교가능성 확보 필수 (`HAS-v2.1` 형식).
+
+```python
+# HAchillesWorld SDK v2.1 — 가중치 재산출 예시
+from hachillesworld.analyze.study_analysis import StudyAnalyzer
+
+analyzer = StudyAnalyzer()
+dataset = analyzer.load_study_data("YOUR-STUDY-ID")
+weights = analyzer.shapley_recalibration(dataset)
+print(weights.summary())  # → 조직별 Shapley 가중치
+```
+
+#### 다. 다중공선성 주의사항 (Sprint 6-C, A-3)
+
+15개 지표는 범주 내 높은 상관(|r| ≈ 0.85~0.95)을 보이므로
+**지표 레벨 Shapley 해석 시 다중공선성 검증 필수**:
+
+```python
+from hachillesworld.analyze.multicollinearity import MulticollinearityAnalyzer
+
+mc = MulticollinearityAnalyzer()
+report = mc.analyze(metric_matrix, metric_names)
+# VIF > 10 지표 발견 시 대표 지표 선택 또는 PCA 적용 권고
+```
 
 ### 4.2 도메인 조정 HAS (daHAS)
 
@@ -156,8 +189,26 @@ print(f"역량 레벨: {report.level_label}")
 SDK는 다음을 자동화한다:
 - 15개 지표 자동 측정
 - HAS/daHAS 자동 산출
-- EU AI Act Art.13~15 준수 여부 자동 매핑
-- ISO/IEC 42001 체크리스트 자동 생성
+- EU AI Act Art.13~15 모니터링 참고 자료 생성
+- ISO/IEC 42001 체크리스트 참고 자료 생성
+
+---
+
+## 5-A. ISO/IEC 42001:2023 조항 해석 근거 (D-5)
+
+본 표준에서 인용하는 ISO/IEC 42001 조항은 다음 공식 버전을 기준으로 한다.
+
+| 인용 조항 | 내용 | 적용 맥락 |
+|-----------|------|----------|
+| §6.1 리스크 평가 | AI 시스템 리스크 식별·분석·평가 | HAS 등급 C 이하 에이전트 |
+| §8.4 AI 시스템 개발 | 개발 수명주기 관리 요구사항 | 에이전트 배포 전 검증 |
+| §9.1 모니터링 | AI 성과 모니터링 방법 | 실시간 HAS 추적 |
+| §10.2 부적합 및 시정조치 | 성과 미달 시 조치 절차 | HAS 등급 D 에이전트 처리 |
+
+> **면책 조항**: 본 문서의 ISO/IEC 42001 조항 해석은
+> **ISO/IEC 42001:2023 (초판, 2023-12-15)** 기준이며,
+> 표준 개정 시 재검토가 필요하다.
+> 공식 법적 의무 여부는 인증 기관 또는 법률 전문가의 확인을 받을 것을 권고한다.
 
 ---
 

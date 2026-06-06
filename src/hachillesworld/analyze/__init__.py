@@ -6,6 +6,10 @@ from hachillesworld.analyze.correlation import (
     HASBusinessCorrelation,
     ShapleyResult,
 )
+from hachillesworld.analyze.multicollinearity import (
+    MulticollinearityAnalyzer,
+    MulticollinearityReport,
+)
 from hachillesworld.analyze.study_analysis import (
     AgentRecord,
     H1Result,
@@ -20,6 +24,8 @@ __all__ = [
     "CorrelationResult",
     "ShapleyResult",
     "CorrelationReport",
+    "MulticollinearityAnalyzer",
+    "MulticollinearityReport",
     "StudyAnalyzer",
     "StudyDataset",
     "AgentRecord",
