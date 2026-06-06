@@ -5,16 +5,13 @@
 
 from __future__ import annotations
 
-import math
 import random
 
 import pytest
 
 from hachillesworld.analyze.multicollinearity import (
-    MulticollinearityAnalyzer,
-    MulticollinearityReport,
     _HIGH_CORR_THRESHOLD,
-    _HIGH_VIF_THRESHOLD,
+    MulticollinearityAnalyzer,
 )
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────
@@ -45,13 +42,11 @@ def _make_correlated_matrix(n_agents: int = 30, seed: int = 42) -> list[list[flo
         wmq_base = rng.uniform(0.2, 0.9)
         alm_base = rng.uniform(0.2, 0.9)
         ohm_base = rng.uniform(0.2, 0.9)
-        row: list[float] = []
-        for _ in range(5):  # WMQ 지표 5개
-            row.append(max(0.0, min(1.0, wmq_base + rng.gauss(0, 0.04))))
-        for _ in range(5):  # ALM 지표 5개
-            row.append(max(0.0, min(1.0, alm_base + rng.gauss(0, 0.04))))
-        for _ in range(5):  # OHM 지표 5개
-            row.append(max(0.0, min(1.0, ohm_base + rng.gauss(0, 0.04))))
+        row: list[float] = [
+            *[max(0.0, min(1.0, wmq_base + rng.gauss(0, 0.04))) for _ in range(5)],
+            *[max(0.0, min(1.0, alm_base + rng.gauss(0, 0.04))) for _ in range(5)],
+            *[max(0.0, min(1.0, ohm_base + rng.gauss(0, 0.04))) for _ in range(5)],
+        ]
         matrix.append(row)
     return matrix
 
@@ -59,7 +54,6 @@ def _make_correlated_matrix(n_agents: int = 30, seed: int = 42) -> list[list[flo
 def _make_collinear_matrix(n_agents: int = 30, seed: int = 7) -> list[list[float]]:
     """완전 선형 종속 지표 포함 행렬: M02 = M00 + M01."""
     rng = random.Random(seed)
-    n_metrics = 5
     matrix: list[list[float]] = []
     for _ in range(n_agents):
         m0 = rng.uniform(0.0, 0.5)

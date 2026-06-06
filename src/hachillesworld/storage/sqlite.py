@@ -192,7 +192,7 @@ class SQLiteRepository:
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         params.append(limit)
         rows = self._conn.execute(
-            f"SELECT event_id, timestamp, actor, action, resource, outcome, "
+            f"SELECT event_id, timestamp, actor, action, resource, outcome, "  # noqa: S608
             f"ip_address, request_size_bytes, response_size_bytes, duration_ms "
             f"FROM audit_events {where} ORDER BY timestamp DESC LIMIT ?",
             params,

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from hachillesworld.core.models import DiagnosticReport
+
+# 지표 미측정 조항에 적용하는 보수적 기본 점수
+_UNMEASURED_CLAUSE_SCORE: float = 40.0
 
 
 @dataclass
@@ -85,16 +88,14 @@ class ISO42001Checker:
 
         return ISO42001CheckResult(
             agent_name=report.agent_name,
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
             clauses=clauses,
             overall_score=round(overall, 2),
             overall_status=overall_status,
             summary=summary,
         )
 
-    def _find_metric_value(
-        self, report: DiagnosticReport, name: str
-    ) -> float | None:
+    def _find_metric_value(self, report: DiagnosticReport, name: str) -> float | None:
         all_metrics = (
             report.world_model_quality.metrics
             + report.agency_level.metrics
@@ -206,11 +207,11 @@ class ISO42001Checker:
             else:
                 gaps.append(f"GAR={gar:.3f} — 정확성 목표 미달")
 
-        score = (sum(scores) / len(scores)) if scores else 40.0
+        score = (sum(scores) / len(scores)) if scores else _UNMEASURED_CLAUSE_SCORE
         return ISO42001Clause(
             clause_id="8.4",
             title="AI 시스템 운용",
-            description="조직은 AI 시스템이 의도된 목적에 맞게 운용되고 성과를 내는지 관리해야 한다.",
+            description="조직은 AI 시스템이 의도된 목적에 맞게 운용되고 성과를 내는지 관리해야 한다.",  # noqa: E501
             haw_indicators=["ECE", "CA", "GAR"],
             score=round(score, 2),
             status=_status(score),
@@ -239,9 +240,7 @@ class ISO42001Checker:
                 gaps.append(f"LCR={lrc:.3f} — 루프 완료율 낮음")
 
         # HAS 점수를 AI 관리시스템 정량 지표로 활용
-        evidence.append(
-            f"HAS 지수 {has_score:.1f}/100 — ISO 42001 §9.1 정량 성과 지표로 활용"
-        )
+        evidence.append(f"HAS 지수 {has_score:.1f}/100 — ISO 42001 §9.1 정량 성과 지표로 활용")
 
         score = min(100.0, max(30.0, has_score))
         return ISO42001Clause(
@@ -292,15 +291,15 @@ class ISO42001Checker:
     def to_markdown(self, result: ISO42001CheckResult) -> str:
         """체크리스트 결과를 마크다운 표로 출력."""
         lines = [
-            f"# ISO/IEC 42001 AI 관리시스템 체크리스트",
-            f"",
+            "# ISO/IEC 42001 AI 관리시스템 체크리스트",
+            "",
             f"**에이전트**: {result.agent_name}  ",
             f"**생성일시**: {result.generated_at}  ",
             f"**종합 점수**: {result.overall_score:.1f}/100 [{result.overall_status}]  ",
             f"**요약**: {result.summary}",
-            f"",
-            f"| 조항 | 제목 | 점수 | 상태 | 연동 지표 |",
-            f"|------|------|:----:|------|-----------|",
+            "",
+            "| 조항 | 제목 | 점수 | 상태 | 연동 지표 |",
+            "|------|------|:----:|------|-----------|",
         ]
         status_emoji = {
             "conformant": "✅",
@@ -319,7 +318,6 @@ class ISO42001Checker:
         for clause in result.clauses:
             if clause.gaps:
                 lines.append(f"## {clause.clause_id} 개선 필요 사항")
-                for gap in clause.gaps:
-                    lines.append(f"- {gap}")
+                lines.extend(f"- {gap}" for gap in clause.gaps)
                 lines.append("")
         return "\n".join(lines)

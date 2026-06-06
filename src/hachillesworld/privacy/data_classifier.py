@@ -11,7 +11,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # 개인식별정보(PII)로 간주되는 키 패턴
 # (?<![a-zA-Z0-9]) / (?![a-zA-Z0-9]): 앞뒤에 알파숫자가 없을 때 매칭 (복합 키 포함)
 _PII_KEY_PATTERNS: list[re.Pattern[str]] = [
@@ -23,7 +22,9 @@ _PII_KEY_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(?<![a-zA-Z0-9])(ip_?address|remote_?addr)(?![a-zA-Z0-9])", re.I),
     re.compile(r"(?<![a-zA-Z0-9])(ssn|rrn|주민|주민등록)(?![a-zA-Z0-9])", re.I),
     re.compile(r"(?<![a-zA-Z0-9])(password|passwd|pwd|secret)(?![a-zA-Z0-9])", re.I),
-    re.compile(r"(?<![a-zA-Z0-9])(api_?token|auth_?token|access_?token|token)(?![a-zA-Z0-9])", re.I),
+    re.compile(
+        r"(?<![a-zA-Z0-9])(api_?token|auth_?token|access_?token|token)(?![a-zA-Z0-9])", re.I
+    ),
     re.compile(r"(?<![a-zA-Z0-9])(api_?key|secret_?key|private_?key)(?![a-zA-Z0-9])", re.I),
     re.compile(r"(?<![a-zA-Z0-9])(birth|birthday|dob|date_?of_?birth)(?![a-zA-Z0-9])", re.I),
     re.compile(r"(?<![a-zA-Z0-9])(gender|sex)(?![a-zA-Z0-9])", re.I),
@@ -33,8 +34,8 @@ _PII_KEY_PATTERNS: list[re.Pattern[str]] = [
 # 값 기반 PII 패턴 (값 자체가 PII인 경우)
 _PII_VALUE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b"),  # 이메일
-    re.compile(r"\b\d{3}[-.\s]?\d{3,4}[-.\s]?\d{4}\b"),                      # 전화번호
-    re.compile(r"\b\d{6}[-]\d{7}\b"),                                          # 주민등록번호
+    re.compile(r"\b\d{3}[-.\s]?\d{3,4}[-.\s]?\d{4}\b"),  # 전화번호
+    re.compile(r"\b\d{6}[-]\d{7}\b"),  # 주민등록번호
 ]
 
 _REDACTED = "[REDACTED]"
@@ -76,9 +77,7 @@ class DataClassifier:
                 pii_keys.append(key)
                 continue
             # 값 기반 탐지 (문자열 값에 한함)
-            if isinstance(value, str) and any(
-                p.search(value) for p in _PII_VALUE_PATTERNS
-            ):
+            if isinstance(value, str) and any(p.search(value) for p in _PII_VALUE_PATTERNS):
                 pii_value_keys.append(key)
 
         contains = bool(pii_keys or pii_value_keys)
@@ -94,28 +93,23 @@ class DataClassifier:
 
         원본 payload는 변경되지 않는다.
         """
-        result = {}
+        result: dict[str, Any] = {}
         for key, value in payload.items():
-            if any(p.search(key) for p in _PII_KEY_PATTERNS):
-                result[key] = _REDACTED
-            elif isinstance(value, str) and any(
-                p.search(value) for p in _PII_VALUE_PATTERNS
+            if any(p.search(key) for p in _PII_KEY_PATTERNS) or (
+                isinstance(value, str) and any(p.search(value) for p in _PII_VALUE_PATTERNS)
             ):
                 result[key] = _REDACTED
             elif isinstance(value, dict):
                 result[key] = self.sanitize_for_external(value)
             elif isinstance(value, list):
                 result[key] = [
-                    self.sanitize_for_external(v) if isinstance(v, dict) else v
-                    for v in value
+                    self.sanitize_for_external(v) if isinstance(v, dict) else v for v in value
                 ]
             else:
                 result[key] = value
         return result
 
-    def _flatten(
-        self, d: dict[str, Any], prefix: str = ""
-    ) -> dict[str, Any]:
+    def _flatten(self, d: dict[str, Any], prefix: str = "") -> dict[str, Any]:
         """중첩 dict를 평탄화하여 탐지 정확도를 높인다."""
         items: dict[str, Any] = {}
         for k, v in d.items():

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 from collections.abc import Callable
 from typing import Any
-
-import anthropic
 
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.core.models import (
@@ -37,7 +36,13 @@ class ScanEngine:
         self.config = config
         self._ca_evaluator: CounterfactualEvaluator | None = None
         if anthropic_api_key:
-            client = anthropic.Anthropic(api_key=anthropic_api_key)
+            if importlib.util.find_spec("anthropic") is None:
+                raise ImportError(
+                    "CA 평가를 위해 anthropic 패키지가 필요합니다: pip install hachillesworld[ca]"
+                )
+            import anthropic as _anthropic
+
+            client = _anthropic.Anthropic(api_key=anthropic_api_key)
             self._ca_evaluator = CounterfactualEvaluator(anthropic_client=client)
 
     def run(
@@ -46,7 +51,7 @@ class ScanEngine:
         agent_name: str,
         *,
         probing_env: ProbingEnvironment | None = None,
-        agent_fn: Callable | None = None,
+        agent_fn: Callable[..., Any] | None = None,
         episodes: list[EpisodeRecord] | None = None,
     ) -> DiagnosticReport:
         calc = MetricsCalculator(
@@ -83,8 +88,8 @@ class ScanEngine:
 
         # ── Category C: 운영 건전성 ───────────────────────────
         ops_metrics = [
-            calc.world_model_update_latency(),   # WMUL — SDR→ECE 회복 레이턴시
-            calc.incident_recovery_time(),        # IRT  — 인시던트 회복 시간
+            calc.world_model_update_latency(),  # WMUL — SDR→ECE 회복 레이턴시
+            calc.incident_recovery_time(),  # IRT  — 인시던트 회복 시간
             calc.hitl_trigger_rate(),
             calc.harness_violation_rate(),
             calc.checkpoint_recovery_rate(),
@@ -118,7 +123,7 @@ class ScanEngine:
 
     def _probe_planning_depth(
         self,
-        agent_fn: Callable,
+        agent_fn: Callable[..., Any],
         probing_env: ProbingEnvironment,
     ) -> MetricScore:
         """행동 프로빙으로 Planning Depth를 측정하고 MetricScore로 반환한다."""

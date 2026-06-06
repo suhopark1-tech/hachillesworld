@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -31,7 +32,7 @@ class IRTResult:
     irt_minutes: float
     n_incidents: int
     irt_ok: bool
-    incidents: list[dict] = field(default_factory=list)
+    incidents: list[dict[str, Any]] = field(default_factory=list)
 
 
 class IncidentTracker:
@@ -71,8 +72,8 @@ class IncidentTracker:
 
     def compute_irt(
         self,
-        episodes: list,  # list[EpisodeRecord]
-        logs: list[dict] | None = None,
+        episodes: list[Any],  # list[EpisodeRecord]
+        logs: list[dict[str, Any]] | None = None,
     ) -> IRTResult:
         """IRT를 자동 계산한다.
 
@@ -86,11 +87,11 @@ class IncidentTracker:
             return self._from_manual()
         return IRTResult(irt_minutes=0.0, n_incidents=0, irt_ok=True)
 
-    def _from_episodes(self, episodes: list) -> IRTResult:
+    def _from_episodes(self, episodes: list[Any]) -> IRTResult:
         """EpisodeRecord 시퀀스에서 인시던트 자동 탐지·IRT 측정."""
         sorted_eps = sorted(episodes, key=lambda e: e.timestamp)
 
-        incidents_found: list[dict] = []
+        incidents_found: list[dict[str, Any]] = []
         irt_values: list[float] = []
         incident_start_ts: float | None = None
 
@@ -129,11 +130,11 @@ class IncidentTracker:
             incidents=incidents_found,
         )
 
-    def _from_logs(self, logs: list[dict]) -> IRTResult:
+    def _from_logs(self, logs: list[dict[str, Any]]) -> IRTResult:
         """로그에서 incident_start / incident_recovery 이벤트를 탐지한다."""
         starts: dict[str, float] = {}
         irt_values: list[float] = []
-        incidents_found: list[dict] = []
+        incidents_found: list[dict[str, Any]] = []
 
         for event in logs:
             et = event.get("event_type", "")

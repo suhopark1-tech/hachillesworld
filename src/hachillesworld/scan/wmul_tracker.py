@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from hachillesworld.scan.incident_tracker import _parse_ts
 
@@ -34,8 +35,8 @@ class WMULTracker:
 
     def compute_wmul(
         self,
-        episodes: list,  # list[EpisodeRecord]
-        logs: list[dict] | None = None,
+        episodes: list[Any],  # list[EpisodeRecord]
+        logs: list[dict[str, Any]] | None = None,
     ) -> WMULResult:
         """WMUL을 자동 계산한다.
 
@@ -47,7 +48,7 @@ class WMULTracker:
             return self._from_logs(logs)
         return WMULResult(wmul_hours=0.0, n_drift_events=0, wmul_ok=True)
 
-    def _from_episodes(self, episodes: list) -> WMULResult:
+    def _from_episodes(self, episodes: list[Any]) -> WMULResult:
         """EpisodeRecord 시퀀스에서 SDR→ECE 회복 레이턴시 측정."""
         sorted_eps = sorted(episodes, key=lambda e: e.timestamp)
 
@@ -78,7 +79,7 @@ class WMULTracker:
             wmul_ok=wmul_mean < self.wmul_ok_hours,
         )
 
-    def _from_logs(self, logs: list[dict]) -> WMULResult:
+    def _from_logs(self, logs: list[dict[str, Any]]) -> WMULResult:
         """로그에서 recalibrated 이벤트 수를 n_drift_events로 반환한다.
 
         로그에 타임스탬프가 없으면 wmul_hours=0.0으로 반환한다.

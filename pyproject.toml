@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hachillesworld"
-version = "0.1.0"
+version = "2.1.0"
 description = "World Model 진단 및 최적화 플랫폼 — HAchillesWorld"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,7 +13,6 @@ authors = [{ name = "박성훈" }]
 keywords = ["world-model", "agent-diagnostics", "agentops", "llm"]
 
 dependencies = [
-    "anthropic>=0.101.0",
     "opentelemetry-api>=1.42.1",
     "opentelemetry-sdk>=1.42.1",
     "opentelemetry-exporter-otlp-proto-grpc>=1.42.1",
@@ -31,6 +30,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ca = [
+    "anthropic>=0.101.0",
+]
+full = [
+    "anthropic>=0.101.0",
+    "sqlalchemy>=2.0",
+    "redis>=5.0",
+]
 dev = [
     "pytest>=8.2.0",
     "pytest-asyncio>=0.23.6",

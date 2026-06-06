@@ -7,13 +7,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hachillesworld.scan.judge.base import JudgeBackend
+from hachillesworld.collect.episode import EpisodeRecord
+from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
 from hachillesworld.scan.judge.anthropic_judge import AnthropicJudge
+from hachillesworld.scan.judge.base import JudgeBackend
 from hachillesworld.scan.judge.local_judge import LocalLLMJudge
 from hachillesworld.scan.judge.rule_judge import RuleBasedJudge
-from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
-from hachillesworld.collect.episode import EpisodeRecord
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -145,7 +144,7 @@ def test_rule_judge_empty_inputs(rule_judge: RuleBasedJudge):
 
 
 @pytest.mark.parametrize(
-    "text,expected",
+    ("text", "expected"),
     [
         ("8", 0.8),
         ("10", 1.0),

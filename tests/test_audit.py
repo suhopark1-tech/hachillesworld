@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import time
 from typing import Any
 
 import pytest
@@ -169,7 +167,7 @@ def test_audit_query_limit():
     repo = InMemoryRepository()
     logger = AuditLogger(repository=repo)
 
-    for i in range(20):
+    for _i in range(20):
         logger.log(
             AuditEvent.create(
                 actor="x",

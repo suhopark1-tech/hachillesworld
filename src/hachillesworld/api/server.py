@@ -15,6 +15,7 @@ from hachillesworld.api.routers import compliance, group, operate, scan, study
 from hachillesworld.api.routers.operate import audit_router
 from hachillesworld.api.state import AppState
 from hachillesworld.audit.logger import AuditLogger
+from hachillesworld.storage.base import HAWRepository
 
 _API_KEY: str = os.getenv("HAW_API_KEY", "dev-key-insecure")
 _ADMIN_KEY: str = os.getenv("HAW_ADMIN_KEY", "dev-admin-insecure")
@@ -29,7 +30,7 @@ def _verify_key(
     return credentials.credentials
 
 
-def _create_repository() -> object:
+def _create_repository() -> HAWRepository:
     """HAW_STORAGE 환경변수로 스토리지 백엔드를 선택한다.
 
     - memory : InMemoryRepository (테스트·개발, 재시작 시 소실)
@@ -40,7 +41,7 @@ def _create_repository() -> object:
     if backend == "postgres":
         from hachillesworld.storage.postgres import PostgreSQLRepository
 
-        return PostgreSQLRepository(dsn=os.getenv("HAW_DATABASE_URL"))
+        return PostgreSQLRepository(dsn=os.getenv("HAW_DATABASE_URL"))  # type: ignore[return-value]
     if backend == "memory":
         from hachillesworld.storage.memory import InMemoryRepository
 

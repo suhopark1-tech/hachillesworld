@@ -6,7 +6,7 @@ E-2: 구체적 액션 아이템 없음 → 지표별 즉시 실행 가능한 조
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -211,16 +211,17 @@ class HASInterpreter:
 
     def _action_items(self, report: "DiagnosticReport") -> list[ActionItem]:
         """Critical → Warning 순으로 액션 아이템 생성, estimated_has_gain 내림차순."""
-        items: list[ActionItem] = []
-        for metric in report.critical_issues:
-            items.append(self._metric_to_action(metric, priority=1))
+        items: list[ActionItem] = [
+            self._metric_to_action(metric, priority=1) for metric in report.critical_issues
+        ]
         for category in (
             report.world_model_quality,
             report.agency_level,
             report.operational_health,
         ):
-            for metric in category.warning_metrics:
-                items.append(self._metric_to_action(metric, priority=2))
+            items.extend(
+                self._metric_to_action(metric, priority=2) for metric in category.warning_metrics
+            )
         return sorted(items, key=lambda x: (-x.estimated_has_gain, x.priority))
 
     def _metric_to_action(self, metric: "MetricScore", priority: int) -> ActionItem:

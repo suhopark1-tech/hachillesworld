@@ -128,7 +128,7 @@ class CounterfactualAnalyzer:
     def analyze(
         self,
         session: ReplaySession,
-        env_fn: Callable | None = None,
+        env_fn: Callable[..., Any] | None = None,
     ) -> CounterfactualReport:
         """
         1. 실패 분기점 자동 탐지 (예측 오차 가장 큰 타임스텝)
@@ -386,7 +386,7 @@ class ReplayDebugger:
         """
         debugger = cls(**kwargs)
         drift_log = monitor.get_drift_log()
-        events: list[dict[str, Any]] = [
+        events: list[AgentEvent | dict[str, Any]] = [
             {
                 "agent_name": agent_name,
                 "event_type": "observe",

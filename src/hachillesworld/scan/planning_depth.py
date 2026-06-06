@@ -125,7 +125,7 @@ class SupplyChainProbingEnvironment(ProbingEnvironment):
 class _LegacyEnvAdapter(ProbingEnvironment):
     """기존 `env_fn(state, action)` 방식을 ProbingEnvironment로 변환한다."""
 
-    def __init__(self, env_fn: Callable) -> None:
+    def __init__(self, env_fn: Callable[..., Any]) -> None:
         self._env_fn = env_fn
         self._state: State = None
 
@@ -134,7 +134,7 @@ class _LegacyEnvAdapter(ProbingEnvironment):
         return self._state
 
     def step(self, action: Action) -> tuple[State, float, bool]:
-        result = self._env_fn(self._state, action)
+        result: tuple[State, float, bool] = self._env_fn(self._state, action)
         self._state = result[0]
         return result
 
@@ -175,7 +175,7 @@ class PlanningDepthProber:
     def probe(
         self,
         agent_fn: Callable[[State, int], Action],
-        env_fn: Callable,
+        env_fn: Callable[..., Any],
     ) -> PlanningDepthResult:
         """레거시 env_fn 방식으로 PD를 측정한다.
 
@@ -210,9 +210,9 @@ class PlanningDepthProber:
 
     def _probe_impl(
         self,
-        agent_fn: Callable,
+        agent_fn: Callable[..., Any],
         env: ProbingEnvironment,
-        rollout_policy_fn: Callable | None = None,
+        rollout_policy_fn: Callable[..., Any] | None = None,
     ) -> PlanningDepthResult:
         value_range = self._estimate_value_range(env)
         delta = self.significance_margin * value_range
@@ -246,7 +246,7 @@ class PlanningDepthProber:
 
     def _rollout_agent(
         self,
-        agent_fn: Callable,
+        agent_fn: Callable[..., Any],
         env: ProbingEnvironment,
         depth: int,
     ) -> float:
@@ -265,7 +265,7 @@ class PlanningDepthProber:
 
     def _rollout_baseline(
         self,
-        policy_fn: Callable | None,
+        policy_fn: Callable[..., Any] | None,
         env: ProbingEnvironment,
         depth: int,
     ) -> float:
@@ -400,8 +400,10 @@ def extract_pd_from_logs(episodes: list[dict[str, Any]]) -> float | None:
 
     필드가 없으면 None을 반환하여 행동 프로빙 폴백을 유도한다.
     """
-    depths = [
-        ep["planning_depth_used"] for ep in episodes if ep.get("planning_depth_used") is not None
+    depths: list[float] = [
+        float(ep["planning_depth_used"])
+        for ep in episodes
+        if ep.get("planning_depth_used") is not None
     ]
     if not depths:
         return None

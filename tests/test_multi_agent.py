@@ -9,7 +9,6 @@ from hachillesworld.core.models import (
     DiagnosticReport,
     LawsDomain,
     Level,
-    MetricScore,
 )
 from hachillesworld.optimize.multi_agent import (
     AgentDependencyGraph,
@@ -18,7 +17,6 @@ from hachillesworld.optimize.multi_agent import (
     MultiAgentOrchestrator,
     SimultaneousDriftResult,
 )
-
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────
 
@@ -32,7 +30,10 @@ def _make_report(
 
     composite_score = WMQ*0.40 + Agency*0.35 + OHM*0.25 = score*(0.4+0.35+0.25) = score
     """
-    cat = lambda n, s: CategoryScore(name=n, score=s)
+
+    def cat(n: str, s: float) -> CategoryScore:
+        return CategoryScore(name=n, score=s)
+
     return DiagnosticReport(
         agent_name=name,
         level=level,
@@ -195,8 +196,8 @@ class TestDriftPropagationRisk:
         risks = g.propagation_risk("A", decay=0.8)
 
         assert risks["B"] > risks["C"] > risks["D"]
-        assert abs(risks["B"] - 0.8) < 1e-4    # 1홉: 1.0 * 0.8
-        assert abs(risks["C"] - 0.64) < 1e-4   # 2홉: 0.8 * 1.0 * 0.8
+        assert abs(risks["B"] - 0.8) < 1e-4  # 1홉: 1.0 * 0.8
+        assert abs(risks["C"] - 0.64) < 1e-4  # 2홉: 0.8 * 1.0 * 0.8
         assert abs(risks["D"] - 0.512) < 1e-4  # 3홉: 0.64 * 1.0 * 0.8
 
     def test_parallel_paths_take_maximum(self) -> None:
@@ -236,10 +237,11 @@ class TestSimultaneousDriftDetection:
     def test_uncorrelated_drifts_not_detected(self) -> None:
         """에이전트마다 독립적인 드리프트 → 동시 감지 안 됨."""
         import random
+
         correlator = CrossAgentDriftCorrelator(correlation_threshold=0.60)
         rng = random.Random(42)
 
-        for step in range(30):
+        for _step in range(30):
             correlator.record_drift("agent-A", rng.uniform(0.1, 0.3))
             correlator.record_drift("agent-B", rng.uniform(0.1, 0.3))
             correlator.record_drift("agent-C", rng.uniform(0.1, 0.3))
@@ -280,8 +282,8 @@ class TestWeakestLinkIdentification:
         """최저 점수 에이전트가 weakest_link로 정확히 식별된다."""
         reports = [
             _make_report("high-agent", 88.0),
-            _make_report("mid-agent",  72.0),
-            _make_report("low-agent",  45.0),  # 최저
+            _make_report("mid-agent", 72.0),
+            _make_report("low-agent", 45.0),  # 최저
         ]
         orch = MultiAgentOrchestrator()
         group = orch.aggregate_has(reports)
@@ -291,7 +293,7 @@ class TestWeakestLinkIdentification:
     def test_weakest_link_with_dependency_risk(self) -> None:
         """weakest_link의 전파 위험도가 dependency_risk에 포함된다."""
         reports = [
-            _make_report("planner",  88.0),
+            _make_report("planner", 88.0),
             _make_report("executor", 40.0),  # 최저 → weakest
             _make_report("reporter", 75.0),
         ]

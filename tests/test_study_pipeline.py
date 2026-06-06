@@ -12,8 +12,7 @@ import pytest
 from hachillesworld.analyze.correlation import CorrelationResult, HASBusinessCorrelation
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.collect.log_pipeline import StudyLogPipeline
-from hachillesworld.collect.study_client import InterimReport, StudyClient, StudyEnrollment
-
+from hachillesworld.collect.study_client import StudyClient, StudyEnrollment
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────
 
@@ -293,7 +292,11 @@ class TestCorrelationComputation:
         n = 10
         # 3개 지표만 사용 (2^3 = 8 부분집합, 빠름)
         has_data = [
-            {"SDR": rng.uniform(0.6, 0.9), "PD": rng.uniform(0.5, 0.8), "SCR": rng.uniform(0.4, 0.7)}
+            {
+                "SDR": rng.uniform(0.6, 0.9),
+                "PD": rng.uniform(0.5, 0.8),
+                "SCR": rng.uniform(0.4, 0.7),
+            }
             for _ in range(n)
         ]
         kpi_data = [sum(row.values()) / 3 + rng.gauss(0, 0.05) for row in has_data]
@@ -319,7 +322,7 @@ class TestAnonymization:
                 metadata={
                     "org_name": "ACME Corp",
                     "user_id": "john@example.com",
-                    "task_type": "reorder",   # 민감하지 않은 필드
+                    "task_type": "reorder",  # 민감하지 않은 필드
                 },
             )
         ]

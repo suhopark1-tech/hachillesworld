@@ -217,8 +217,8 @@ class MetaHarness:
     def approve_rule(
         self,
         rule_id: str,
-        agent_fn: Callable | None = None,
-        env_fn: Callable | None = None,
+        agent_fn: Callable[..., Any] | None = None,
+        env_fn: Callable[..., Any] | None = None,
     ) -> bool:
         """규칙을 승인해 실제 하네스에 적용한다.
 

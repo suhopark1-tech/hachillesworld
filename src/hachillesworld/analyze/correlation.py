@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 import statistics
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import combinations
@@ -89,9 +90,21 @@ class HASBusinessCorrelation:
     """
 
     HAS_METRICS: list[str] = [
-        "SDR", "ECE", "PA", "ODR", "WMUL",
-        "PD", "SCR", "CA", "GAR", "AS",
-        "LCR", "HC", "HR", "IRT", "SU",
+        "SDR",
+        "ECE",
+        "PA",
+        "ODR",
+        "WMUL",
+        "PD",
+        "SCR",
+        "CA",
+        "GAR",
+        "AS",
+        "LCR",
+        "HC",
+        "HR",
+        "IRT",
+        "SU",
     ]
 
     def compute_spearman(
@@ -274,7 +287,9 @@ def _compute_shapley(
             val_with = _regression_r2(normed, outcomes, list(subset_with))
             val_without = _regression_r2(normed, outcomes, list(subset))
             k = len(subset)
-            weight = math.factorial(k) * math.factorial(n_features - k - 1) / math.factorial(n_features)
+            weight = (
+                math.factorial(k) * math.factorial(n_features - k - 1) / math.factorial(n_features)
+            )
             total += weight * (val_with - val_without)
         shapley[feat_idx] = total
     shapley = [max(0.0, s) for s in shapley]
@@ -286,7 +301,7 @@ def _compute_shapley(
     )
 
 
-def _all_subsets(n: int):
+def _all_subsets(n: int) -> Iterator[tuple[int, ...]]:
     for r in range(n):
         yield from combinations(range(n), r)
     yield tuple(range(n))
@@ -357,15 +372,20 @@ def _partial_correlation(
     unique_domains = sorted(set(domains))
     if len(unique_domains) <= 1:
         return _spearman_rho(has_scores, outcomes)
-    nd = len(unique_domains)
     X = [
         [1.0 if domains[i] == d else 0.0 for d in unique_domains[:-1]] + [1.0]
         for i in range(len(has_scores))
     ]
     beta_has = _ols(X, has_scores)
-    res_has = [has_scores[i] - sum(X[i][j] * beta_has[j] for j in range(len(beta_has))) for i in range(len(has_scores))]
+    res_has = [
+        has_scores[i] - sum(X[i][j] * beta_has[j] for j in range(len(beta_has)))
+        for i in range(len(has_scores))
+    ]
     beta_out = _ols(X, outcomes)
-    res_out = [outcomes[i] - sum(X[i][j] * beta_out[j] for j in range(len(beta_out))) for i in range(len(outcomes))]
+    res_out = [
+        outcomes[i] - sum(X[i][j] * beta_out[j] for j in range(len(beta_out)))
+        for i in range(len(outcomes))
+    ]
     return _spearman_rho(res_has, res_out)
 
 

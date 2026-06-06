@@ -32,8 +32,8 @@ class HarnessRuleValidator:
     def validate(
         self,
         new_rule: HarnessRule,
-        agent_fn: Callable,
-        env_fn: Callable,
+        agent_fn: Callable[..., Any],
+        env_fn: Callable[..., Any],
         n_episodes: int = 50,
     ) -> ValidationResult:
         """신규 규칙 적용 전후 시뮬레이션 비교 검증.
@@ -65,8 +65,8 @@ class HarnessRuleValidator:
     def _run_simulation(
         self,
         rule: HarnessRule | None,
-        agent_fn: Callable,
-        env_fn: Callable,
+        agent_fn: Callable[..., Any],
+        env_fn: Callable[..., Any],
         n_episodes: int,
     ) -> float:
         """n_episodes 실행 후 GAR(목표 달성률)을 반환한다."""

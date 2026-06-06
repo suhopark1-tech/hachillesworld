@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -22,9 +24,9 @@ class CategoryScoreSchema(BaseModel):
 
 class ScanRequest(BaseModel):
     agent_name: str
-    logs: list[dict] = Field(default_factory=list)
-    config: dict = Field(default_factory=dict)
-    episodes: list[dict] | None = None
+    logs: list[dict[str, Any]] = Field(default_factory=list)
+    config: dict[str, Any] = Field(default_factory=dict)
+    episodes: list[dict[str, Any]] | None = None
 
 
 class ScanResponse(BaseModel):
@@ -37,7 +39,7 @@ class ScanResponse(BaseModel):
     agency_level: CategoryScoreSchema
     operational_health: CategoryScoreSchema
     recommendations: list[str] = Field(default_factory=list)
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class HasDataPoint(BaseModel):
@@ -54,8 +56,8 @@ class HasTimeseriesResponse(BaseModel):
 
 
 class DriftRecordRequest(BaseModel):
-    predicted: dict
-    actual: dict
+    predicted: dict[str, Any]
+    actual: dict[str, Any]
 
 
 class DriftAlertSchema(BaseModel):

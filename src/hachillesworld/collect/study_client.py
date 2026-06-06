@@ -16,7 +16,6 @@ from typing import Any
 from hachillesworld.collect.collector import EpisodeContext, LogCollector
 from hachillesworld.collect.episode import EpisodeRecord
 
-
 # ── 데이터 모델 ────────────────────────────────────────────────────
 
 
@@ -25,12 +24,12 @@ class StudyEnrollment:
     """HAW-STUDY-001 참여 등록 정보."""
 
     study_id: str
-    org_hash: str       # SHA256(org_name)[:16] — 익명화
+    org_hash: str  # SHA256(org_name)[:16] — 익명화
     agent_type: str
     domain: str
     consent: bool
     enrolled_at: str
-    config_path: str    # haw_study_config.yaml 경로
+    config_path: str  # haw_study_config.yaml 경로
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -49,7 +48,7 @@ class KPIRecord:
     """월별 비즈니스 KPI 제출 단위."""
 
     study_id: str
-    month: str          # YYYY-MM
+    month: str  # YYYY-MM
     kpi_data: dict[str, Any]
     submitted_at: str
 
@@ -68,7 +67,7 @@ class InterimReport:
     kpi_months_submitted: int
     correlation_rho: float | None
     p_value: float | None
-    h1_status: str      # "PASS" | "FAIL" | "INSUFFICIENT_DATA"
+    h1_status: str  # "PASS" | "FAIL" | "INSUFFICIENT_DATA"
     recommendations: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -90,8 +89,7 @@ class InterimReport:
             lines.append(f"  H1 상태: {self.h1_status}")
         if self.recommendations:
             lines.append("  권고사항:")
-            for rec in self.recommendations:
-                lines.append(f"    - {rec}")
+            lines.extend(f"    - {rec}" for rec in self.recommendations)
         return "\n".join(lines)
 
 

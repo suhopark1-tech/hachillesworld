@@ -13,6 +13,12 @@ from hachillesworld.scan.incident_tracker import IncidentTracker
 from hachillesworld.scan.ood_detector import OODDetector
 from hachillesworld.scan.wmul_tracker import WMULTracker
 
+# ── 측정 불가 지표 처리 정책 ─────────────────────────────────────────
+# "exclude": HAS 계산에서 해당 지표 제외 (분모 조정)
+# "neutral": 카테고리 중간값(50.0)으로 대체
+# "penalty": 보수적 하한(25.0)으로 대체
+NOT_MEASURED_POLICY: str = "exclude"
+
 # ── SDK v1.1: 15개 지표 100% 자동화 완성 ─────────────────────────────────
 # WMQ (A): PA, ECE, SDR, ODR, PD
 # ALM (B): SCR, CA, GAR, AS, HC
@@ -324,6 +330,87 @@ class MetricsCalculator:
             status="ok" if rate >= 0.98 else "warning" if rate >= 0.90 else "critical",
             description="장애 발생 후 체크포인트에서 성공적으로 복구된 비율.",
         )
+
+    # ── 신뢰구간 및 측정 불가 처리 ────────────────────────────
+
+    @staticmethod
+    def _handle_not_measured(metric_name: str, policy: str = NOT_MEASURED_POLICY) -> float | None:
+        """측정 불가 지표 처리 정책.
+
+        - exclude: None 반환 (HAS 분모에서 제외)
+        - neutral: 50.0 (카테고리 중간값)
+        - penalty: 25.0 (임계값의 50%)
+        """
+        if policy == "neutral":
+            return 50.0
+        if policy == "penalty":
+            return 25.0
+        return None  # exclude (기본)
+
+    @staticmethod
+    def _compute_sdr(predicted: list[float], actual: list[float]) -> float:
+        """예측-실제 리스트로 SDR 계산 (Bootstrap 재사용용 내부 메서드)."""
+        if not predicted or not actual:
+            return 0.0
+        errors = [abs(p - a) for p, a in zip(predicted, actual, strict=False)]
+        if len(errors) < 2:
+            return 0.0
+        mu = float(np.mean(errors))
+        sigma = float(np.std(errors))
+        threshold = mu + 2.0 * sigma
+        return sum(1 for e in errors if e > threshold) / len(errors)
+
+    def compute_sdr_with_ci(
+        self,
+        predicted: list[float],
+        actual: list[float],
+        n_bootstrap: int = 1000,
+        seed: int = 42,
+    ) -> tuple[float, float, float]:
+        """SDR + Bootstrap 95% CI. (sdr, ci_lower, ci_upper) 반환.
+
+        샘플 < 5이면 CI = (nan, nan).
+        """
+        n = len(predicted)
+        point_sdr = self._compute_sdr(predicted, actual)
+        if n < 5:
+            return point_sdr, float("nan"), float("nan")
+
+        rng = np.random.default_rng(seed)
+        bootstrap_sdrs: list[float] = []
+        for _ in range(n_bootstrap):
+            idx = rng.integers(0, n, size=n)
+            p_boot = [predicted[i] for i in idx]
+            a_boot = [actual[i] for i in idx]
+            bootstrap_sdrs.append(self._compute_sdr(p_boot, a_boot))
+
+        ci_lower = float(np.percentile(bootstrap_sdrs, 2.5))
+        ci_upper = float(np.percentile(bootstrap_sdrs, 97.5))
+        return round(point_sdr, 4), round(ci_lower, 4), round(ci_upper, 4)
+
+    @staticmethod
+    def compute_has_with_ci(
+        wmq: float,
+        alm: float,
+        ohm: float,
+        wmq_se: float,
+        alm_se: float,
+        ohm_se: float,
+    ) -> tuple[float, float, float]:
+        """HAS + 오차 전파 95% CI (델타 방법, 독립성 가정).
+
+        Returns (has, ci_lower, ci_upper).
+        """
+        from hachillesworld.core.config import HAS_WEIGHTS
+
+        w = HAS_WEIGHTS
+        has = w["wmq"] * wmq + w["alm"] * alm + w["ohm"] * ohm
+        has_se = (
+            (w["wmq"] * wmq_se) ** 2 + (w["alm"] * alm_se) ** 2 + (w["ohm"] * ohm_se) ** 2
+        ) ** 0.5
+        ci_lower = max(0.0, has - 1.96 * has_se)
+        ci_upper = min(100.0, has + 1.96 * has_se)
+        return round(has, 2), round(ci_lower, 2), round(ci_upper, 2)
 
     # ── 유틸리티 ──────────────────────────────────────────────
 

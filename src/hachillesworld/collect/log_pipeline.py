@@ -63,8 +63,8 @@ class StudyLogPipeline:
 
         for jsonl_file in sorted(self.log_dir.glob("**/*.jsonl")):
             with jsonl_file.open(encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
+                for raw_line in f:
+                    line = raw_line.strip()
                     if not line:
                         continue
                     try:
@@ -100,11 +100,7 @@ class StudyLogPipeline:
         anonymized: list[EpisodeRecord] = []
         for r in records:
             anon_id = hashlib.sha256(r.agent_id.encode()).hexdigest()
-            clean_meta = {
-                k: v
-                for k, v in r.metadata.items()
-                if k.lower() not in _PRIVATE_KEYS
-            }
+            clean_meta = {k: v for k, v in r.metadata.items() if k.lower() not in _PRIVATE_KEYS}
             d = r.to_dict()
             d["agent_id"] = anon_id
             d["metadata"] = clean_meta
@@ -187,8 +183,7 @@ class StudyLogPipeline:
 
         total_days = (end.date() - start.date()).days + 1
         expected_days = {
-            (start + timedelta(days=i)).strftime("%Y-%m-%d")
-            for i in range(total_days)
+            (start + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(total_days)
         }
         missing = sorted(expected_days - days_with_data)
         n_covered = len(expected_days & days_with_data)

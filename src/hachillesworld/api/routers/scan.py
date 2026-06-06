@@ -105,7 +105,8 @@ def interpret_agent(
     if report is None:
         raise HTTPException(
             status_code=404,
-            detail=f"에이전트 '{agent_id}'의 진단 보고서가 없습니다. 먼저 POST /v1/scan을 호출하세요.",
+            detail=f"에이전트 '{agent_id}'의 진단 보고서가 없습니다."
+            " 먼저 POST /v1/scan을 호출하세요.",
         )
     interp = HASInterpreter().interpret(report)
     return _interp_schema(interp)
@@ -118,7 +119,8 @@ def get_next_actions(agent_id: str, request: Request) -> NextActionsResponse:
     if report is None:
         raise HTTPException(
             status_code=404,
-            detail=f"에이전트 '{agent_id}'의 진단 보고서가 없습니다. 먼저 POST /v1/scan을 호출하세요.",
+            detail=f"에이전트 '{agent_id}'의 진단 보고서가 없습니다."
+            " 먼저 POST /v1/scan을 호출하세요.",
         )
     interp = HASInterpreter().interpret(report)
     return NextActionsResponse(

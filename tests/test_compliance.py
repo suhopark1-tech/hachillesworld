@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from hachillesworld.compliance.eu_ai_act import EUAIActMapper, EUAIActReport
-from hachillesworld.compliance.iso42001 import ISO42001CheckResult, ISO42001Checker
+from hachillesworld.compliance.eu_ai_act import EUAIActMapper
+from hachillesworld.compliance.iso42001 import ISO42001Checker
 from hachillesworld.core.models import (
     CategoryScore,
     DiagnosticReport,
@@ -14,7 +14,6 @@ from hachillesworld.core.models import (
     Level,
     MetricScore,
 )
-
 
 # ── 픽스처 ────────────────────────────────────────────────────────────
 
@@ -26,9 +25,7 @@ def _make_metric(
     status: str = "ok",
     unit: str = "",
 ) -> MetricScore:
-    return MetricScore(
-        name=name, value=value, threshold=threshold, unit=unit, status=status
-    )
+    return MetricScore(name=name, value=value, threshold=threshold, unit=unit, status=status)
 
 
 def _make_report(
@@ -77,9 +74,7 @@ def _make_report(
         world_model_quality=CategoryScore(
             name="World Model Quality", score=wmq_score, metrics=wmq_metrics
         ),
-        agency_level=CategoryScore(
-            name="Agency Level", score=alm_score, metrics=alm_metrics
-        ),
+        agency_level=CategoryScore(name="Agency Level", score=alm_score, metrics=alm_metrics),
         operational_health=CategoryScore(
             name="Operational Health", score=ohm_score, metrics=ohm_metrics
         ),
@@ -125,9 +120,7 @@ class TestEUAIActArticleMapping:
         assert "GAR" in metric_names
 
     def test_compliant_scores(self) -> None:
-        report = _make_report(
-            sdr=0.02, ece=0.02, ca=0.90, odr=0.92, gar=0.90, irt=30.0, hc=0.95
-        )
+        report = _make_report(sdr=0.02, ece=0.02, ca=0.90, odr=0.92, gar=0.90, irt=30.0, hc=0.95)
         mapper = EUAIActMapper()
         eu_report = mapper.map_to_articles(report)
 
@@ -136,9 +129,7 @@ class TestEUAIActArticleMapping:
         assert eu_report.article_15.compliance_score > 70
 
     def test_non_compliant_scores(self) -> None:
-        report = _make_report(
-            sdr=0.20, ece=0.30, ca=0.30, odr=0.40, gar=0.40, irt=300.0, hc=0.40
-        )
+        report = _make_report(sdr=0.20, ece=0.30, ca=0.30, odr=0.40, gar=0.40, irt=300.0, hc=0.40)
         mapper = EUAIActMapper()
         eu_report = mapper.map_to_articles(report)
 
@@ -163,7 +154,8 @@ class TestEUAIActArticleMapping:
         assert eu_report.agent_name == report.agent_name
 
     def test_generated_at_is_iso8601(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         eu_report = EUAIActMapper().map_to_articles(_make_report())
         # ISO 8601 파싱 가능 여부 + UTC 타임존 포함 여부 확인
         dt = datetime.fromisoformat(eu_report.generated_at)
@@ -179,44 +171,43 @@ class TestComplianceReportGeneration:
 
     def test_html_contains_doctype(self) -> None:
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert "<!DOCTYPE html>" in html
 
     def test_html_contains_all_articles(self) -> None:
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         for article in ("Art.13", "Art.14", "Art.15"):
             assert article in html
 
     def test_html_contains_agent_name(self) -> None:
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert report.agent_name in html
 
     def test_text_format(self) -> None:
         report = _make_report()
-        txt = EUAIActMapper().generate_compliance_report(report, format="text")
+        txt = EUAIActMapper().generate_monitoring_report(report, output_format="text")
         assert "EU AI Act" in txt
         assert "Art.13" in txt
 
     def test_html_escapes_special_chars(self) -> None:
-        from hachillesworld.core.models import CategoryScore, DiagnosticReport, LawsDomain, Level
         report = _make_report()
         report.agent_name = "<script>alert('xss')</script>"
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert "<script>" not in html
         assert "&lt;script&gt;" in html
 
     def test_html_has_score_bar(self) -> None:
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert "score-bar" in html
         assert "score-fill" in html
 
     def test_html_contains_legal_notice_banner(self) -> None:
         """법적 고지 배너가 HTML 상단에 포함되어 있어야 한다."""
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert "legal-notice" in html
         assert "법적 고지" in html
         assert "법적 효력" in html
@@ -224,14 +215,14 @@ class TestComplianceReportGeneration:
     def test_text_contains_legal_warning(self) -> None:
         """텍스트 형식 보고서에도 법적 경고가 포함되어야 한다."""
         report = _make_report()
-        txt = EUAIActMapper().generate_compliance_report(report, format="text")
+        txt = EUAIActMapper().generate_monitoring_report(report, output_format="text")
         assert "참고 자료" in txt
         assert "법적 컴플라이언스 인증이 아닙니다" in txt
 
     def test_html_title_reflects_monitoring_purpose(self) -> None:
         """HTML 제목이 '모니터링 참고 보고서'임을 명시해야 한다."""
         report = _make_report()
-        html = EUAIActMapper().generate_compliance_report(report, format="html")
+        html = EUAIActMapper().generate_monitoring_report(report, output_format="html")
         assert "모니터링" in html
         assert "참고" in html
 
@@ -308,6 +299,7 @@ class TestTTAProposalFormat:
     @pytest.fixture
     def proposal_text(self) -> str:
         import os
+
         path = os.path.join(
             os.path.dirname(__file__),
             "..",
@@ -362,12 +354,14 @@ class TestComplianceAPIEndpoints:
     @pytest.fixture
     def client(self):
         from hachillesworld.api.server import app
+
         with TestClient(app, headers={"Authorization": "Bearer dev-key-insecure"}) as c:
             yield c
 
     def _seed_report(self, client: TestClient, agent_id: str) -> None:
         """에이전트 리포트를 /v1/scan으로 먼저 생성한다."""
         import random
+
         logs = [
             {
                 "timestamp": 1000.0 + i,
