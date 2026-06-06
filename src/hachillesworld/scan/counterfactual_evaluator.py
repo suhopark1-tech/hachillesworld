@@ -140,10 +140,18 @@ class CounterfactualEvaluator:
         return self._llm_evaluate(evaluable)
 
     def _judge_evaluate(self, episodes: list[EpisodeRecord]) -> CAResult:
-        """JudgeBackend 구현체(local/rule)로 CA를 계산한다."""
+        """JudgeBackend 구현체로 CA를 계산한다.
+
+        AnthropicJudge 사용 시 외부 전송 전 PII 자동 sanitize 적용.
+        """
         assert self._judge is not None
         judge_scores: list[float] = []
         actual_outcomes: list[float] = []
+
+        # AnthropicJudge는 외부 API를 호출하므로 PII 필터 적용
+        from hachillesworld.scan.judge.anthropic_judge import AnthropicJudge
+
+        is_external = isinstance(self._judge, AnthropicJudge)
 
         for ep in episodes:
             cache_key = ep.episode_id
@@ -154,8 +162,23 @@ class CounterfactualEvaluator:
                     "cf_question",
                     "에이전트가 다른 행동을 선택했다면 결과가 달라졌을까요?",
                 )
-                response_a = json.dumps(ep.predicted_next_state or {}, ensure_ascii=False)
-                response_b = json.dumps(ep.actual_next_state or {}, ensure_ascii=False)
+                predicted_raw = ep.predicted_next_state or {}
+                actual_raw = ep.actual_next_state or {}
+
+                if is_external and self._classifier is not None:
+                    predicted_raw = self._classifier.sanitize_for_external(predicted_raw)
+                    actual_raw = self._classifier.sanitize_for_external(actual_raw)
+                    classification = self._classifier.classify(ep.predicted_next_state or {})
+                    if classification.contains_pii:
+                        warnings.warn(
+                            f"[HAchillesWorld PII] 에피소드 '{ep.episode_id}'에서 "
+                            "PII 필드를 탐지하여 외부 전송 전 제거했습니다.",
+                            UserWarning,
+                            stacklevel=3,
+                        )
+
+                response_a = json.dumps(predicted_raw, ensure_ascii=False)
+                response_b = json.dumps(actual_raw, ensure_ascii=False)
                 score = self._judge.evaluate(scenario, response_a, response_b)
                 if self._cache_evaluations:
                     self._eval_cache[cache_key] = score

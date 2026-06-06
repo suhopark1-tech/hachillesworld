@@ -107,9 +107,39 @@ evaluator = CounterfactualEvaluator(judge_type="local", model="llama3.1:8b")
 evaluator = CounterfactualEvaluator(anthropic_client=client, consent_acknowledged=True)
 ```
 
+## 6. 감사 로그 데이터 흐름 (Sprint 6-B)
+
+모든 API 호출은 `AuditMiddleware`에 의해 자동으로 `audit_events` 테이블에 기록됩니다.
+
+```
+HTTP 요청
+    │
+    ▼
+AuditMiddleware (api/middleware.py)
+    │ actor, action, resource, outcome, duration_ms 추출
+    ▼
+AuditLogger.log(AuditEvent) → Repository.save_audit_event()
+    │
+    ├── InMemoryRepository: _audit 리스트 (메모리)
+    └── SQLiteRepository: audit_events 테이블 (영구)
+```
+
+감사 로그 조회: `GET /v1/audit/events` (admin API key 전용)
+
+**감사 이벤트 포함 데이터**:
+- `actor`: API key 앞 8자 (개인 식별자 최소화)
+- `action`: "scan" | "interpret" | "drift.record" | "harness.approve" | ...
+- `resource`: agent_id 또는 group_id
+- `outcome`: "success" | "not_found" | "unauthorized" | "forbidden" | "error"
+- `ip_address`, `duration_ms`, `request_size_bytes`
+
+**감사 로그는 외부로 전송되지 않습니다.** 모든 기록은 로컬 스토리지(SQLite 또는 메모리)에만 보존됩니다.
+
 ## 관련 문서
 
 - `NOTICE` — 오픈소스 라이선스 및 저작권 고지
 - `src/hachillesworld/privacy/data_classifier.py` — PII 분류 구현
+- `src/hachillesworld/audit/logger.py` — AuditLogger + AuditEvent
+- `src/hachillesworld/api/middleware.py` — AuditMiddleware
 - `src/hachillesworld/scan/counterfactual_evaluator.py` — CA 평가 및 전송 고지
 - `docs/CA_MEASUREMENT_GUIDE.md` — Judge 선택 가이드 (Sprint 5-D)

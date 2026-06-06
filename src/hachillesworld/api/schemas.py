@@ -184,3 +184,24 @@ class NextActionsResponse(BaseModel):
     agent_id: str
     actions: list[ActionItemSchema] = Field(default_factory=list)
     total_estimated_gain: float
+
+
+# ── 감사 로그 스키마 (Sprint 6-B) ─────────────────────────────────────
+
+
+class AuditEventSchema(BaseModel):
+    event_id: str
+    timestamp: str
+    actor: str
+    action: str
+    resource: str
+    outcome: str
+    ip_address: str
+    request_size_bytes: int
+    response_size_bytes: int
+    duration_ms: float
+
+
+class AuditEventsResponse(BaseModel):
+    events: list[AuditEventSchema] = Field(default_factory=list)
+    total: int

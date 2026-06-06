@@ -1,12 +1,16 @@
-"""Operate 엔드포인트 — HAS 시계열, 드리프트, 하네스, Replay."""
+"""Operate 엔드포인트 — HAS 시계열, 드리프트, 하네스, Replay, 감사 로그."""
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from hachillesworld.api.schemas import (
+    AuditEventSchema,
+    AuditEventsResponse,
     DriftAlertSchema,
     DriftRecordRequest,
     DriftRecordResponse,
@@ -19,6 +23,20 @@ from hachillesworld.api.schemas import (
 from hachillesworld.operate.replay import ReplayDebugger
 
 router = APIRouter(tags=["operate"])
+
+# 감사 로그 엔드포인트 — 별도 라우터 (regular _auth 우회, admin key 전용)
+audit_router = APIRouter(tags=["audit"])
+
+_ADMIN_KEY: str = os.getenv("HAW_ADMIN_KEY", "dev-admin-insecure")
+_security = HTTPBearer(auto_error=False)
+
+
+def _verify_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_security),
+) -> str:
+    if credentials is None or credentials.credentials != _ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return credentials.credentials
 
 
 @router.get("/agents/{agent_id}/has", response_model=HasTimeseriesResponse)
@@ -146,3 +164,39 @@ def get_replay(
         "repair_suggestion": "",
         "confidence": 0.5 if session.anomaly_frames else 0.0,
     }
+
+
+@audit_router.get(
+    "/audit/events",
+    response_model=AuditEventsResponse,
+    dependencies=[Depends(_verify_admin)],
+)
+def get_audit_events(
+    request: Request,
+    actor: str | None = None,
+    action: str | None = None,
+    from_ts: str | None = None,
+    limit: int = 100,
+) -> AuditEventsResponse:
+    """감사 로그 조회 — admin API key 전용."""
+    audit_logger = getattr(request.app.state, "audit_logger", None)
+    if audit_logger is None:
+        return AuditEventsResponse(events=[], total=0)
+
+    events = audit_logger.query(actor=actor, action=action, from_ts=from_ts, limit=limit)
+    schemas = [
+        AuditEventSchema(
+            event_id=e.event_id,
+            timestamp=e.timestamp,
+            actor=e.actor,
+            action=e.action,
+            resource=e.resource,
+            outcome=e.outcome,
+            ip_address=e.ip_address,
+            request_size_bytes=e.request_size_bytes,
+            response_size_bytes=e.response_size_bytes,
+            duration_ms=e.duration_ms,
+        )
+        for e in events
+    ]
+    return AuditEventsResponse(events=schemas, total=len(schemas))

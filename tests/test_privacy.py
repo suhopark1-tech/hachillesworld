@@ -168,3 +168,46 @@ class TestCounterfactualEvaluatorConsent:
 
         ev = CounterfactualEvaluator(anthropic_client=None, pii_filter=False)
         assert ev._classifier is None
+
+    def test_auto_sanitize_before_anthropic(self) -> None:
+        """PII가 포함된 에피소드 데이터는 Anthropic API 호출 전 자동으로 제거된다."""
+        from unittest.mock import MagicMock
+
+        from hachillesworld.collect.episode import EpisodeRecord
+        from hachillesworld.scan.counterfactual_evaluator import CounterfactualEvaluator
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text="0.8")]
+        mock_response.usage.input_tokens = 100
+        mock_client.messages.create.return_value = mock_response
+
+        evaluator = CounterfactualEvaluator(
+            anthropic_client=mock_client,
+            consent_acknowledged=True,
+            pii_filter=True,
+        )
+
+        ep = EpisodeRecord(
+            agent_id="pii-agent",
+            goal_achieved=True,
+            predicted_next_state={"user_id": "u-secret-123", "score": 0.8},
+            actual_next_state={"result": "ok"},
+        )
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            evaluator._judge_single(ep)
+
+        # API가 호출됐는지 확인
+        mock_client.messages.create.assert_called_once()
+
+        # 전송된 메시지에 원본 PII 값이 없어야 한다
+        call_kwargs = mock_client.messages.create.call_args
+        msg_content = call_kwargs[1]["messages"][0]["content"]
+        assert "u-secret-123" not in msg_content
+        assert "[REDACTED]" in msg_content
+
+        # PII 탐지 경고가 발생했어야 한다
+        pii_warns = [w for w in caught if "PII" in str(w.message)]
+        assert len(pii_warns) >= 1
