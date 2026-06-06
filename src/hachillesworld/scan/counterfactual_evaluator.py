@@ -1,12 +1,14 @@
 """Counterfactual Accuracy (CA) 자동 측정 — LLM-as-Judge (HAW-TR-001 §4.2).
 
 데이터 전송 고지:
-    LLM Judge 사용 시 에피소드의 predicted_next_state / actual_next_state가
+    AnthropicJudge 사용 시 에피소드의 predicted_next_state / actual_next_state가
     Anthropic API 서버로 전송됩니다. 전송 전 DataClassifier를 통해 PII 필드가
     자동으로 제거됩니다. 민감 데이터 포함 여부는 호출자가 확인해야 합니다.
 
-    외부 API 전송을 원하지 않는 경우 anthropic_client=None으로 초기화하면
-    로컬 프록시 방식으로 CA를 추정합니다.
+    외부 API 전송을 원하지 않는 경우:
+    - judge_type="local" : Ollama 기반 로컬 LLM (재현 가능, 무료)
+    - judge_type="rule"  : 규칙 기반 완전 오프라인 (GDPR 안전)
+    - anthropic_client=None : max_prediction_error 기반 프록시로 fallback
 """
 
 from __future__ import annotations
@@ -14,12 +16,16 @@ from __future__ import annotations
 import json
 import warnings
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.stats import spearmanr
 
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.privacy.data_classifier import DataClassifier
+
+if TYPE_CHECKING:
+    from hachillesworld.scan.judge.base import JudgeBackend
 
 
 @dataclass
@@ -29,15 +35,19 @@ class CAResult:
     judge_scores: list[float] = field(default_factory=list)
     cache_hit_rate: float = 0.0
     cost_usd: float = 0.0
-    method: str = "proxy"  # "llm_judge" | "proxy"
+    method: str = "proxy"  # "llm_judge" | "local_judge" | "rule_judge" | "proxy"
 
 
 class CounterfactualEvaluator:
-    """CA 자동 계산: LLM-as-Judge + Prompt Caching.
+    """CA 자동 계산: 멀티 Judge 백엔드 지원.
 
-    Anthropic SDK의 system-prompt Prompt Caching을 활용해
-    반복 에피소드 평가 비용을 최소화한다.
-    anthropic_client=None이면 max_prediction_error 기반 프록시로 fallback.
+    judge_type 또는 judge 파라미터로 평가 방식을 선택한다.
+    - "anthropic" (기본): Anthropic API, 비결정적, 고정확도
+    - "local": Ollama 로컬 LLM, 결정론적, 무료
+    - "rule": 규칙 기반, 결정론적, 완전 오프라인
+    judge 파라미터로 JudgeBackend 구현체를 직접 주입할 수도 있다.
+
+    하위 호환: anthropic_client 파라미터를 그대로 사용하면 기존 동작과 동일.
     """
 
     _SYSTEM_PROMPT = (
@@ -52,19 +62,52 @@ class CounterfactualEvaluator:
         anthropic_client: object | None = None,
         model: str = "claude-sonnet-4-6",
         *,
+        judge: "JudgeBackend | None" = None,
+        judge_type: str = "anthropic",
         cache_evaluations: bool = True,
         pii_filter: bool = True,
         consent_acknowledged: bool = False,
+        **judge_kwargs: object,
     ) -> None:
-        self._client = anthropic_client
-        self._model = model
         self._cache_evaluations = cache_evaluations
         self._pii_filter = pii_filter
         self._eval_cache: dict[str, float] = {}
         self._classifier = DataClassifier() if pii_filter else None
 
+        # Judge 백엔드 선택 — 직접 주입 우선
+        if judge is not None:
+            self._judge: "JudgeBackend | None" = judge
+            self._client = None
+            self._model = model
+        elif judge_type == "local":
+            from hachillesworld.scan.judge.local_judge import LocalLLMJudge
+
+            self._judge = LocalLLMJudge(**judge_kwargs)  # type: ignore[arg-type]
+            self._client = None
+            self._model = model
+        elif judge_type == "rule":
+            from hachillesworld.scan.judge.rule_judge import RuleBasedJudge
+
+            self._judge = RuleBasedJudge()
+            self._client = None
+            self._model = model
+        else:
+            # anthropic (기존 동작 — judge_type="anthropic" 또는 기본값)
+            self._judge = None
+            self._client = anthropic_client
+            self._model = model
+
+        # 비결정성 경고 — 연구/재현 목적 시 권고
+        if self._judge is not None and not self._judge.is_deterministic:
+            warnings.warn(
+                f"Judge '{judge_type}'는 비결정적입니다. "
+                "논문/연구 목적이라면 judge_type='local' 또는 'rule'을 권장합니다.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # 외부 API 사용 시 데이터 전송 동의 고지
-        if anthropic_client is not None and not consent_acknowledged:
+        if self._client is not None and not consent_acknowledged:
             warnings.warn(
                 "\n[HAchillesWorld 데이터 전송 고지]\n"
                 "LLM Judge(CA 측정)를 사용하면 에피소드의 predicted_next_state / "
@@ -72,8 +115,7 @@ class CounterfactualEvaluator:
                 "PII 자동 필터링이 활성화되어 있습니다(pii_filter=True).\n"
                 "민감 데이터가 없음을 확인했다면 consent_acknowledged=True를 설정하여 "
                 "이 경고를 제거할 수 있습니다.\n"
-                "외부 전송을 원하지 않으면 anthropic_client=None을 사용하세요 "
-                "(프록시 방식으로 CA 추정).",
+                "외부 전송을 원하지 않으면 judge_type='local' 또는 'rule'을 사용하세요.",
                 UserWarning,
                 stacklevel=2,
             )
@@ -82,16 +124,55 @@ class CounterfactualEvaluator:
         """에피소드 리스트에서 CA를 계산한다.
 
         predicted_next_state / actual_next_state 쌍이 있는 에피소드를
-        LLM-as-Judge로 평가한다. 없거나 API 키가 없으면 프록시로 fallback.
+        Judge 백엔드로 평가한다. 없거나 judge가 없으면 프록시로 fallback.
         """
         evaluable = [
             ep
             for ep in episodes
             if ep.predicted_next_state is not None and ep.actual_next_state is not None
         ]
-        if not evaluable or self._client is None:
+        if not evaluable:
+            return self._proxy_fallback(episodes)
+        if self._judge is not None:
+            return self._judge_evaluate(evaluable)
+        if self._client is None:
             return self._proxy_fallback(episodes)
         return self._llm_evaluate(evaluable)
+
+    def _judge_evaluate(self, episodes: list[EpisodeRecord]) -> CAResult:
+        """JudgeBackend 구현체(local/rule)로 CA를 계산한다."""
+        assert self._judge is not None
+        judge_scores: list[float] = []
+        actual_outcomes: list[float] = []
+
+        for ep in episodes:
+            cache_key = ep.episode_id
+            if self._cache_evaluations and cache_key in self._eval_cache:
+                score = self._eval_cache[cache_key]
+            else:
+                scenario = ep.metadata.get(
+                    "cf_question",
+                    "에이전트가 다른 행동을 선택했다면 결과가 달라졌을까요?",
+                )
+                response_a = json.dumps(ep.predicted_next_state or {}, ensure_ascii=False)
+                response_b = json.dumps(ep.actual_next_state or {}, ensure_ascii=False)
+                score = self._judge.evaluate(scenario, response_a, response_b)
+                if self._cache_evaluations:
+                    self._eval_cache[cache_key] = score
+
+            judge_scores.append(score)
+            actual_outcomes.append(1.0 if ep.goal_achieved else 0.0)
+
+        judge_name = type(self._judge).__name__.lower().replace("judge", "")
+        method = f"{judge_name}_judge" if judge_name else "judge"
+        return CAResult(
+            ca_score=self._compute_ca(judge_scores, actual_outcomes),
+            n_evaluated=len(episodes),
+            judge_scores=judge_scores,
+            cache_hit_rate=0.0,
+            cost_usd=0.0,
+            method=method,
+        )
 
     def _llm_evaluate(self, episodes: list[EpisodeRecord]) -> CAResult:
         judge_scores: list[float] = []
@@ -161,7 +242,7 @@ class CounterfactualEvaluator:
             "에이전트가 다른 행동을 선택했다면 결과가 달라졌을까요?",
         )
 
-        response = self._client.messages.create(  # type: ignore[union-attr]
+        response = self._client.messages.create(  # type: ignore[attr-defined]
             model=self._model,
             max_tokens=10,
             system=[
