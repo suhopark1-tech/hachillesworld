@@ -123,7 +123,51 @@
 
 ---
 
-### STEP 4 — 변경 사항 확인
+### STEP 4 — admin.html 업데이트
+
+`landing/admin.html` 안의 세 곳을 수정한다.
+
+**① BLOG_POSTS 배열 맨 앞에 새 항목 추가**
+
+```javascript
+const BLOG_POSTS = [
+  { num:'{번호}', file:'blog-{slug}.html', title:'{제목 요약}' },  // ← 새 항목
+  { num:'09', file:'blog-multi-agent-collaboration.html', title:'Multi-Agent 협업 실전' },
+  // ... 기존 항목들
+];
+```
+
+**② Blog 탭 KPI — 포스트 수 · 범위 업데이트**
+
+```html
+<!-- 변경 전 -->
+<div class="kpi-num accent" id="b-total">9</div>
+<div class="kpi-sub">POST 01 ~ 09</div>
+
+<!-- 변경 후 -->
+<div class="kpi-num accent" id="b-total">{새 총수}</div>
+<div class="kpi-sub">POST 01 ~ {번호}</div>
+```
+
+**③ System 탭 — 현황 텍스트 업데이트**
+
+```html
+<!-- 변경 전 -->
+<span class="sys-val">9개 (POST 01 ~ 09)</span>
+...
+<span class="badge-dim">/blog-add 스킬로 추가</span>  <!-- 다음 번호 -->
+
+<!-- 변경 후 -->
+<span class="sys-val">{새 총수}개 (POST 01 ~ {번호})</span>
+...
+<span class="badge-dim">/blog-add 스킬로 추가</span>  <!-- 다음 번호 +1 -->
+```
+
+System 탭의 "다음 블로그 포스트 번호" 값도 `{번호+1}`로 업데이트한다.
+
+---
+
+### STEP 5 — 변경 사항 확인
 
 파일이 올바르게 생성/수정되었는지 점검한다:
 
@@ -144,10 +188,10 @@ foreach ($link in $links) {
 
 ---
 
-### STEP 5 — Git 커밋 & 푸시
+### STEP 6 — Git 커밋 & 푸시
 
 ```powershell
-git add landing/blog-{slug}.html landing/blog.html
+git add landing/blog-{slug}.html landing/blog.html landing/admin.html
 git status
 ```
 
@@ -169,7 +213,7 @@ git push origin main
 
 ---
 
-### STEP 6 — CI 실행 확인
+### STEP 7 — CI 실행 확인
 
 푸시 후 GitHub Actions의 `pages.yml` 워크플로우가 자동 트리거된다. CI 상태를 확인한다:
 
@@ -187,19 +231,20 @@ CI 단계별 결과를 보고한다:
 
 ---
 
-### STEP 7 — 결과 보고
+### STEP 8 — 결과 보고
 
 CI 완료 후 다음 정보를 요약 보고한다:
 
 ```
 ✅ 블로그 포스트 추가 완료
-─────────────────────────────────────────
-파일:     landing/blog-{slug}.html
-카드:     blog.html POST {번호} 삽입
-커밋:     {commit SHA 앞 7자리}
-CI:       validate ✅  deploy ✅
-게시 URL: https://suhopark1-tech.github.io/hachillesworld/blog-{slug}.html
-─────────────────────────────────────────
+─────────────────────────────────────────────────────
+파일:       landing/blog-{slug}.html
+카드:       blog.html POST {번호} 삽입
+admin.html: BLOG_POSTS · KPI · System 탭 업데이트
+커밋:       {commit SHA 앞 7자리}
+CI:         validate ✅  deploy ✅
+게시 URL:   https://suhopark1-tech.github.io/hachillesworld/blog-{slug}.html
+─────────────────────────────────────────────────────
 ```
 
 CI 실패 시:
@@ -211,7 +256,7 @@ CI 실패 시:
 
 ## 주의 사항
 
-- 새 파일을 커밋하기 전 반드시 **internal links check** (STEP 4)를 로컬에서 통과시킬 것
+- 새 파일을 커밋하기 전 반드시 **internal links check** (STEP 5)를 로컬에서 통과시킬 것
 - `blog.html`에 카드를 추가하면서 `landing/blog-{slug}.html` 파일이 실제로 존재해야 CI가 통과됨
 - 본문 TODO 플레이스홀더가 포함된 상태로 커밋·배포해도 무방 (페이지는 정상 표시)
 - `git push`는 사용자 승인 후 실행 (기본 확인)
