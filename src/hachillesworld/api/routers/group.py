@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, HTTPException, Request
 
 from hachillesworld.api.schemas import (
@@ -72,11 +70,7 @@ def get_group_has(group_id: str, request: Request) -> GroupHASResponse:
         raise HTTPException(status_code=404, detail=f"그룹 '{group_id}'을(를) 찾을 수 없습니다")
 
     # 최신 보고서 수집
-    reports = [
-        store.latest_reports[aid]
-        for aid in agent_ids
-        if aid in store.latest_reports
-    ]
+    reports = [r for aid in agent_ids if (r := store.get_latest_report(aid)) is not None]
     if not reports:
         raise HTTPException(
             status_code=404,
