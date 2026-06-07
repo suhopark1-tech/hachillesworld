@@ -142,6 +142,9 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Upgrade pip (fix pip self-CVE before audit)
+        run: pip install --upgrade pip
+
       - name: Install pip-audit
         run: pip install pip-audit
 
