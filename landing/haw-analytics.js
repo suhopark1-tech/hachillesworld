@@ -17,7 +17,7 @@
 
   /* ── 설정 ─────────────────────────────────────────────── */
   const CFG = {
-    GA4_ID:     'G-XXXXXXXXXX',   // ← 실제 GA4 Measurement ID로 교체
+    GA4_ID:     'G-E78PZ2H8FG',   // Google Analytics 4 Measurement ID
     STORE_KEY:  'haw_evt',        // localStorage 키
     MAX_EVT:    1000,             // 최대 저장 이벤트 수
     PAGE:       location.pathname.replace(/.*\//, '') || 'index.html',

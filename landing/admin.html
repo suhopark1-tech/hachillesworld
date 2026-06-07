@@ -542,7 +542,7 @@
           <div class="step-body">
             <strong>haw-analytics.js 수정</strong><br/>
             <code>landing/haw-analytics.js</code> 파일 최상단의<br/>
-            <code>GA4_ID: 'G-XXXXXXXXXX'</code>를 실제 ID로 교체합니다.
+            <code>GA4_ID: 'G-E78PZ2H8FG'</code> — 설정 완료.
           </div>
         </div>
         <div class="setup-step">
@@ -949,9 +949,12 @@
 
     // GA4 설정 여부 확인
     const analyticsLoaded = typeof window.HAWAnalytics !== 'undefined';
-    document.getElementById('sys-analytics').textContent      = analyticsLoaded ? '로드됨' : '미로드';
+    document.getElementById('sys-analytics').textContent       = analyticsLoaded ? '로드됨' : '미로드';
     document.getElementById('sys-analytics-badge').textContent = analyticsLoaded ? '정상' : '미설치';
-    document.getElementById('sys-analytics-badge').className  = 'badge-' + (analyticsLoaded ? 'ok' : 'warn');
+    document.getElementById('sys-analytics-badge').className   = 'badge-' + (analyticsLoaded ? 'ok' : 'warn');
+    document.getElementById('sys-ga4-id').textContent    = 'G-E78PZ2H8FG';
+    document.getElementById('sys-ga4-badge').textContent = '연동됨';
+    document.getElementById('sys-ga4-badge').className   = 'badge-ok';
 
     // GitHub CI 상태 확인 (PAT 있으면)
     const token = sessionStorage.getItem('haw_gh_token');
