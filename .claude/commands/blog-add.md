@@ -23,12 +23,12 @@
 ```powershell
 (Get-ChildItem "landing\blog-*.html" | Where-Object { $_.Name -ne "blog.html" }).Count
 ```
-→ 현재 개수 + 1 = 새 포스트 번호 (2자리, 예: 12)
+→ 현재 개수 + 1 = 새 포스트 번호 (2자리, 예: 13)
 
 슬러그와 번호를 확정하기 전에 사용자에게 다음을 확인한다:
 - 생성할 파일명 (`landing/blog-{slug}.html`)
 - 포스트 번호
-- 블로그 카드에 들어갈 태그 목록 (기존 태그 참고: `#WorldModel`, `#MCTS`, `#AI기초`, `#AgenticAI`, `#실전케이스`, `#용어해설`, `#사용가이드`, `#비용최적화`, `#운영`, `#MultiAgent`, `#로드맵`, `#v3.0`, `#HAchillesWorld`, `#PlanningDepth`)
+- 블로그 카드에 들어갈 태그 목록 (기존 태그 참고: `#WorldModel`, `#MCTS`, `#AI기초`, `#AgenticAI`, `#실전케이스`, `#용어해설`, `#사용가이드`, `#비용최적화`, `#운영`, `#MultiAgent`, `#로드맵`, `#v3.0`, `#HAchillesWorld`, `#PlanningDepth`, `#Harness`)
 - 포스트 요약 설명 (2줄, 카드의 `post-desc`)
 - 예상 분량 (예: "약 3,000자 · 12분 읽기")
 - 부제 컬러 힌트 (실전/성과→green `var(--accent3)`, 기술/분석→cyan `var(--accent2)`, 연구/아카데믹→purple `#c4b5fd`, 전략→amber `#fbbf24`)
