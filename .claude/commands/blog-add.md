@@ -165,6 +165,37 @@ const BLOG_POSTS = [
 
 System 탭의 "다음 블로그 포스트 번호" 값도 `{번호+1}`로 업데이트한다.
 
+**④ docs/blog_add_workflow_prompt.md — 현황 표 업데이트**
+
+표 맨 앞에 새 행 추가, 다음 포스트 번호 갱신:
+
+```markdown
+| {번호} | blog-{slug}.html | {제목} |   ← 새 행
+| 10 | blog-v3-roadmap.html | HAchillesWorld v3.0 로드맵 |
+...
+
+> 다음 포스트 번호: **{번호+1}**
+```
+
+**⑤ docs/admin_operations_guide.md — Blog 탭 BLOG_POSTS 표 업데이트**
+
+`Tab 2 — Blog` 섹션의 BLOG_POSTS 현황 표 맨 앞에 새 행 추가, 총수·다음 번호 갱신:
+
+```markdown
+| {번호} | blog-{slug}.html | {제목 요약} |   ← 새 행
+| 10 | blog-v3-roadmap.html | HAchillesWorld v3.0 로드맵 |
+...
+
+> 다음 포스트 번호: **{번호+1}**
+```
+
+`총 블로그 포스트 수` 항목도 `**{새 총수}개** (POST 01~{번호})`로 업데이트한다.
+
+**⑥ .claude/commands/blog-add.md (이 파일) — 다음 번호·태그 업데이트**
+
+- `→ 현재 개수 + 1 = 새 포스트 번호 (2자리, 예: {번호+1})` 숫자 갱신
+- 태그 목록에 이번 포스트에서 새로 사용한 태그가 있으면 추가
+
 ---
 
 ### STEP 5 — 변경 사항 확인
@@ -191,7 +222,10 @@ foreach ($link in $links) {
 ### STEP 6 — Git 커밋 & 푸시
 
 ```powershell
-git add landing/blog-{slug}.html landing/blog.html landing/admin.html
+git add landing/blog-{slug}.html landing/blog.html landing/admin.html `
+        docs/blog_add_workflow_prompt.md `
+        docs/admin_operations_guide.md `
+        .claude/commands/blog-add.md
 git status
 ```
 
@@ -237,14 +271,17 @@ CI 완료 후 다음 정보를 요약 보고한다:
 
 ```
 ✅ 블로그 포스트 추가 완료
-─────────────────────────────────────────────────────
-파일:       landing/blog-{slug}.html
-카드:       blog.html POST {번호} 삽입
-admin.html: BLOG_POSTS · KPI · System 탭 업데이트
-커밋:       {commit SHA 앞 7자리}
-CI:         validate ✅  deploy ✅
-게시 URL:   https://suhopark1-tech.github.io/hachillesworld/blog-{slug}.html
-─────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────────
+파일:                landing/blog-{slug}.html
+카드:                blog.html POST {번호} 삽입
+admin.html:          BLOG_POSTS · KPI · System 탭 업데이트
+blog_add_prompt.md:  POST {번호} 행 추가, 다음 번호 {번호+1}
+admin_guide.md:      Blog 탭 표 업데이트, 다음 번호 {번호+1}
+blog-add.md:         예시 번호 · 태그 갱신
+커밋:                {commit SHA 앞 7자리}
+CI:                  validate ✅  deploy ✅
+게시 URL:            https://suhopark1-tech.github.io/hachillesworld/blog-{slug}.html
+──────────────────────────────────────────────────────────────
 ```
 
 CI 실패 시:
@@ -260,3 +297,4 @@ CI 실패 시:
 - `blog.html`에 카드를 추가하면서 `landing/blog-{slug}.html` 파일이 실제로 존재해야 CI가 통과됨
 - 본문 TODO 플레이스홀더가 포함된 상태로 커밋·배포해도 무방 (페이지는 정상 표시)
 - `git push`는 사용자 승인 후 실행 (기본 확인)
+- STEP 4에서 이 파일(blog-add.md) 자신도 업데이트하므로, 수정 후 반드시 git add에 포함시킬 것

@@ -250,14 +250,17 @@ docker compose up
 
 ### 블로그 포스트 추가 시
 
-`/blog-add [제목]` 스킬이 아래 항목을 **자동** 처리합니다 (STEP 4):
-- `admin.html` BLOG_POSTS 배열 · KPI · System 탭 업데이트
+`/blog-add [제목]` 스킬이 아래 항목을 **모두 자동** 처리합니다 (STEP 4 + STEP 6):
 
-스킬 완료 후 수동으로 진행:
 ```
-[ ] docs/blog_add_workflow_prompt.md 현황 업데이트
-[ ] .claude/commands/blog-add.md 다음 번호·태그 업데이트
-[ ] docs/admin_operations_guide.md 현황 업데이트 (이 파일)
+[자동] landing/blog-{slug}.html 생성
+[자동] landing/blog.html 카드 삽입
+[자동] landing/admin.html — BLOG_POSTS · KPI · System 탭
+[자동] docs/blog_add_workflow_prompt.md — 현황 표·다음 번호
+[자동] docs/admin_operations_guide.md — Blog 탭 표·다음 번호 (이 파일)
+[자동] .claude/commands/blog-add.md — 예시 번호·태그
+[자동] git commit + git push (6개 파일 일괄)
+[자동] CI (pages.yml) 모니터링 및 결과 보고
 ```
 
 ### GitHub PAT 만료 시
