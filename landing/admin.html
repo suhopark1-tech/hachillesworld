@@ -200,12 +200,64 @@
     /* ── MISC ── */
     .note { font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; }
     #last-updated { font-size: 0.78rem; color: var(--text-muted); }
-    /* 로그인 화면 홈 링크 */
     .login-home { display: block; margin-top: 1.25rem; font-size: 0.78rem; color: var(--text-muted); text-decoration: none; transition: color .15s; }
     .login-home:hover { color: var(--accent); }
-    /* 탑바 홈 링크 */
     .top-home { color: var(--text-muted); text-decoration: none; font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid var(--border); transition: all .15s; }
     .top-home:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── TABS ── */
+    .tab-nav { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+    .tab-btn {
+      padding: 0.55rem 1.2rem; font-size: 0.82rem; font-weight: 600;
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── HOURLY HEATMAP ── */
+    .heatmap-row { display: flex; gap: 4px; align-items: flex-end; height: 80px; margin: 0.5rem 0 0.25rem; }
+    .heatmap-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .heatmap-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.5s ease; }
+    .heatmap-lbl { font-size: 0.55rem; color: var(--text-muted); font-family: var(--mono); }
+
+    /* ── BLOG TABLE ── */
+    .blog-table { width: 100%; font-size: 0.82rem; border-collapse: collapse; }
+    .blog-table th { padding: 0.6rem 0.75rem; text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+    .blog-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .blog-table tr:last-child td { border-bottom: none; }
+    .blog-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .dur-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-family: var(--mono); font-weight: 600; }
+    .dur-good  { background: rgba(34,211,165,0.12); color: var(--green); }
+    .dur-mid   { background: rgba(245,158,11,0.12); color: var(--yellow); }
+    .dur-low   { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+    .scroll-bar { display: inline-block; height: 5px; border-radius: 3px; background: var(--accent); opacity: 0.6; vertical-align: middle; margin-left: 4px; }
+
+    /* ── SCAN STATS ── */
+    .scan-funnel { display: flex; gap: 1px; margin: 1rem 0; }
+    .funnel-step { flex: 1; padding: 1.25rem 1rem; background: var(--bg-3); text-align: center; }
+    .funnel-step:first-child { border-radius: 10px 0 0 10px; }
+    .funnel-step:last-child  { border-radius: 0 10px 10px 0; }
+    .funnel-num { font-size: 1.8rem; font-weight: 800; font-family: var(--mono); color: var(--accent); }
+    .funnel-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .funnel-pct { font-size: 0.7rem; color: var(--green); margin-top: 0.15rem; font-family: var(--mono); }
+
+    /* ── SYSTEM PANEL ── */
+    .sys-row { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .sys-row:last-child { border-bottom: none; }
+    .sys-label { color: var(--text-muted); flex: 1; }
+    .sys-val { font-family: var(--mono); font-size: 0.82rem; color: var(--text); }
+    .badge-ok   { padding: 2px 10px; border-radius: 999px; background: rgba(34,211,165,0.12); color: var(--green); font-size: 0.75rem; font-weight: 600; }
+    .badge-warn { padding: 2px 10px; border-radius: 999px; background: rgba(245,158,11,0.12); color: var(--yellow); font-size: 0.75rem; font-weight: 600; }
+    .badge-dim  { padding: 2px 10px; border-radius: 999px; background: rgba(107,114,128,0.12); color: var(--text-muted); font-size: 0.75rem; font-weight: 600; }
+    .setup-step { display: flex; gap: 1rem; padding: 0.75rem 1rem; margin: 0.5rem 0; background: var(--bg-3); border-radius: 8px; align-items: flex-start; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-body { flex: 1; font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+    .step-body strong { color: var(--text); }
+    .step-body code { font-family: var(--mono); font-size: 0.78rem; background: var(--bg); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
   </style>
 </head>
 <body>
@@ -238,6 +290,19 @@
   </div>
 
   <div class="dash-body">
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('traffic')">📈 Traffic</button>
+      <button class="tab-btn"        onclick="switchTab('blog')">📝 Blog</button>
+      <button class="tab-btn"        onclick="switchTab('scan')">🔍 Scan 진단</button>
+      <button class="tab-btn"        onclick="switchTab('system')">⚙ System</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         TAB 1: TRAFFIC
+    ══════════════════════════════════════════ -->
+    <div class="tab-panel active" id="panel-traffic">
 
     <!-- Token Banner -->
     <div id="token-banner">
@@ -294,6 +359,236 @@
       ※ GitHub Pages Traffic API는 최근 14일 데이터만 제공합니다.
       저장소 소유자/협업자 권한의 GitHub PAT가 필요합니다.
     </p>
+
+    <!-- 시간대별 분포 (localStorage) -->
+    <div class="chart-card" style="margin-top:1.5rem">
+      <div class="section-title">시간대별 방문 분포 — localStorage 기록 기준</div>
+      <div class="heatmap-row" id="hourly-chart"></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:var(--text-muted);font-family:var(--mono);margin-top:4px">
+        <span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>23시</span>
+      </div>
+      <p class="note" id="hourly-note">haw-analytics.js 로드 후 이 기기의 방문 데이터가 누적됩니다.</p>
+    </div>
+
+    </div><!-- /panel-traffic -->
+
+    <!-- ══════════════════════════════════════════
+         TAB 2: BLOG
+    ══════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-blog">
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">총 블로그 포스트</div><div class="kpi-num accent" id="b-total">9</div><div class="kpi-sub">POST 01 ~ 09</div></div>
+        <div class="kpi-card"><div class="kpi-label">추적된 블로그 방문</div><div class="kpi-num green" id="b-views">—</div><div class="kpi-sub">localStorage 기준</div></div>
+        <div class="kpi-card"><div class="kpi-label">평균 체류시간</div><div class="kpi-num yellow" id="b-avg-dur">—</div><div class="kpi-sub">초 (engagement 기준)</div></div>
+        <div class="kpi-card"><div class="kpi-label">평균 스크롤 깊이</div><div class="kpi-num purple" id="b-avg-scroll">—</div><div class="kpi-sub">% (가장 깊이 읽은 지점)</div></div>
+      </div>
+
+      <!-- 블로그 포스트별 현황 -->
+      <div class="chart-card">
+        <div class="section-title">블로그 포스트별 방문·체류 현황</div>
+        <div style="overflow-x:auto">
+          <table class="blog-table" id="blog-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>포스트</th>
+                <th>방문</th>
+                <th>평균 체류</th>
+                <th>평균 스크롤</th>
+                <th>GitHub Views</th>
+              </tr>
+            </thead>
+            <tbody id="blog-tbody">
+              <!-- JS로 채워짐 -->
+            </tbody>
+          </table>
+        </div>
+        <p class="note">체류시간·스크롤은 haw-analytics.js가 설치된 기기의 localStorage 기록 기준입니다. GitHub Views는 Traffic API 연결 후 표시됩니다.</p>
+      </div>
+
+      <!-- GA4 안내 -->
+      <div class="chart-card" id="ga4-prompt-blog" style="border-color:rgba(91,127,255,0.3)">
+        <div class="section-title" style="color:var(--accent)">Google Analytics 4 연동 시 추가로 확인 가능한 항목</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem">
+          <div style="padding:0.75rem;background:var(--bg-3);border-radius:8px;font-size:0.82rem;color:var(--text-dim)">🌍 <strong style="color:var(--text)">지역별 방문자</strong><br/>국가·도시 단위 분포</div>
+          <div style="padding:0.75rem;background:var(--bg-3);border-radius:8px;font-size:0.82rem;color:var(--text-dim)">📱 <strong style="color:var(--text)">디바이스 유형</strong><br/>데스크탑·모바일·태블릿</div>
+          <div style="padding:0.75rem;background:var(--bg-3);border-radius:8px;font-size:0.82rem;color:var(--text-dim)">🔗 <strong style="color:var(--text)">유입 채널</strong><br/>검색·SNS·직접 비율</div>
+          <div style="padding:0.75rem;background:var(--bg-3);border-radius:8px;font-size:0.82rem;color:var(--text-dim)">⏱ <strong style="color:var(--text)">실시간 방문자</strong><br/>현재 접속 중인 사용자 수</div>
+        </div>
+        <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-muted)">
+          ⚙ System 탭 → GA4 설정 가이드를 참고하세요.
+        </div>
+      </div>
+
+    </div><!-- /panel-blog -->
+
+    <!-- ══════════════════════════════════════════
+         TAB 3: SCAN 진단
+    ══════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-scan">
+
+      <!-- 퍼널 -->
+      <div class="chart-card">
+        <div class="section-title">Scan 전환 퍼널</div>
+        <div class="scan-funnel" id="scan-funnel">
+          <div class="funnel-step">
+            <div class="funnel-num" id="fn-pageview">—</div>
+            <div class="funnel-lbl">Scan 페이지 방문</div>
+            <div class="funnel-pct">100%</div>
+          </div>
+          <div class="funnel-step">
+            <div class="funnel-num" id="fn-submit">—</div>
+            <div class="funnel-lbl">Scan 제출</div>
+            <div class="funnel-pct" id="fn-submit-pct">—%</div>
+          </div>
+        </div>
+        <p class="note">localStorage 기반. haw-analytics.js가 scan.html에 포함된 후 누적됩니다.</p>
+      </div>
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">총 Scan 제출</div><div class="kpi-num accent" id="sc-total">—</div><div class="kpi-sub">누적 localStorage 기준</div></div>
+        <div class="kpi-card"><div class="kpi-label">최근 7일 제출</div><div class="kpi-num green" id="sc-7d">—</div><div class="kpi-sub">7일 이내</div></div>
+        <div class="kpi-card"><div class="kpi-label">오늘 제출</div><div class="kpi-num yellow" id="sc-today">—</div><div class="kpi-sub">오늘 기준</div></div>
+        <div class="kpi-card"><div class="kpi-label">전환율</div><div class="kpi-num purple" id="sc-cvr">—</div><div class="kpi-sub">방문 대비 제출</div></div>
+      </div>
+
+      <!-- 도메인 목록 -->
+      <div class="chart-card">
+        <div class="section-title">최근 Scan 제출 도메인</div>
+        <table class="stat-table" id="scan-domain-table">
+          <tbody>
+            <tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">데이터 없음</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /panel-scan -->
+
+    <!-- ══════════════════════════════════════════
+         TAB 4: SYSTEM
+    ══════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-system">
+
+      <!-- 시스템 상태 -->
+      <div class="chart-card">
+        <div class="section-title">시스템 상태</div>
+        <div class="sys-row">
+          <span class="sys-label">GitHub Pages</span>
+          <span><a href="https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml" target="_blank" style="color:var(--accent);font-size:0.8rem">CI 확인 →</a></span>
+          <span class="badge-ok" id="sys-pages">확인 중…</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">Python CI (tests · lint · mypy)</span>
+          <span><a href="https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml" target="_blank" style="color:var(--accent);font-size:0.8rem">CI 확인 →</a></span>
+          <span class="badge-ok" id="sys-ci">확인 중…</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">haw-analytics.js</span>
+          <span class="sys-val" id="sys-analytics">—</span>
+          <span class="badge-dim" id="sys-analytics-badge">확인 중…</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">GA4 Measurement ID</span>
+          <span class="sys-val" id="sys-ga4-id">—</span>
+          <span class="badge-dim" id="sys-ga4-badge">미설정</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">localStorage 기록 이벤트 수</span>
+          <span class="sys-val" id="sys-evt-count">—</span>
+          <button onclick="clearAnalytics()" style="font-size:0.75rem;padding:2px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer">초기화</button>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">블로그 포스트 수</span>
+          <span class="sys-val">9개 (POST 01 ~ 09)</span>
+          <span class="badge-ok">최신</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-label">다음 블로그 포스트 번호</span>
+          <span class="sys-val">10</span>
+          <span class="badge-dim">/blog-add 스킬로 추가</span>
+        </div>
+      </div>
+
+      <!-- GA4 설정 가이드 -->
+      <div class="chart-card" style="border-color:rgba(91,127,255,0.3)">
+        <div class="section-title" style="color:var(--accent)">Google Analytics 4 설정 가이드</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.6">
+          GA4를 연동하면 <strong style="color:var(--text)">지역별·시간대별·디바이스별 방문자</strong>,
+          <strong style="color:var(--text)">블로그 체류시간</strong>, <strong style="color:var(--text)">유입 채널</strong>을
+          Google Analytics 대시보드에서 실시간으로 확인할 수 있습니다. 무료입니다.
+        </p>
+
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>GA4 속성 생성</strong><br/>
+            <a href="https://analytics.google.com" target="_blank" style="color:var(--accent)">analytics.google.com</a> →
+            관리 → 속성 만들기 → 웹 스트림 추가 →
+            <code>suhopark1-tech.github.io/hachillesworld</code> 입력
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Measurement ID 복사</strong><br/>
+            웹 스트림 세부정보에서 <code>G-XXXXXXXXXX</code> 형식의 ID를 복사합니다.
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>haw-analytics.js 수정</strong><br/>
+            <code>landing/haw-analytics.js</code> 파일 최상단의<br/>
+            <code>GA4_ID: 'G-XXXXXXXXXX'</code>를 실제 ID로 교체합니다.
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>커밋 & 배포</strong><br/>
+            <code>git add landing/haw-analytics.js && git commit -m "feat: GA4 연동" && git push</code><br/>
+            GitHub Pages CI가 자동 배포합니다. (~30초)
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>확인</strong><br/>
+            GA4 대시보드 → 실시간 리포트에서 방문자가 표시되면 완료입니다.<br/>
+            지역·시간 분석은 데이터 누적 후 (보통 24~48시간) 확인 가능합니다.
+          </div>
+        </div>
+
+        <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+          <a href="https://analytics.google.com" target="_blank"
+             style="padding:0.5rem 1.2rem;background:var(--accent);color:#fff;border-radius:8px;font-size:0.82rem;font-weight:600;text-decoration:none">
+            Google Analytics 열기 →
+          </a>
+          <a href="../landing/haw-analytics.js" target="_blank"
+             style="padding:0.5rem 1.2rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;font-size:0.82rem;text-decoration:none">
+            haw-analytics.js 보기
+          </a>
+        </div>
+      </div>
+
+      <!-- Docker 스택 안내 -->
+      <div class="chart-card">
+        <div class="section-title">고급: Docker 스택 (Prometheus · Grafana · ClickHouse)</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6">
+          로컬에서 <code style="font-family:var(--mono);font-size:0.8rem;background:var(--bg);padding:1px 6px;border-radius:4px;color:var(--accent)">docker compose up</code>을 실행하면
+          FastAPI(8000) · Prometheus(9090) · Grafana(3000)가 기동됩니다.
+          Grafana에서 진단 API 메트릭과 시스템 상태를 실시간으로 시각화할 수 있습니다.
+        </p>
+        <div class="sys-row"><span class="sys-label">FastAPI 서버</span><span class="sys-val">localhost:8000</span><span class="badge-dim">로컬 전용</span></div>
+        <div class="sys-row"><span class="sys-label">Prometheus</span><span class="sys-val">localhost:9090</span><span class="badge-dim">로컬 전용</span></div>
+        <div class="sys-row"><span class="sys-label">Grafana</span><span class="sys-val">localhost:3000 (admin/admin)</span><span class="badge-dim">로컬 전용</span></div>
+        <div class="sys-row"><span class="sys-label">ClickHouse</span><span class="sys-val">localhost:8123</span><span class="badge-dim">로컬 전용</span></div>
+      </div>
+
+    </div><!-- /panel-system -->
 
   </div>
 </div>
@@ -495,6 +790,200 @@
     return String(s).replace(/[&<>"']/g, c =>
       ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+
+  // ── 탭 전환 ──────────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'blog')   renderBlogPanel();
+    if (name === 'scan')   renderScanPanel();
+    if (name === 'system') renderSystemPanel();
+    if (name === 'traffic') renderHourlyChart();
+  }
+
+  // ── localStorage analytics 로드 ──────────────────────────────────────────
+  function getStoredEvents() {
+    try { return JSON.parse(localStorage.getItem('haw_evt') || '[]'); }
+    catch { return []; }
+  }
+
+  function clearAnalytics() {
+    if (!confirm('localStorage 분석 데이터를 초기화할까요?')) return;
+    localStorage.removeItem('haw_evt');
+    renderSystemPanel();
+    renderBlogPanel();
+    renderScanPanel();
+    renderHourlyChart();
+  }
+
+  // ── 시간대별 차트 ────────────────────────────────────────────────────────
+  function renderHourlyChart() {
+    const dist = Array(24).fill(0);
+    getStoredEvents()
+      .filter(e => e.type === 'pageview' && typeof e.hour === 'number')
+      .forEach(e => { dist[e.hour]++; });
+
+    const wrap = document.getElementById('hourly-chart');
+    const note = document.getElementById('hourly-note');
+    if (!wrap) return;
+
+    const max = Math.max(...dist, 1);
+    const H = 70;
+    wrap.innerHTML = dist.map((v, h) => {
+      const ht = Math.max(Math.round((v / max) * H), 2);
+      const hue = h >= 6 && h < 22 ? 'var(--accent)' : 'var(--accent-2)';
+      return `<div class="heatmap-col" title="${h}시: ${v}회">
+        <div class="heatmap-bar" style="height:${ht}px;background:${hue};opacity:${v ? 0.8 : 0.15}"></div>
+        <div class="heatmap-lbl">${h}</div>
+      </div>`;
+    }).join('');
+
+    const total = dist.reduce((a, b) => a + b, 0);
+    if (total === 0) {
+      note.textContent = 'haw-analytics.js 로드 후 이 기기의 방문 데이터가 누적됩니다.';
+    } else {
+      const peak = dist.indexOf(Math.max(...dist));
+      note.textContent = `총 ${total}회 페이지뷰 기록됨 (이 기기). 피크 시간대: ${peak}시`;
+    }
+  }
+
+  // ── 블로그 패널 ──────────────────────────────────────────────────────────
+  const BLOG_POSTS = [
+    { num:'09', file:'blog-multi-agent-collaboration.html', title:'Multi-Agent 협업 실전' },
+    { num:'08', file:'blog-agent-cost-optimization.html',   title:'AI 에이전트 비용 최적화' },
+    { num:'07', file:'blog-user-guide.html',                title:'완전 사용 가이드 v2.1' },
+    { num:'06', file:'blog-glossary.html',                  title:'플랫폼 용어 완전 해설' },
+    { num:'05', file:'blog-recognition-certification.html', title:'AI 에이전트 인정과 인증' },
+    { num:'04', file:'blog-arxiv-paper.html',               title:'AI 에이전트 신용 점수' },
+    { num:'03', file:'blog-why-world-model.html',           title:'World Model 기업 도입 이유' },
+    { num:'02', file:'blog-mcts-planning-depth.html',       title:'MCTS Planning Depth' },
+    { num:'01', file:'blog-world-model.html',               title:'AI 에이전트 왜 실패하는가' },
+  ];
+
+  function renderBlogPanel() {
+    const evts   = getStoredEvents();
+    const stats  = {};
+    BLOG_POSTS.forEach(p => { stats[p.file] = { views:0, durs:[], scrolls:[] }; });
+
+    evts.forEach(e => {
+      if (!e.page || !stats[e.page]) return;
+      if (e.type === 'pageview')   stats[e.page].views++;
+      if (e.type === 'engagement') { stats[e.page].durs.push(e.duration_s); stats[e.page].scrolls.push(e.max_scroll||0); }
+    });
+
+    let totalViews = 0, totalDur = [], totalScroll = [];
+    BLOG_POSTS.forEach(p => {
+      totalViews += stats[p.file].views;
+      totalDur   = totalDur.concat(stats[p.file].durs);
+      totalScroll = totalScroll.concat(stats[p.file].scrolls);
+    });
+
+    const avgDur    = totalDur.length    ? Math.round(totalDur.reduce((a,b)=>a+b,0)/totalDur.length) : null;
+    const avgScroll = totalScroll.length ? Math.round(totalScroll.reduce((a,b)=>a+b,0)/totalScroll.length) : null;
+
+    document.getElementById('b-views').textContent    = totalViews || '—';
+    document.getElementById('b-avg-dur').textContent  = avgDur    != null ? avgDur+'s' : '—';
+    document.getElementById('b-avg-scroll').textContent = avgScroll != null ? avgScroll+'%' : '—';
+
+    // GitHub paths 데이터가 있으면 매핑
+    const ghPaths = window._ghPaths || {};
+
+    const tbody = document.getElementById('blog-tbody');
+    tbody.innerHTML = BLOG_POSTS.map(p => {
+      const s   = stats[p.file];
+      const dur = s.durs.length ? Math.round(s.durs.reduce((a,b)=>a+b,0)/s.durs.length) : null;
+      const scr = s.scrolls.length ? Math.round(s.scrolls.reduce((a,b)=>a+b,0)/s.scrolls.length) : null;
+      const durClass = dur == null ? 'dur-low' : dur >= 120 ? 'dur-good' : dur >= 60 ? 'dur-mid' : 'dur-low';
+      const durTxt   = dur != null ? `${dur}s` : '—';
+      const scrTxt   = scr != null ? `${scr}%` : '—';
+      const scrBar   = scr ? `<span class="scroll-bar" style="width:${Math.round(scr*0.5)}px"></span>` : '';
+      const ghKey    = '/hachillesworld/' + p.file;
+      const ghViews  = ghPaths[ghKey] ? ghPaths[ghKey] : '—';
+      return `<tr>
+        <td style="color:var(--text-muted);font-family:var(--mono)">${p.num}</td>
+        <td><a href="${p.file}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.82rem">${escHtml(p.title)}</a></td>
+        <td style="font-family:var(--mono);font-weight:600;color:var(--text)">${s.views || '—'}</td>
+        <td><span class="dur-badge ${durClass}">${durTxt}</span></td>
+        <td style="font-size:0.8rem;color:var(--text-dim)">${scrTxt}${scrBar}</td>
+        <td style="font-family:var(--mono);color:var(--text-muted)">${ghViews}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Scan 패널 ────────────────────────────────────────────────────────────
+  function renderScanPanel() {
+    const evts = getStoredEvents();
+    const views   = evts.filter(e => e.type === 'scan_view').length;
+    const submits = evts.filter(e => e.type === 'scan_submit');
+    const now     = Date.now();
+    const sc7d    = submits.filter(e => e.ts >= now - 7*86400000).length;
+    const scToday = submits.filter(e => new Date(e.ts).toDateString() === new Date().toDateString()).length;
+    const cvr     = views ? Math.round((submits.length / views) * 100) : 0;
+
+    document.getElementById('fn-pageview').textContent   = views || '—';
+    document.getElementById('fn-submit').textContent     = submits.length || '—';
+    document.getElementById('fn-submit-pct').textContent = views ? cvr + '%' : '—';
+    document.getElementById('sc-total').textContent  = submits.length || '—';
+    document.getElementById('sc-7d').textContent     = sc7d || '—';
+    document.getElementById('sc-today').textContent  = scToday || '—';
+    document.getElementById('sc-cvr').textContent    = views ? cvr + '%' : '—';
+
+    const domains = {};
+    submits.forEach(e => {
+      const d = (e.domain || '(미입력)').slice(0, 40);
+      domains[d] = (domains[d] || 0) + 1;
+    });
+    const tbody = document.querySelector('#scan-domain-table tbody');
+    const entries = Object.entries(domains).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    tbody.innerHTML = entries.length
+      ? entries.map(([d,c]) => `<tr><td>${escHtml(d)}</td><td>${c}</td></tr>`).join('')
+      : '<tr><td colspan="2" style="color:var(--text-muted);padding:1rem 0;text-align:center;">데이터 없음 — scan.html에 haw-analytics.js 추가 후 누적됩니다.</td></tr>';
+  }
+
+  // ── System 패널 ──────────────────────────────────────────────────────────
+  async function renderSystemPanel() {
+    const evts = getStoredEvents();
+    document.getElementById('sys-evt-count').textContent = evts.length + '개';
+
+    // GA4 설정 여부 확인
+    const analyticsLoaded = typeof window.HAWAnalytics !== 'undefined';
+    document.getElementById('sys-analytics').textContent      = analyticsLoaded ? '로드됨' : '미로드';
+    document.getElementById('sys-analytics-badge').textContent = analyticsLoaded ? '정상' : '미설치';
+    document.getElementById('sys-analytics-badge').className  = 'badge-' + (analyticsLoaded ? 'ok' : 'warn');
+
+    // GitHub CI 상태 확인 (PAT 있으면)
+    const token = sessionStorage.getItem('haw_gh_token');
+    if (token) {
+      try {
+        const [pages, ci] = await Promise.all([
+          ghFetch('actions/workflows/pages.yml/runs?per_page=1', token),
+          ghFetch('actions/workflows/ci.yml/runs?per_page=1', token),
+        ]);
+        const pStatus = pages.workflow_runs?.[0]?.conclusion;
+        const cStatus = ci.workflow_runs?.[0]?.conclusion;
+        const badge = s => s === 'success' ? 'badge-ok' : s ? 'badge-warn' : 'badge-dim';
+        document.getElementById('sys-pages').textContent  = pStatus || '확인 중…';
+        document.getElementById('sys-pages').className   = badge(pStatus);
+        document.getElementById('sys-ci').textContent    = cStatus || '확인 중…';
+        document.getElementById('sys-ci').className      = badge(cStatus);
+      } catch {}
+    }
+  }
+
+  // ── GitHub paths를 블로그 패널에 공유 ───────────────────────────────────
+  const _origRenderPaths = renderPaths;
+  function renderPaths(paths) {
+    _origRenderPaths(paths);
+    window._ghPaths = {};
+    (paths || []).forEach(p => { window._ghPaths[p.path] = p.count; });
+  }
+
+  // ── 초기 로드 시 Traffic 탭 기본 렌더 ───────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('haw_admin_authed') === '1') renderHourlyChart();
+  });
 </script>
 
 </body>
