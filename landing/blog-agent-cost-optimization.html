@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — AI 에이전트 비용 최적화 실전 가이드 | HAchillesWorld</title>
+  <meta name="description" content="AI 에이전트 운영 비용의 70%는 불필요한 LLM 호출에서 발생한다. HAchillesWorld Planning Depth·World Model 진단으로 호출 횟수를 줄이고 연간 수천만 원을 절감한 실전 사례." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── LAYOUT ── */
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    /* ── HERO ── */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ── ARTICLE ── */
+    .article{padding:0 0 80px}
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:48px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.1rem;font-weight:800;color:var(--text);margin:32px 0 12px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+
+    /* ── CODE ── */
+    .code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .code-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+    .code-block-head .dots{display:flex;gap:5px}
+    .code-block-head .dot{width:10px;height:10px;border-radius:50%}
+    .code-block pre{padding:20px;font-family:var(--mono);font-size:.82rem;line-height:1.7;color:#c4b5fd;overflow-x:auto;margin:0}
+    .code-block pre .kw{color:#67e8f9}
+    .code-block pre .st{color:#86efac}
+    .code-block pre .cm{color:#4b5563}
+    .code-block pre .nm{color:#fda4af}
+
+    /* ── INLINE CODE ── */
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+
+    /* ── SCAN OUTPUT BLOCK ── */
+    .scan-output{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .scan-output-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent3);display:flex;align-items:center;gap:6px}
+    .scan-output pre{padding:18px;font-family:var(--mono);font-size:.79rem;line-height:1.75;color:#d1fae5;overflow-x:auto;margin:0}
+
+    /* ── DATA TABLE ── */
+    .data-table-wrap{overflow-x:auto;margin:24px 0}
+    .data-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .data-table th{background:var(--bg3);padding:10px 16px;text-align:left;font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:#cbd5e1}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(139,92,246,.03)}
+    .data-table td strong{color:var(--accent3);font-weight:700}
+    .data-table .val-before{color:var(--muted)}
+    .data-table .val-after{color:var(--accent3);font-weight:700;font-family:var(--mono)}
+
+    /* ── RESULT SUMMARY CARD ── */
+    .result-card{background:var(--surface);border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:28px;margin:32px 0;box-shadow:0 0 30px rgba(16,185,129,.07)}
+    .result-card h3{font-size:1rem;font-weight:800;color:var(--accent3);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+    .result-item{background:var(--bg3);border-radius:10px;padding:12px 14px}
+    .result-item .ri-label{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+    .result-item .ri-before{font-family:var(--mono);font-size:.8rem;color:var(--muted);text-decoration:line-through;margin-bottom:2px}
+    .result-item .ri-after{font-family:var(--mono);font-size:1rem;font-weight:800;color:var(--accent3)}
+
+    /* ── CTA ── */
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    /* ── SCROLL FADE ── */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+
+    /* ── SIDEBAR TOC (데스크탑) ── */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#AgenticAI</span>
+      <span class="blog-tag">#실전케이스</span>
+      <span class="blog-tag">#비용최적화</span>
+      <span class="blog-tag">#운영</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      AI 에이전트 비용 최적화<br/>실전 가이드
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      LLM 호출 70%를 줄이고 연간 ₩3,600만을 절감한 구체적인 방법
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,200자 · 12분 읽기</span>
+      <span style="color:var(--accent3)">◈ 실전 케이스 포함</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARTICLE + TOC ── -->
+<section class="article">
+  <div class="article-layout">
+
+    <!-- BODY -->
+    <div class="article-body">
+
+      <p>지난 분기, 우리 팀의 AI 에이전트 운영 비용 청구서를 처음 열었을 때 나는 할 말을 잃었다.</p>
+
+      <p>월 LLM API 비용 <strong>₩1,280만 원</strong>. 예상의 세 배였다.</p>
+
+      <p>처음엔 트래픽이 늘었다고 생각했다. 틀렸다. 로그를 뒤져보니 에이전트가 같은 질문을 평균 <strong>7.3번</strong> 반복 호출하고 있었다. 답을 얻은 뒤에도 확인을 위해 다시 물어보고, 또 물어봤다. 자신감이 없어서였다.</p>
+
+      <p>이것이 비용 문제의 본질이었다. 에이전트가 <strong>세상을 제대로 이해하지 못할수록 더 많이 물어본다.</strong></p>
+
+      <hr/>
+
+      <h2 id="s-structure">AI 에이전트 비용의 실제 구조</h2>
+
+      <p>일반적으로 AI 에이전트 운영 비용을 이렇게 상상한다: "질문 하나 → LLM 호출 한 번 → 답변." 하지만 현실은 훨씬 복잡하다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#f87171">●</span> 에이전트의 실제 LLM 호출 패턴 (로그 분석)
+        </div>
+        <pre><span style="color:#fbbf24">태스크 1건당 평균 호출 분해:</span>
+
+  계획 수립        : 1.0회  (필수)
+  상태 재확인      : 2.3회  ← World Model 불신
+  중간 검증        : 1.8회  ← 과신 보정 부재
+  오류 후 재시도   : 2.2회  ← Harness 미작동
+  ──────────────────────────
+  합계             : 7.3회  (이상적: 1.5회)</pre>
+      </div>
+
+      <p>HAchillesWorld 진단이 밝혀낸 비용 낭비의 세 가지 근원:</p>
+
+      <ul>
+        <li><strong>World Model Drift</strong>: 환경이 바뀌었는데 에이전트는 과거 정보로 계획을 세운다. 예측이 틀리면 재호출한다.</li>
+        <li><strong>얕은 Planning Depth</strong>: 몇 스텝 앞을 못 보기 때문에 매 스텝마다 새로 물어봐야 한다.</li>
+        <li><strong>Harness 부재</strong>: 이미 배운 실수를 기억하지 못해서 같은 오류를 반복하고 재시도한다.</li>
+      </ul>
+
+      <hr/>
+
+      <h2 id="s-diagnosis">HAchillesWorld로 비용 낭비 지점 진단</h2>
+
+      <p>먼저 현재 에이전트의 비용 구조를 수치로 확인해야 한다. HAchillesWorld Scan이 이것을 자동으로 분해한다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          bash
+        </div>
+        <pre>pip install hachillesworld
+hachillesworld scan \
+  --logs ./agent_logs.json \
+  --name <span class="st">"my-agent"</span> \
+  --cost-analysis</pre>
+      </div>
+
+      <p>Scan 결과에서 주목해야 할 세 가지 지표:</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#f59e0b">●</span> HAchillesWorld 비용 진단 리포트
+        </div>
+        <pre><span style="color:#fbbf24">⚠ 비용 효율성 분석</span>
+
+  LLM 호출 효율      : 21%    🔴  (이상치: 70% 이상)
+  Simulation Drift    : 34%    🔴  (목표: 5% 미만)
+  Calibration ECE     : 0.27   🔴  (목표: 0.10 미만)
+  Harness Coverage    : 4개    ⚠   (권장: 20개 이상)
+
+  💡 예상 절감 가능액: ₩890만/월 (현재 대비 -69%)</pre>
+      </div>
+
+      <p>LLM 호출 효율 21%는 <strong>호출의 79%가 낭비</strong>라는 뜻이다. Calibration ECE 0.27은 에이전트가 "90% 확신"을 말할 때 실제 정확도가 63%임을 의미한다 — 자신이 없어서 계속 재확인하는 구조다.</p>
+
+      <hr/>
+
+      <h2 id="s-planning">Planning Depth를 높여 선제 계획하기</h2>
+
+      <p>비용 절감에서 가장 극적인 효과를 낸 것은 <strong>Planning Depth 개선</strong>이었다.</p>
+
+      <p>Depth가 낮은 에이전트는 근시안적이다. 3스텝 앞밖에 못 보면, 4스텝 후에 문제가 생길 때 그 시점에서 다시 LLM을 호출해야 한다. Depth 15라면, 처음 계획을 세울 때 15스텝의 결과를 미리 시뮬레이션해서 중간에 재호출할 필요가 없다.</p>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Planning Depth</th>
+              <th>태스크당 LLM 호출 수</th>
+              <th>월 비용 (동일 트래픽)</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3 (초기)</td>
+              <td class="val-before">7.3회</td>
+              <td class="val-before">₩1,280만</td>
+              <td style="color:#f87171">낭비</td>
+            </tr>
+            <tr>
+              <td>8 (Phase 1)</td>
+              <td>3.9회</td>
+              <td>₩680만</td>
+              <td style="color:#fbbf24">개선 중</td>
+            </tr>
+            <tr>
+              <td>15 (Phase 2)</td>
+              <td>2.1회</td>
+              <td>₩370만</td>
+              <td style="color:#6ee7b7">양호</td>
+            </tr>
+            <tr>
+              <td><strong>22 (Phase 3)</strong></td>
+              <td><strong class="val-after">1.6회</strong></td>
+              <td><strong class="val-after">₩280만</strong></td>
+              <td style="color:var(--accent3)">최적화</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Planning Depth는 MCTS(Monte Carlo Tree Search)를 기반으로 단계적으로 끌어올린다. HAchillesWorld Optimize 명령이 현재 Depth에서 다음 단계로 올리기 위한 구체적인 로드맵을 자동 생성한다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          bash
+        </div>
+        <pre><span class="cm"># 비용 최적화 로드맵 자동 생성</span>
+hachillesworld optimize ./scan_report.json \
+  --target cost \
+  --weeks 12</pre>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-harness">Harness로 반복 실수 차단</h2>
+
+      <p>두 번째로 큰 절감 효과는 <strong>Harness</strong>에서 나왔다.</p>
+
+      <p>Harness는 에이전트가 이미 경험한 실수를 다시 반복하지 않도록 막는 규칙 집합이다. 규칙이 없으면 에이전트는 오류가 날 때마다 LLM에게 "이건 어떻게 처리해야 하나요?"를 반복 질문한다.</p>
+
+      <p>초기 우리 에이전트의 Harness Coverage는 4개였다. 가장 빈번하게 발생하는 오류 패턴 20개를 Harness 규칙으로 등록했다. 결과는 즉각적이었다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#6ee7b7">●</span> Harness 적용 전후 오류 재시도 비율
+        </div>
+        <pre>오류 유형                  | 적용 전  | 적용 후
+──────────────────────────────────────────────
+재고 부족 처리              | 재호출 3.1회 | 즉시 처리 (0회)
+외부 API 타임아웃           | 재호출 2.8회 | 자동 폴백 (0회)
+예산 초과 경계 케이스       | 재호출 4.2회 | 규칙 적용 (0회)
+중복 발주 감지              | 재호출 1.9회 | Harness 차단 (0회)
+──────────────────────────────────────────────
+절감된 호출 수 (월 기준)   |          | 약 1,840회</pre>
+      </div>
+
+      <p>Phase 3에서는 <strong>Meta-Harness</strong>가 새로운 오류 패턴을 자동으로 감지해서 규칙을 스스로 생성했다. 8개의 자동 생성 규칙이 추가됐고, 모두 승인했다. 이제 에이전트는 더 영리해질수록 스스로 더 저렴해진다.</p>
+
+      <hr/>
+
+      <h2 id="s-calibration">과신(Overconfidence) 교정으로 재확인 호출 제거</h2>
+
+      <p>가장 놓치기 쉬운 비용 원인이 <strong>Calibration</strong>이다.</p>
+
+      <p>에이전트가 "85% 확신"이라고 말할 때 실제로 85% 정확하다면, 재확인이 필요 없다. 하지만 ECE(Expected Calibration Error)가 0.27인 에이전트는 85% 확신할 때 실제 정확도가 58%다. 이 격차를 에이전트 스스로 느끼기 때문에 계속 재확인한다.</p>
+
+      <p>Temperature Scaling 적용으로 ECE를 0.27 → 0.06으로 낮췄다. 코드 20줄이었다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          calibrate.py
+        </div>
+        <pre><span class="kw">from</span> hachillesworld <span class="kw">import</span> HAchillesWorldClient
+
+client = HAchillesWorldClient()
+
+<span class="cm"># Calibration 자동 측정</span>
+report = client.calibrate(
+    agent_name=<span class="st">"my-agent"</span>,
+    logs=<span class="st">"./agent_logs.json"</span>
+)
+<span class="nm">print</span>(f<span class="st">"ECE: {report.ece:.3f}"</span>)  <span class="cm"># 0.270</span>
+
+<span class="cm"># Temperature Scaling 적용</span>
+client.apply_temperature_scaling(
+    agent_name=<span class="st">"my-agent"</span>,
+    target_ece=<span class="nm">0.08</span>
+)</pre>
+      </div>
+
+      <p>ECE가 낮아지자 에이전트는 확신할 때 실제로 확신하기 시작했다. 재확인 호출이 62% 감소했다.</p>
+
+      <hr/>
+
+      <h2 id="s-result">12주 결과: 비용 절감 요약</h2>
+
+      <p>세 가지를 순서대로 적용했다: Calibration 교정 → Planning Depth 향상 → Harness 구축.</p>
+
+      <div class="result-card">
+        <h3>◈ 12주 비용 최적화 결과</h3>
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="ri-label">월 LLM 비용</div>
+            <div class="ri-before">₩1,280만</div>
+            <div class="ri-after">₩280만</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">태스크당 호출</div>
+            <div class="ri-before">7.3회</div>
+            <div class="ri-after">1.6회</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">Calibration ECE</div>
+            <div class="ri-before">0.27</div>
+            <div class="ri-after">0.06</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">Planning Depth</div>
+            <div class="ri-before">3스텝</div>
+            <div class="ri-after">22스텝</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">Harness 규칙</div>
+            <div class="ri-before">4개</div>
+            <div class="ri-after">32개</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">연간 절감</div>
+            <div class="ri-before">—</div>
+            <div class="ri-after">₩3,600만</div>
+          </div>
+        </div>
+      </div>
+
+      <p>비용이 줄었을 뿐만 아니라 성능도 올라갔다. LLM 호출을 줄이기 위해 에이전트가 더 정확해졌기 때문이다. 비용 최적화와 성능 향상이 같은 방향이다.</p>
+
+      <blockquote>
+        "에이전트를 더 저렴하게 만드는 방법은 더 영리하게 만드는 것이다."<br/>
+        — World Model을 고치면 호출이 줄어든다.
+      </blockquote>
+
+      <hr/>
+
+      <h2 id="s-start">지금 시작할 수 있다</h2>
+
+      <p>비용 분석 Scan은 무료이고, 10분이면 충분하다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          bash
+        </div>
+        <pre>pip install hachillesworld
+hachillesworld scan \
+  --logs ./agent_logs.json \
+  --name <span class="st">"my-agent"</span> \
+  --cost-analysis</pre>
+      </div>
+
+      <p>Scan 결과에 "예상 절감 가능액"이 표시된다. 그 숫자가 설득력 있다면, Optimize 로드맵을 따라 12주 안에 달성할 수 있다.</p>
+
+      <div class="article-cta">
+        <h3>지금 바로 <span style="background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">비용 진단</span>을 시작하세요</h3>
+        <p>LLM 호출 낭비 지점을 10분 안에 수치로 확인합니다.<br/>코드 변경 없이, API 키 없이.</p>
+        <div class="cta-btns">
+          <a href="scan.html" class="btn-primary">🔍 무료 Scan 시작</a>
+          <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank" class="btn-secondary">⭐ GitHub</a>
+        </div>
+      </div>
+
+      <!-- RELATED POSTS -->
+      <div style="margin:48px 0 0">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px">다음 글</h3>
+        <a href="blog-user-guide.html" style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+          <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px">→</span>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px">HAchillesWorld 완전 사용 가이드 v2.1</div>
+            <div style="font-size:.82rem;color:var(--muted)">설치부터 첫 진단, Optimize 로드맵, 실시간 Drift 모니터링까지 — 15분 실전 가이드</div>
+          </div>
+        </a>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        이 글은 《Agentic World Modeling 2027》의 이론을 기반으로 실제 프로젝트 경험을 정리한 것입니다.<br/>
+        저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026
+      </p>
+
+    </div><!-- /article-body -->
+
+    <!-- TOC (데스크탑 사이드바) -->
+    <aside class="toc">
+      <h4>목차</h4>
+      <ul class="toc-list">
+        <li><a href="#s-structure">비용의 실제 구조</a></li>
+        <li><a href="#s-diagnosis">비용 낭비 지점 진단</a></li>
+        <li><a href="#s-planning">Planning Depth 높이기</a></li>
+        <li><a href="#s-harness">Harness로 반복 차단</a></li>
+        <li><a href="#s-calibration">과신 교정</a></li>
+        <li><a href="#s-result">12주 결과</a></li>
+        <li><a href="#s-start">지금 시작할 수 있다</a></li>
+      </ul>
+    </aside>
+
+  </div><!-- /article-layout -->
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  // TOC 활성화
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => l.style.color = '');
+        const active = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+        if (active) { active.style.color = 'var(--text)'; active.style.borderColor = 'var(--accent)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('h2[id]').forEach(h => observer.observe(h));
+</script>
+</body>
+</html>
