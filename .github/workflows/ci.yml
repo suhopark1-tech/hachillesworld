@@ -6,6 +6,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "validation/**"
       - "pyproject.toml"
       - ".github/workflows/ci.yml"
   pull_request:
@@ -13,6 +14,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "validation/**"
       - "pyproject.toml"
       - ".github/workflows/ci.yml"
 
@@ -22,9 +24,18 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # CA Judge: 실제 Anthropic API 호출 없이 rule 기반으로 동작
+  HACHILLESWORLD_CA_JUDGE: rule
+
+# ── 잡 공통 Python 버전 ─────────────────────────────────────────────────
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  # ── 테스트 ──────────────────────────────────────────────────────
+  # ────────────────────────────────────────────────────────────────────
+  # 1. 테스트 (Python 3.11 · 3.12 매트릭스)
+  # ────────────────────────────────────────────────────────────────────
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -41,26 +52,35 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
+      - name: Install dependencies (dev + ca extras)
+        # ca extra: anthropic 포함 — CA judge 백엔드 import 경로 정상 확인
+        run: pip install -e ".[dev,ca]"
 
-      - name: Run tests
+      - name: Smoke test — CLI sanity check
+        run: |
+          hachillesworld version
+          python -c "from hachillesworld import HAchillesWorldClient, DiagnosticReport, Level, LawsDomain; print('imports OK')"
+
+      - name: Run tests with coverage
         run: |
           pytest \
             --cov=hachillesworld \
             --cov-report=term-missing \
             --cov-report=xml \
+            --cov-fail-under=80 \
             -q
 
-      - name: Upload coverage (3.12 only)
+      - name: Upload coverage report (3.12 only)
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
-          retention-days: 7
+          retention-days: 14
 
-  # ── 린트 ────────────────────────────────────────────────────────
+  # ────────────────────────────────────────────────────────────────────
+  # 2. 린트 (ruff — pyproject.toml 버전 사용)
+  # ────────────────────────────────────────────────────────────────────
   lint:
     name: Lint (ruff)
     runs-on: ubuntu-latest
@@ -73,20 +93,22 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Install ruff
-        run: pip install "ruff==0.15.15"
+      - name: Install dev dependencies (ruff from pyproject.toml)
+        run: pip install -e ".[dev]"
 
-      - name: Check
+      - name: Check style
         run: ruff check src/ tests/
 
-      - name: Format check
+      - name: Check formatting
         run: ruff format --check src/ tests/
 
-      - name: Debug format diff (on failure)
+      - name: Show format diff (failure only)
         if: failure()
         run: ruff format --diff src/ tests/ || true
 
-  # ── 타입 검사 ────────────────────────────────────────────────────
+  # ────────────────────────────────────────────────────────────────────
+  # 3. 타입 검사 (mypy strict)
+  # ────────────────────────────────────────────────────────────────────
   typecheck:
     name: Type check (mypy)
     runs-on: ubuntu-latest
@@ -100,7 +122,52 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ca]"
 
       - name: Run mypy
         run: mypy src/hachillesworld/
+
+  # ────────────────────────────────────────────────────────────────────
+  # 4. 보안 스캔 (pip-audit)
+  # ────────────────────────────────────────────────────────────────────
+  security:
+    name: Security scan (pip-audit)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Install project dependencies
+        run: pip install -e ".[dev,ca]"
+
+      - name: Audit dependencies
+        run: pip-audit --skip-editable
+
+  # ────────────────────────────────────────────────────────────────────
+  # 5. CI 게이트 — 모든 잡이 통과해야 merge 가능
+  # ────────────────────────────────────────────────────────────────────
+  ci-gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    needs: [test, lint, typecheck, security]
+    if: always()
+
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.test.result }}"     != "success" ||
+                "${{ needs.lint.result }}"     != "success" ||
+                "${{ needs.typecheck.result }}" != "success" ||
+                "${{ needs.security.result }}" != "success" ]]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI jobs passed."

@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'landing/**'
+      - "landing/**"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,11 +21,62 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # 1. HTML 링크·구조 검증
+  # ────────────────────────────────────────────────────────────────────
+  validate:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install htmlhint
+        run: npm install -g htmlhint
+
+      - name: Lint HTML files
+        # 주요 HTML 파일만 검사 (node_modules 제외)
+        run: |
+          htmlhint \
+            landing/index.html \
+            landing/index-en.html \
+            landing/blog.html \
+            landing/blog-*.html \
+            landing/optimize.html \
+            landing/cert.html \
+            --config .htmlhintrc || true
+
+      - name: Check internal links
+        # 블로그 카드가 참조하는 HTML 파일이 실제로 존재하는지 확인
+        run: |
+          echo "Checking blog post files referenced in blog.html..."
+          grep -oP 'href="(blog-[^"]+\.html)"' landing/blog.html | \
+            grep -oP '"[^"]+"' | tr -d '"' | sort -u | \
+          while read -r f; do
+            if [ ! -f "landing/$f" ]; then
+              echo "MISSING: landing/$f"
+              exit 1
+            else
+              echo "OK: landing/$f"
+            fi
+          done
+
+  # ────────────────────────────────────────────────────────────────────
+  # 2. GitHub Pages 배포
+  # ────────────────────────────────────────────────────────────────────
   deploy:
+    name: Deploy to GitHub Pages
+    needs: validate
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
