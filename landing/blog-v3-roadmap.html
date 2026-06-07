@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — HAchillesWorld v3.0 로드맵 공개 | HAchillesWorld</title>
+  <meta name="description" content="HAchillesWorld v3.0에서 무엇이 달라지는가. Multi-Agent 오케스트레이션·실시간 Drift 알림·엔터프라이즈 컴플라이언스까지 — 다음 메이저 버전의 전체 계획을 공개합니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+    .article{padding:0 0 80px}
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:48px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.1rem;font-weight:800;color:var(--text);margin:32px 0 12px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+    .scan-output{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .scan-output-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent3);display:flex;align-items:center;gap:6px}
+    .scan-output pre{padding:18px;font-family:var(--mono);font-size:.79rem;line-height:1.75;color:#d1fae5;overflow-x:auto;margin:0}
+    .roadmap-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin:20px 0}
+    .roadmap-card .rc-phase{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:8px;font-family:var(--mono)}
+    .roadmap-card .rc-title{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:10px}
+    .roadmap-card .rc-items{display:flex;flex-direction:column;gap:6px}
+    .roadmap-card .rc-item{display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:#cbd5e1}
+    .roadmap-card .rc-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:8px;flex-shrink:0}
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#AgenticAI</span>
+      <span class="blog-tag">#로드맵</span>
+      <span class="blog-tag">#v3.0</span>
+      <span class="blog-tag">#HAchillesWorld</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      HAchillesWorld v3.0<br/>로드맵 공개
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      다음 메이저 버전에서 무엇이 달라지는가
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 2,800자 · 10분 읽기</span>
+      <span style="color:#fbbf24">◈ 로드맵 공개</span>
+    </div>
+  </div>
+</div>
+
+<section class="article">
+  <div class="article-layout">
+    <div class="article-body">
+
+      <p>v2.1을 출시한 지 3개월이 지났다.</p>
+
+      <p>그 사이 HAchillesWorld를 도입한 팀들로부터 공통된 피드백이 쌓였다. 단일 에이전트 진단은 충분히 잘 작동한다. 그런데 에이전트가 여러 개가 되면, 실시간으로 Drift를 감지하고 싶은데 방법이 없다. 기업 보안 정책상 외부 API를 못 쓴다. 이 세 가지가 반복됐다.</p>
+
+      <p>v3.0은 이 세 가지에 집중한다.</p>
+
+      <hr/>
+
+      <h2 id="s-why">왜 v3.0인가</h2>
+
+      <p>v2.x 시리즈는 <strong>단일 에이전트의 World Model 품질을 측정하고 개선하는 것</strong>에 집중했다. HAS 점수, Planning Depth, Calibration ECE, Harness — 이 개념들이 v2.x에서 완성됐다.</p>
+
+      <p>v3.0이 다루는 문제는 한 단계 위다: <strong>에이전트들이 시스템으로서 어떻게 함께 작동하는가.</strong></p>
+
+      <p>개별 에이전트의 HAS가 85점이어도, 10개의 에이전트가 서로 충돌하면 시스템은 실패한다. Drift가 진행 중인데 알림이 없으면, 문제가 터진 뒤에야 안다. 컴플라이언스 리포트가 자동으로 생성되지 않으면, 감사 때마다 수작업이 발생한다.</p>
+
+      <p>v3.0은 이 간극을 채운다.</p>
+
+      <hr/>
+
+      <h2 id="s-features">v3.0 핵심 기능 3가지</h2>
+
+      <h3>1. Multi-Agent 오케스트레이션 레이어</h3>
+
+      <p>v2.x의 Multi-Agent 진단은 사후 분석이었다. 충돌이 발생한 후에 로그를 보는 방식이다. v3.0은 실시간 오케스트레이션으로 전환한다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#6ee7b7">●</span> v3.0 — Multi-Agent Orchestration
+        </div>
+        <pre><span style="color:#6ee7b7">새로 추가:</span>
+  SharedWorldModel v2  — 에이전트 간 상태 동기화 (50ms 이내)
+  ConflictResolver     — 충돌 자동 감지 + 우선순위 기반 해소
+  AgentRegistry        — 에이전트 등록/해제 실시간 관리
+  OrchestratorAPI      — 외부 시스템과 연동 가능한 REST 인터페이스
+
+<span style="color:#94a3b8">기존 유지:</span>
+  instrument() 데코레이터 — 코드 변경 없이 계측
+  Harness 규칙 엔진       — v2.x 규칙 그대로 호환</pre>
+      </div>
+
+      <h3>2. 실시간 Drift 알림 시스템</h3>
+
+      <p>Simulation Drift는 서서히 진행된다. v2.x에서는 주기적으로 Scan을 실행해야 감지할 수 있었다. v3.0은 Drift를 지속적으로 모니터링하고, 임계치를 초과하는 순간 알림을 보낸다.</p>
+
+      <div class="roadmap-card">
+        <div class="rc-phase">v3.0 — Drift Monitor</div>
+        <div class="rc-title">지원 알림 채널</div>
+        <div class="rc-items">
+          <div class="rc-item"><div class="rc-dot"></div>Slack / Teams 웹훅</div>
+          <div class="rc-item"><div class="rc-dot"></div>이메일 (SMTP)</div>
+          <div class="rc-item"><div class="rc-dot"></div>Prometheus AlertManager 연동</div>
+          <div class="rc-item"><div class="rc-dot"></div>사용자 정의 웹훅 (JSON POST)</div>
+        </div>
+      </div>
+
+      <h3>3. 엔터프라이즈 컴플라이언스 자동화</h3>
+
+      <p>EU AI Act, ISO 42001 대응 리포트를 <code>hachillesworld comply</code> 명령 하나로 생성한다. 감사 항목별 충족 여부, 근거 데이터, 개선 권고를 PDF로 출력한다.</p>
+
+      <div class="roadmap-card">
+        <div class="rc-phase">v3.0 — Compliance</div>
+        <div class="rc-title">지원 규격</div>
+        <div class="rc-items">
+          <div class="rc-item"><div class="rc-dot"></div>EU AI Act (High-Risk AI Systems)</div>
+          <div class="rc-item"><div class="rc-dot"></div>ISO/IEC 42001:2023 (AI Management System)</div>
+          <div class="rc-item"><div class="rc-dot"></div>NIST AI RMF (Risk Management Framework)</div>
+          <div class="rc-item"><div class="rc-dot"></div>국내 AI 안전성 가이드라인 (과기정통부)</div>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-timeline">출시 일정</h2>
+
+      <div class="roadmap-card">
+        <div class="rc-phase">Phase 1 — 2026년 8월</div>
+        <div class="rc-title">v3.0 Alpha</div>
+        <div class="rc-items">
+          <div class="rc-item"><div class="rc-dot"></div>SharedWorldModel v2 + ConflictResolver</div>
+          <div class="rc-item"><div class="rc-dot"></div>Drift Monitor (Slack·웹훅)</div>
+          <div class="rc-item"><div class="rc-dot"></div>Early Access 신청자 대상 배포</div>
+        </div>
+      </div>
+
+      <div class="roadmap-card">
+        <div class="rc-phase">Phase 2 — 2026년 10월</div>
+        <div class="rc-title">v3.0 Beta</div>
+        <div class="rc-items">
+          <div class="rc-item"><div class="rc-dot"></div>Compliance 자동화 (EU AI Act · ISO 42001)</div>
+          <div class="rc-item"><div class="rc-dot"></div>OrchestratorAPI REST 인터페이스</div>
+          <div class="rc-item"><div class="rc-dot"></div>On-premise 설치 지원</div>
+        </div>
+      </div>
+
+      <div class="roadmap-card">
+        <div class="rc-phase">Phase 3 — 2026년 12월</div>
+        <div class="rc-title">v3.0 GA (General Availability)</div>
+        <div class="rc-items">
+          <div class="rc-item"><div class="rc-dot"></div>전체 기능 정식 출시</div>
+          <div class="rc-item"><div class="rc-dot"></div>v2.x 마이그레이션 가이드 + 자동 변환 도구</div>
+          <div class="rc-item"><div class="rc-dot"></div>엔터프라이즈 지원 플랜 오픈</div>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-compat">v2.x 호환성</h2>
+
+      <p>v3.0은 v2.x와 완전히 하위 호환된다. <code>instrument()</code> 데코레이터, Harness 규칙, Scan 리포트 형식이 그대로 유지된다. v3.0으로 업그레이드해도 기존 코드를 수정할 필요가 없다.</p>
+
+      <blockquote>
+        "업그레이드는 <code>pip install --upgrade hachillesworld</code> 한 줄이면 충분하다."<br/>
+        — v3.0 GA 출시 시 마이그레이션 가이드 제공 예정
+      </blockquote>
+
+      <hr/>
+
+      <h2 id="s-early">Early Access 신청</h2>
+
+      <p>v3.0 Alpha를 먼저 사용해보고 싶다면 Early Access를 신청하세요. Alpha 기간 동안 직접 피드백을 주신 분들은 v3.0 GA에서 크레딧으로 보답할 예정입니다.</p>
+
+      <div class="article-cta">
+        <h3>v3.0 <span style="background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Early Access</span> 신청</h3>
+        <p>2026년 8월 Alpha 배포 시 가장 먼저 받아보세요.<br/>신청은 이메일 한 줄이면 됩니다.</p>
+        <div class="cta-btns">
+          <a href="mailto:suhopark1@gmail.com?subject=HAchillesWorld v3.0 Early Access 신청" class="btn-primary">Early Access 신청 →</a>
+          <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank" class="btn-secondary">⭐ GitHub</a>
+        </div>
+      </div>
+
+      <div style="margin:48px 0 0">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px">이전 글</h3>
+        <a href="blog-multi-agent-collaboration.html" style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+          <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px">←</span>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px">Multi-Agent 협업 실전: 에이전트들이 서로 충돌할 때</div>
+            <div style="font-size:.82rem;color:var(--muted)">World Model 충돌의 원인과 Shared World Model·Harness로 막는 실전 방법</div>
+          </div>
+        </a>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        이 글은 《Agentic World Modeling 2027》의 이론을 기반으로 실제 프로젝트 경험을 정리한 것입니다.<br/>
+        저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026
+      </p>
+
+    </div>
+
+    <aside class="toc">
+      <h4>목차</h4>
+      <ul class="toc-list">
+        <li><a href="#s-why">왜 v3.0인가</a></li>
+        <li><a href="#s-features">핵심 기능 3가지</a></li>
+        <li><a href="#s-timeline">출시 일정</a></li>
+        <li><a href="#s-compat">v2.x 호환성</a></li>
+        <li><a href="#s-early">Early Access 신청</a></li>
+      </ul>
+    </aside>
+  </div>
+</section>
+
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》 &nbsp;·&nbsp; <a href="admin.html" style="color:inherit;opacity:.5;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">HAchilles Labs</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => { l.style.color = ''; l.style.borderColor = ''; });
+        const active = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+        if (active) { active.style.color = 'var(--text)'; active.style.borderColor = 'var(--accent)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('h2[id]').forEach(h => observer.observe(h));
+</script>
+<script src="haw-analytics.js"></script>
+</body>
+</html>
