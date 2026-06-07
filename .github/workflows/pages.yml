@@ -6,6 +6,7 @@ on:
     paths:
       - "landing/**"
       - ".github/workflows/pages.yml"
+      - ".htmlhintrc"
   workflow_dispatch:
 
 permissions:
