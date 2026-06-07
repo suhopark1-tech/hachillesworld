@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI는 몇 수 앞을 보는가? — MCTS Planning Depth 쉽게 이해하기 | HAchillesWorld Blog</title>
+  <meta name="description" content="바둑 고수는 왜 아마추어보다 강할까? AI 에이전트의 사고 깊이, MCTS Planning Depth를 비유를 통해 일반인도 쉽게 이해할 수 있도록 설명합니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── LAYOUT ── */
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    /* ── HERO ── */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(6,182,212,.08),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(6,182,212,.4);background:rgba(6,182,212,.08);color:#67e8f9}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ── ARTICLE ── */
+    .article{padding:0 0 80px}
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:48px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.1rem;font-weight:800;color:var(--text);margin:32px 0 12px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(6,182,212,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent2);padding:12px 20px;margin:24px 0;background:rgba(6,182,212,.06);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+
+    /* ── CODE ── */
+    .code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .code-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+    .code-block-head .dots{display:flex;gap:5px}
+    .code-block-head .dot{width:10px;height:10px;border-radius:50%}
+    .code-block pre{padding:20px;font-family:var(--mono);font-size:.82rem;line-height:1.7;color:#c4b5fd;overflow-x:auto;margin:0}
+    .code-block pre .kw{color:#67e8f9}
+    .code-block pre .st{color:#86efac}
+    .code-block pre .cm{color:#4b5563}
+    .code-block pre .nm{color:#fda4af}
+
+    /* ── INLINE CODE ── */
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);padding:1px 6px;border-radius:4px;color:#67e8f9}
+
+    /* ── VISUAL BOX ── */
+    .visual-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .visual-box-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent2);display:flex;align-items:center;gap:6px}
+    .visual-box pre{padding:18px;font-family:var(--mono);font-size:.82rem;line-height:1.85;color:#e0f2fe;overflow-x:auto;margin:0}
+
+    /* ── ANALOGY CARD ── */
+    .analogy-card{background:linear-gradient(135deg,rgba(6,182,212,.06),rgba(139,92,246,.04));border:1px solid rgba(6,182,212,.2);border-radius:14px;padding:24px 28px;margin:28px 0}
+    .analogy-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .analogy-label::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2)}
+    .analogy-title{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:10px}
+    .analogy-body{font-size:.93rem;color:#94a3b8;line-height:1.7}
+
+    /* ── DEPTH VISUAL ── */
+    .depth-visual{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0}
+    .depth-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .depth-row:last-child{margin-bottom:0}
+    .depth-num{font-family:var(--mono);font-size:.85rem;font-weight:700;width:60px;flex-shrink:0;color:var(--accent)}
+    .depth-bar-wrap{flex:1}
+    .depth-bar{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .depth-desc{font-size:.78rem;color:var(--muted);width:200px;flex-shrink:0}
+    @media(max-width:600px){.depth-desc{display:none}}
+
+    /* ── MCTS STEPS ── */
+    .mcts-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:24px 0}
+    .mcts-step{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .mcts-step-num{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-bottom:6px}
+    .mcts-step-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:6px}
+    .mcts-step-desc{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+    /* ── RESULT CARD ── */
+    .result-card{background:var(--surface);border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:28px;margin:32px 0;box-shadow:0 0 30px rgba(16,185,129,.07)}
+    .result-card h3{font-size:1rem;font-weight:800;color:var(--accent3);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .key-point-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+    .key-point{background:var(--bg3);border-radius:10px;padding:14px 16px;border-left:3px solid var(--accent2)}
+    .key-point-label{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+    .key-point-val{font-size:.9rem;font-weight:700;color:var(--text)}
+
+    /* ── CTA ── */
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    /* ── RELATED POSTS ── */
+    .related-posts{margin:48px 0 0}
+    .related-posts h3{font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px}
+    .related-card{display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;transition:border-color .2s;text-decoration:none}
+    .related-card:hover{border-color:var(--accent);text-decoration:none}
+    .related-arrow{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+    .related-card-title{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
+    .related-card-desc{font-size:.82rem;color:var(--muted)}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    /* ── SCROLL FADE ── */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+
+    /* ── SIDEBAR TOC (데스크탑) ── */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent2);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#MCTS</span>
+      <span class="blog-tag">#PlanningDepth</span>
+      <span class="blog-tag">#AI기초</span>
+      <span class="blog-tag">#알고리즘</span>
+      <span class="blog-tag">#AgenticAI</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      AI는 몇 수 앞을 보는가?<br/>MCTS Planning Depth 쉽게 이해하기
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      바둑 고수의 머릿속을 따라가면 AI의 사고 깊이가 보인다
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,200자 · 12분 읽기</span>
+      <span style="color:var(--accent2)">◈ 비유 중심 설명</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARTICLE + TOC ── -->
+<section class="article">
+  <div class="article-layout">
+
+    <!-- BODY -->
+    <div class="article-body">
+
+      <p>바둑 기원에 아마추어와 9단 고수가 마주 앉았다. 아마추어는 "지금 이 돌을 여기 놓으면 저 돌을 잡을 수 있겠다"라고 생각한다. 고수는 같은 순간 "내가 여기 두면 상대는 저기 받고, 그러면 나는 이쪽을 공격하고, 상대가 막으면 중앙이 열리고, 그때 내 대마가 살아 20집 이득"이라고 생각한다.</p>
+
+      <p>한 사람은 <strong>3수 앞</strong>을 본다. 다른 사람은 <strong>30수 앞</strong>을 본다.</p>
+
+      <p>AI 에이전트의 세계도 정확히 이렇게 작동한다. 그리고 이 "몇 수 앞을 보는가"를 결정하는 개념이 바로 <strong>Planning Depth</strong>다. 그 Planning Depth를 구현하는 핵심 기술이 <strong>MCTS — Monte Carlo Tree Search</strong>다.</p>
+
+      <p>복잡한 수식 없이, 비유만으로 이 개념을 완전히 이해해보자.</p>
+
+      <hr/>
+
+      <h2 id="s-what">Planning Depth란 무엇인가</h2>
+
+      <p>Planning Depth는 간단히 말하면 <strong>"AI가 미래를 몇 단계 앞까지 시뮬레이션하는가"</strong>다.</p>
+
+      <div class="analogy-card">
+        <div class="analogy-label">일상 비유 1 — 저녁 메뉴 고르기</div>
+        <div class="analogy-title">냉장고 앞에서의 두 가지 사고방식</div>
+        <div class="analogy-body">
+          <strong>Depth 1 사고:</strong> "오늘 배고프니 라면 끓이자."<br/>
+          <br/>
+          <strong>Depth 5 사고:</strong> "오늘 라면 끓이면 내일 얼굴이 붓겠고, 모레 중요한 발표가 있으니 부기 빠진 모습으로 가야 하고, 발표 후 회식이 예정돼 있으니 오늘은 가볍게 먹는 게 낫겠다."<br/>
+          <br/>
+          같은 결정이지만, 얼마나 멀리 내다보느냐에 따라 선택이 완전히 달라진다.
+        </div>
+      </div>
+
+      <p>AI 에이전트도 마찬가지다. Depth가 얕으면 <strong>눈앞의 최선</strong>을 선택한다. Depth가 깊으면 <strong>멀리 봤을 때의 최선</strong>을 선택한다. 그리고 이 둘은 종종 정반대의 결과를 낳는다.</p>
+
+      <div class="depth-visual">
+        <div style="font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:16px;letter-spacing:.06em;text-transform:uppercase">Planning Depth 수준별 시야</div>
+        <div class="depth-row">
+          <div class="depth-num">Depth 1</div>
+          <div class="depth-bar-wrap"><div class="depth-bar" style="width:8%"></div></div>
+          <div class="depth-desc">지금 이 순간만 본다</div>
+        </div>
+        <div class="depth-row">
+          <div class="depth-num">Depth 3</div>
+          <div class="depth-bar-wrap"><div class="depth-bar" style="width:22%"></div></div>
+          <div class="depth-desc">이번 주 정도 내다봄</div>
+        </div>
+        <div class="depth-row">
+          <div class="depth-num">Depth 8</div>
+          <div class="depth-bar-wrap"><div class="depth-bar" style="width:42%"></div></div>
+          <div class="depth-desc">이달 전체를 고려</div>
+        </div>
+        <div class="depth-row">
+          <div class="depth-num">Depth 15</div>
+          <div class="depth-bar-wrap"><div class="depth-bar" style="width:68%"></div></div>
+          <div class="depth-desc">분기 단위 사이클 반영</div>
+        </div>
+        <div class="depth-row">
+          <div class="depth-num">Depth 22</div>
+          <div class="depth-bar-wrap"><div class="depth-bar" style="width:100%"></div></div>
+          <div class="depth-desc">시장 충격까지 자율 대응</div>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-mcts">MCTS란 무엇인가</h2>
+
+      <p>Planning Depth를 늘리는 방법은 여러 가지다. 그 중 가장 강력한 방법이 <strong>MCTS, Monte Carlo Tree Search</strong>다. 이름이 어렵지만 개념은 놀라울 만큼 직관적이다.</p>
+
+      <div class="analogy-card">
+        <div class="analogy-label">일상 비유 2 — 미로 탐험</div>
+        <div class="analogy-title">눈 먼 탐험가 vs 영리한 탐험가</div>
+        <div class="analogy-body">
+          복잡한 미로 앞에 섰다고 상상해보자.<br/><br/>
+          <strong>무작정 걷기 (무식한 방법):</strong> 모든 갈림길에서 일일이 왼쪽·오른쪽을 전부 걸어본다. 미로가 조금만 복잡해져도 평생이 걸린다.<br/><br/>
+          <strong>MCTS (영리한 방법):</strong> "지금까지 유망해 보이는 길 위주로 탐험하되, 아직 안 가본 길도 가끔 시도해본다." 탐험 결과를 메모해두고, 다음 선택에 반영한다. 점점 출구로 향하는 확률이 높아진다.<br/><br/>
+          이것이 Monte Carlo Tree Search의 핵심이다. <strong>무작위 탐험</strong>과 <strong>경험 누적</strong>을 결합한다.
+        </div>
+      </div>
+
+      <p>MCTS는 크게 4단계를 반복한다. 각 단계를 바둑 대국 비유로 이해해보자.</p>
+
+      <div class="mcts-steps">
+        <div class="mcts-step">
+          <div class="mcts-step-num">Step 1</div>
+          <div class="mcts-step-title">Selection (선택)</div>
+          <div class="mcts-step-desc">지금까지 탐험한 수 중 "가장 유망해 보이는 수"를 선택한다. 승률이 높은 길을 우선 탐색.</div>
+        </div>
+        <div class="mcts-step">
+          <div class="mcts-step-num">Step 2</div>
+          <div class="mcts-step-title">Expansion (확장)</div>
+          <div class="mcts-step-desc">선택한 수에서 "아직 한 번도 시도 안 한 새 수"를 하나 추가해 탐험 범위를 넓힌다.</div>
+        </div>
+        <div class="mcts-step">
+          <div class="mcts-step-num">Step 3</div>
+          <div class="mcts-step-title">Simulation (시뮬레이션)</div>
+          <div class="mcts-step-desc">그 수부터 게임이 끝날 때까지 빠르게 무작위로 플레이해본다. 결과(승/패)를 기록.</div>
+        </div>
+        <div class="mcts-step">
+          <div class="mcts-step-num">Step 4</div>
+          <div class="mcts-step-title">Backpropagation (역전파)</div>
+          <div class="mcts-step-desc">시뮬레이션 결과를 거슬러 올라가며 각 수의 승률을 업데이트한다. 학습이 일어난다.</div>
+        </div>
+      </div>
+
+      <p>이 4단계를 수천, 수만 번 반복하면 AI는 어느 수가 장기적으로 유리한지 점점 정확하게 파악한다. <strong>경험이 쌓일수록 Planning Depth가 깊어진다.</strong></p>
+
+      <hr/>
+
+      <h2 id="s-tree">나무가 자라는 원리</h2>
+
+      <p>MCTS의 "Tree(나무)"가 무엇인지 시각적으로 이해해보자.</p>
+
+      <div class="visual-box">
+        <div class="visual-box-head">
+          <span style="color:#6ee7b7">●</span> 의사결정 나무 — Planning Depth 3의 예시
+        </div>
+        <pre>현재 상태 [루트]
+│
+├── 행동 A (발주 오늘 실행)
+│   ├── 결과 A-1: 가격 안정 → 이익 +12%
+│   │   ├── 다음 행동: 추가 발주 → 이익 +18%
+│   │   └── 다음 행동: 관망     → 이익 +11%
+│   └── 결과 A-2: 가격 급등 → 손실 -8%
+│       ├── 다음 행동: 손절    → 손실 -5%
+│       └── 다음 행동: 홀드    → 손실 -14%
+│
+└── 행동 B (발주 1주일 후)
+    ├── 결과 B-1: 수요 증가 → 이익 +22%  ← 최선
+    └── 결과 B-2: 재고 부족 → 손실 -3%</pre>
+      </div>
+
+      <p>AI는 이 나무를 머릿속에 그리고, <strong>각 가지(결과)의 확률을 추정</strong>해서 가장 기댓값이 높은 행동을 선택한다. Depth가 깊어질수록 나무가 더 무성해지고, 더 멀리 내다볼 수 있다.</p>
+
+      <div class="analogy-card">
+        <div class="analogy-label">일상 비유 3 — 체스 챔피언</div>
+        <div class="analogy-title">왜 체스 고수는 빠르게 결정하는가</div>
+        <div class="analogy-body">
+          처음 보면 이상하다. 체스 챔피언은 수백만 가지 경우의 수 중에서 어떻게 그토록 빠르게 최선의 수를 찾을까?<br/><br/>
+          비밀은 <strong>"모든 길을 다 가보지 않는다"</strong>는 것이다. 경험상 "이런 모양은 불리하다"는 걸 알기에 그 가지는 일찍 포기한다. 유망한 가지에만 깊게 집중한다.<br/><br/>
+          MCTS도 똑같다. UCB(Upper Confidence Bound)라는 공식으로 "탐험할 가치가 있는 가지"를 선별한다. 덕분에 무한한 경우의 수에서도 현실적인 시간 안에 좋은 답을 찾는다.
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-shallow">Depth가 얕으면 왜 위험한가</h2>
+
+      <p>실제 사례로 보자. 공급망 AI 에이전트가 부품 발주를 결정할 때 Planning Depth가 3인 경우다.</p>
+
+      <div class="visual-box">
+        <div class="visual-box-head">
+          <span style="color:#f87171">●</span> Depth 3의 한계 — 결과를 보지 못하고 결정한다
+        </div>
+        <pre>Depth 3이 본 것:
+  발주 결정(D+0) → 물류 진행(D+3) → 입고 예정(D+7)
+  → "계획대로 됩니다. 확신 80%"
+
+Depth 3이 보지 못한 것:
+  → 원자재 가격 +29.6% 급등(D+5)   [리드타임 내 발생]
+  → 실제 비용 ₩6.25M                [예측은 ₩4.82M]
+  → 예산 초과 ₩1.43M                [발주 취소 불가 시점]
+
+결론: AI는 틀리지 않았다. 단지 "너무 짧게 봤다."</pre>
+      </div>
+
+      <p>이것이 Planning Depth 문제의 본질이다. <strong>에러가 없어도, 코드가 맞아도, 짧게 보면 나쁜 결정이 나온다.</strong></p>
+
+      <div class="analogy-card">
+        <div class="analogy-label">일상 비유 4 — 네비게이션</div>
+        <div class="analogy-title">3분 앞만 보는 내비 vs 전체 경로를 보는 내비</div>
+        <div class="analogy-body">
+          출발지에서 목적지까지 가는 내비가 있다.<br/><br/>
+          <strong>Depth 3 내비:</strong> "지금 이 교차로에서 빠른 길은 오른쪽입니다." → 오른쪽으로 갔더니 3km 앞에 공사 구간. 결국 우회해서 20분 더 걸렸다.<br/><br/>
+          <strong>Depth 22 내비:</strong> "오른쪽이 200m 더 짧지만, 5km 앞 공사로 지연이 예상됩니다. 왼쪽으로 가시면 전체 경로가 18분 단축됩니다." → 눈앞은 살짝 돌아가지만 전체 시간은 최적.<br/><br/>
+          AI 에이전트의 Planning Depth도 정확히 이 차이다.
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-alphago">AlphaGo는 어떻게 인간을 이겼나</h2>
+
+      <p>2016년 구글 딥마인드의 AlphaGo가 바둑 세계 챔피언 이세돌 9단을 이겼다. 그 핵심에 MCTS가 있었다.</p>
+
+      <p>바둑은 경우의 수가 <strong>10<sup>170</sup></strong>개다. 우주의 원자 수(10<sup>80</sup>)보다 많다. 단순히 모든 경우를 계산하는 것은 불가능하다.</p>
+
+      <p>AlphaGo는 MCTS를 두 가지 신경망과 결합했다:</p>
+
+      <ul>
+        <li><strong>Policy Network</strong>: "어느 수가 유망한가?" — 탐색 방향을 안내 (쓸모없는 가지 조기 제거)</li>
+        <li><strong>Value Network</strong>: "이 상황이 유리한가?" — 게임 끝까지 가지 않아도 평가 가능</li>
+      </ul>
+
+      <p>결과적으로 AlphaGo는 수천만 번의 시뮬레이션을 통해 인간이 수십 년의 경험으로 쌓은 직관을 뛰어넘는 Planning Depth를 구현했다.</p>
+
+      <blockquote>
+        "AlphaGo의 수는 때로 이해할 수 없었다. 그러나 20수가 지나면 그 수가 왜 최선이었는지 드러났다."<br/>
+        — 이세돌 9단, 2016년 대국 후 인터뷰
+      </blockquote>
+
+      <p>이것이 바로 깊은 Planning Depth의 힘이다. <strong>지금 이상해 보이는 수가 나중에 최선으로 드러난다.</strong></p>
+
+      <hr/>
+
+      <h2 id="s-real">현실의 AI 에이전트에서는</h2>
+
+      <p>바둑 AI 이야기로 멀게 느껴질 수 있지만, 이 원리는 지금 당신 곁의 AI 에이전트에도 그대로 적용된다.</p>
+
+      <div class="key-point-grid">
+        <div class="key-point">
+          <div class="key-point-label">공급망 AI</div>
+          <div class="key-point-val">발주 타이밍 × 시장 예측 × 계절성까지 연결해 결정</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-label">금융 AI</div>
+          <div class="key-point-val">지금의 포지션이 3개월 후 포트폴리오에 미치는 영향 시뮬레이션</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-label">고객 응대 AI</div>
+          <div class="key-point-val">이 답변이 고객의 다음 질문 패턴과 이탈 확률에 미치는 영향 예측</div>
+        </div>
+        <div class="key-point">
+          <div class="key-point-label">자율주행</div>
+          <div class="key-point-val">지금 차선 변경이 5초 후 교차로에서의 선택권에 미치는 영향 계산</div>
+        </div>
+      </div>
+
+      <p>Planning Depth가 얕은 AI는 <strong>눈앞의 최선만 본다</strong>. 마치 체스에서 폰 하나를 잡으려다 퀸을 잃는 것처럼, 단기 이득이 장기 손실로 이어진다.</p>
+
+      <hr/>
+
+      <h2 id="s-tradeoff">깊을수록 좋은가? — 한계와 트레이드오프</h2>
+
+      <p>그렇다면 Planning Depth는 무조건 깊을수록 좋을까? 현실은 그렇지 않다.</p>
+
+      <div class="analogy-card">
+        <div class="analogy-label">일상 비유 5 — 과도한 고민</div>
+        <div class="analogy-title">"점심 뭐 먹을까"를 1년 앞까지 고민하면?</div>
+        <div class="analogy-body">
+          점심 메뉴를 고를 때 "이것이 50년 후 내 건강에 어떤 영향을 미칠까"까지 생각하면 결정 자체가 불가능해진다.<br/><br/>
+          Planning Depth도 마찬가지다. Depth가 너무 깊으면:<br/>
+          - 계산 비용이 기하급수적으로 증가한다<br/>
+          - 불확실성이 쌓여 예측의 신뢰도가 오히려 떨어진다<br/>
+          - 결정이 늦어져 실기(失機)한다<br/><br/>
+          최적의 Depth는 도메인마다 다르다. 공급망은 22, 단순 고객 응대는 5~8 정도가 현실적이다.
+        </div>
+      </div>
+
+      <p>MCTS의 핵심 통찰은 여기 있다: <strong>모든 가지를 균등하게 탐색하지 않는다.</strong> 유망한 가지에는 더 많은 시뮬레이션 자원을 투입하고, 희망이 없어 보이는 가지는 일찍 포기한다. 덕분에 제한된 계산 자원으로도 효과적인 깊이 탐색이 가능하다.</p>
+
+      <hr/>
+
+      <h2 id="s-measure">내 에이전트의 Planning Depth는?</h2>
+
+      <p>대부분의 팀은 자신의 AI 에이전트가 Planning Depth가 얼마인지 모른다.</p>
+
+      <p>에이전트가 발주 결정을 내릴 때, 그 결정이 몇 단계 앞까지를 고려한 것인지 로그에서 추적하고 있는가? 에이전트가 "80% 확신한다"고 말할 때, 그 확신이 3단계 미래를 본 것인지 22단계를 본 것인지 알 수 있는가?</p>
+
+      <p>모른다면, 당신의 에이전트는 지금 <strong>눈 먼 채로 결정을 내리고 있을 가능성</strong>이 높다.</p>
+
+      <div class="result-card">
+        <h3>◈ Planning Depth 핵심 정리</h3>
+        <div class="key-point-grid">
+          <div class="key-point">
+            <div class="key-point-label">Planning Depth란</div>
+            <div class="key-point-val">AI가 미래를 몇 단계까지 시뮬레이션하는가</div>
+          </div>
+          <div class="key-point">
+            <div class="key-point-label">MCTS란</div>
+            <div class="key-point-val">유망한 미래 경로를 선별적으로 탐색해 최선을 찾는 알고리즘</div>
+          </div>
+          <div class="key-point">
+            <div class="key-point-label">Depth가 얕으면</div>
+            <div class="key-point-val">단기 최적 = 장기 최악. 결과를 보기 전에 계획이 끝난다</div>
+          </div>
+          <div class="key-point">
+            <div class="key-point-label">실사례 목표</div>
+            <div class="key-point-val">공급망: Depth 22+ / 고객 응대: Depth 5~8</div>
+          </div>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-cta">나의 에이전트 Planning Depth 진단하기</h2>
+
+      <p>HAchillesWorld는 에이전트의 Planning Depth를 포함한 15개 지표를 자동 측정한다. 로그 파일 하나면 충분하다. 10분이면 수치로 볼 수 있다.</p>
+
+      <p>우리 팀의 에이전트는 처음에 Planning Depth가 3이었다. 진단 없이는 몰랐을 것이다. 24주 후, MCTS 기반 플래너를 붙여 22까지 끌어올렸고, 발주 오류로 인한 손실이 사라졌다.</p>
+
+      <blockquote>
+        "몇 수 앞을 보는가"가<br/>아마추어와 고수를 가른다.<br/>AI 에이전트도 다르지 않다.
+      </blockquote>
+
+      <div class="article-cta">
+        <h3>지금 바로 <span style="background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Planning Depth</span>를 측정하세요</h3>
+        <p>당신의 AI 에이전트는 몇 수 앞을 보고 있나요?<br/>10분 안에 수치로 확인합니다. 코드 변경 없이, API 키 없이.</p>
+        <div class="cta-btns">
+          <a href="scan.html" class="btn-primary">무료 Scan 시작</a>
+          <a href="optimize.html" class="btn-secondary">Optimize 상세보기</a>
+        </div>
+      </div>
+
+      <!-- RELATED POSTS -->
+      <div class="related-posts">
+        <h3>관련 글</h3>
+        <a href="blog-world-model.html" class="related-card">
+          <span class="related-arrow">←</span>
+          <div>
+            <div class="related-card-title">당신의 AI 에이전트, 왜 실패하는지 알고 있나요?</div>
+            <div class="related-card-desc">HAchillesWorld로 10분 안에 World Model을 진단하다 — 24주, 종합 점수 67→91, ₩48M 절감</div>
+          </div>
+        </a>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        이 글은 《Agentic World Modeling 2027》의 이론을 기반으로 작성되었습니다.<br/>
+        저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026
+      </p>
+
+    </div><!-- /article-body -->
+
+    <!-- TOC (데스크탑 사이드바) -->
+    <aside class="toc">
+      <h4>목차</h4>
+      <ul class="toc-list">
+        <li><a href="#s-what">Planning Depth란?</a></li>
+        <li><a href="#s-mcts">MCTS란?</a></li>
+        <li><a href="#s-tree">나무가 자라는 원리</a></li>
+        <li><a href="#s-shallow">Depth가 얕으면 위험한 이유</a></li>
+        <li><a href="#s-alphago">AlphaGo는 어떻게 이겼나</a></li>
+        <li><a href="#s-real">현실의 AI 에이전트</a></li>
+        <li><a href="#s-tradeoff">깊을수록 좋은가?</a></li>
+        <li><a href="#s-measure">내 에이전트 진단하기</a></li>
+      </ul>
+    </aside>
+
+  </div><!-- /article-layout -->
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  const sections = document.querySelectorAll('h2[id]');
+  const tocLinks  = document.querySelectorAll('.toc-list a');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => { l.style.color=''; l.style.borderColor=''; });
+        const active = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+        if (active) { active.style.color='var(--accent2)'; active.style.borderColor='var(--accent2)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => io.observe(s));
+
+  const fadeObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.code-block, .visual-box, .analogy-card, .depth-visual, .mcts-steps, .result-card, .article-cta, .related-posts').forEach(el => {
+    el.style.opacity='0'; el.style.transform='translateY(16px)';
+    el.style.transition='opacity .5s ease, transform .5s ease';
+    fadeObs.observe(el);
+  });
+</script>
+</body>
+</html>

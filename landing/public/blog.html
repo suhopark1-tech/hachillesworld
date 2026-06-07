@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — AI 에이전트 실전 노트 | HAchillesWorld</title>
+  <meta name="description" content="World Model, MCTS Planning Depth, AI 에이전트 운영 — HAchillesWorld 팀의 실전 경험과 기술 인사이트를 공유합니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── LAYOUT ── */
+    .container{max-width:780px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    /* ── PAGE HERO ── */
+    .page-hero{padding:120px 0 56px;position:relative;overflow:hidden}
+    .page-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .page-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:280px;background:radial-gradient(ellipse,rgba(139,92,246,.08),transparent 70%);pointer-events:none}
+    .page-hero-inner{position:relative;z-index:1}
+    .page-eyebrow{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+    .page-title{font-size:clamp(2rem,4vw,3rem);font-weight:900;line-height:1.15;letter-spacing:-.025em;margin-bottom:14px}
+    .page-subtitle{font-size:1.05rem;color:var(--muted);max-width:520px;line-height:1.6}
+
+    /* ── FILTER TABS ── */
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:40px 0 32px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+    .filter-tab{padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+    .filter-tab:hover,.filter-tab.active{border-color:var(--accent);background:rgba(139,92,246,.1);color:var(--text)}
+
+    /* ── POST LIST ── */
+    .post-list{display:flex;flex-direction:column;gap:20px;margin-bottom:60px}
+
+    /* ── POST CARD ── */
+    .post-card{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:16px;transition:border-color .2s,transform .2s;text-decoration:none}
+    .post-card:hover{border-color:var(--accent);transform:translateY(-2px);text-decoration:none}
+    .post-card-featured{border-color:rgba(139,92,246,.4);background:linear-gradient(135deg,rgba(139,92,246,.06),rgba(6,182,212,.03))}
+    .post-card-featured:hover{border-color:var(--accent)}
+
+    .post-card-left{min-width:0}
+    .post-tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .post-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.68rem;font-weight:600;border:1px solid rgba(139,92,246,.3);background:rgba(139,92,246,.08);color:#c4b5fd}
+    .post-tag-cyan{border-color:rgba(6,182,212,.3);background:rgba(6,182,212,.07);color:#67e8f9}
+    .post-featured-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:700;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24;margin-bottom:10px}
+
+    .post-title{font-size:1.15rem;font-weight:900;color:var(--text);line-height:1.35;margin-bottom:8px;letter-spacing:-.01em}
+    .post-desc{font-size:.88rem;color:var(--muted);line-height:1.65;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .post-meta{display:flex;gap:14px;align-items:center;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+    .post-author{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--text)}
+    .author-avatar-sm{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;color:#fff;flex-shrink:0}
+
+    .post-card-right{text-align:right;flex-shrink:0}
+    .post-num{font-family:var(--mono);font-size:2.8rem;font-weight:900;color:rgba(139,92,246,.15);line-height:1;user-select:none}
+    .post-arrow{font-size:1.1rem;color:var(--accent);margin-top:8px;opacity:0;transition:opacity .2s}
+    .post-card:hover .post-arrow{opacity:1}
+
+    @media(max-width:600px){
+      .post-card{grid-template-columns:1fr}
+      .post-card-right{display:none}
+    }
+
+    /* ── NEWSLETTER ── */
+    .newsletter{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(6,182,212,.05));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:0 0 60px}
+    .newsletter h3{font-size:1.2rem;font-weight:900;margin-bottom:10px}
+    .newsletter p{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+    .newsletter-form{display:flex;gap:10px;max-width:380px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+    .newsletter-input{flex:1;min-width:200px;padding:10px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:.875rem;outline:none;transition:border-color .2s}
+    .newsletter-input:focus{border-color:var(--accent)}
+    .newsletter-btn{padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;white-space:nowrap}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border)}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    /* ── FADE ── */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .55s ease both}
+    .delay-1{animation-delay:.08s}.delay-2{animation-delay:.16s}.delay-3{animation-delay:.24s}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-glow"></div>
+  <div class="container page-hero-inner">
+    <div class="page-eyebrow fade-up">HAchillesWorld Blog</div>
+    <h1 class="page-title fade-up delay-1">AI 에이전트<br/>실전 노트</h1>
+    <p class="page-subtitle fade-up delay-2">World Model, Planning Depth, 에이전트 운영 — 이론과 현장을 잇는 기술 인사이트</p>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<section style="padding:0 0 80px">
+  <div class="container">
+
+    <!-- FILTER TABS -->
+    <div class="filter-row">
+      <button class="filter-tab active">전체</button>
+      <button class="filter-tab">#WorldModel</button>
+      <button class="filter-tab">#MCTS</button>
+      <button class="filter-tab">#AI기초</button>
+      <button class="filter-tab">#AgenticAI</button>
+      <button class="filter-tab">#실전케이스</button>
+    </div>
+
+    <!-- POST LIST -->
+    <div class="post-list">
+
+      <!-- POST 5 — 인정과 인증 (최신) -->
+      <a href="blog-recognition-certification.html" class="post-card post-card-featured fade-up delay-1">
+        <div class="post-card-left">
+          <div class="post-featured-badge">NEW</div>
+          <div class="post-tag-row">
+            <span class="post-tag" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fcd34d">#AI에이전트</span>
+            <span class="post-tag" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fcd34d">#인증</span>
+            <span class="post-tag" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fcd34d">#AI거버넌스</span>
+            <span class="post-tag" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fcd34d">#HAS</span>
+          </div>
+          <div class="post-title">AI 에이전트<br/>— 인정과 인증</div>
+          <div class="post-desc">배포 전에 우리는 무엇을 인정해야 하는가. 그리고 무엇을 인증해야 하는가. FICO·NCAP·FDA와 비교로 보는 AI 에이전트 인증의 본질.</div>
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar-sm">박</div>
+              박성훈
+            </div>
+            <span>2026년 6월</span>
+            <span>약 3,200자 · 12분 읽기</span>
+            <span style="color:#fbbf24">거버넌스 · 실무</span>
+          </div>
+        </div>
+        <div class="post-card-right">
+          <div class="post-num">05</div>
+          <div class="post-arrow">→</div>
+        </div>
+      </a>
+
+      <!-- POST 4 — arXiv PAPER -->
+      <a href="blog-arxiv-paper.html" class="post-card fade-up delay-1">
+        <div class="post-card-left">
+          <div class="post-featured-badge">arXiv</div>
+          <div class="post-tag-row">
+            <span class="post-tag">#AI에이전트</span>
+            <span class="post-tag">#WorldModel</span>
+            <span class="post-tag">#에이전트평가</span>
+            <span class="post-tag">#HAS</span>
+          </div>
+          <div class="post-title">AI 에이전트에도 "신용 점수"가 필요하다</div>
+          <div class="post-desc">Levels × Laws 프레임워크 arXiv 논문 HAW-TR-001. HAS ρ=0.9948, 24주 670→910, 연간 ₩4,400만 절감 — 에이전트 배포 준비도를 숫자로 측정하는 법.</div>
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar-sm">박</div>
+              박성훈
+            </div>
+            <span>2026년 6월</span>
+            <span>약 3,000자 · 12분 읽기</span>
+            <span style="color:#c4b5fd">연구 리뷰</span>
+          </div>
+        </div>
+        <div class="post-card-right">
+          <div class="post-num">04</div>
+          <div class="post-arrow">→</div>
+        </div>
+      </a>
+
+      <!-- POST 3 — WHY WORLD MODEL -->
+      <a href="blog-why-world-model.html" class="post-card fade-up delay-1">
+        <div class="post-card-left">
+          <div class="post-tag-row">
+            <span class="post-tag" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:#6ee7b7">#WorldModel</span>
+            <span class="post-tag" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:#6ee7b7">#기업전략</span>
+            <span class="post-tag" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:#6ee7b7">#AI도입</span>
+            <span class="post-tag" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:#6ee7b7">#ROI</span>
+          </div>
+          <div class="post-title">World Model,<br/>기업이 반드시 도입해야 하는 이유</div>
+          <div class="post-desc">왜 사용하는가, 기업에 어떤 이익이 있는가, 어떻게 사용해야 효과적인가, 어떻게 도입해야 하는가. 전략과 실무를 한 글에서 완전히 정리합니다.</div>
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar-sm">박</div>
+              박성훈
+            </div>
+            <span>2026년 6월</span>
+            <span>약 4,000자 · 15분 읽기</span>
+            <span style="color:var(--accent3)">전략·실무 가이드</span>
+          </div>
+        </div>
+        <div class="post-card-right">
+          <div class="post-num">03</div>
+          <div class="post-arrow">→</div>
+        </div>
+      </a>
+
+      <!-- POST 2 — MCTS -->
+      <a href="blog-mcts-planning-depth.html" class="post-card fade-up delay-1">
+        <div class="post-card-left">
+          <div class="post-tag-row">
+            <span class="post-tag post-tag-cyan">#MCTS</span>
+            <span class="post-tag post-tag-cyan">#PlanningDepth</span>
+            <span class="post-tag post-tag-cyan">#AI기초</span>
+            <span class="post-tag post-tag-cyan">#AlphaGo</span>
+          </div>
+          <div class="post-title">AI는 몇 수 앞을 보는가?<br/>MCTS Planning Depth 쉽게 이해하기</div>
+          <div class="post-desc">바둑 고수는 왜 아마추어보다 강할까? AI 에이전트의 사고 깊이, Monte Carlo Tree Search Planning Depth를 미로·바둑·내비게이션 비유로 일반인도 이해할 수 있게 설명합니다.</div>
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar-sm">박</div>
+              박성훈
+            </div>
+            <span>2026년 6월</span>
+            <span>약 3,200자 · 12분 읽기</span>
+            <span style="color:var(--accent2)">비유 중심 설명</span>
+          </div>
+        </div>
+        <div class="post-card-right">
+          <div class="post-num">02</div>
+          <div class="post-arrow">→</div>
+        </div>
+      </a>
+
+      <!-- POST 1 — WORLD MODEL -->
+      <a href="blog-world-model.html" class="post-card post-card-featured fade-up delay-2">
+        <div class="post-card-left">
+          <div class="post-tag-row">
+            <span class="post-tag">#AI에이전트</span>
+            <span class="post-tag">#WorldModel</span>
+            <span class="post-tag">#LLM</span>
+            <span class="post-tag">#실전케이스</span>
+          </div>
+          <div class="post-title">당신의 AI 에이전트,<br/>왜 실패하는지 알고 있나요?</div>
+          <div class="post-desc">공급망 AI 에이전트 실패의 진짜 원인 — World Model. HAchillesWorld로 10분 안에 진단하고 24주 만에 종합 점수 67→91, 연간 ₩48M 절감한 실전 기록.</div>
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar-sm">박</div>
+              박성훈
+            </div>
+            <span>2026년 6월</span>
+            <span>약 2,500자 · 10분 읽기</span>
+            <span style="color:var(--accent3)">실전 케이스 포함</span>
+          </div>
+        </div>
+        <div class="post-card-right">
+          <div class="post-num">01</div>
+          <div class="post-arrow">→</div>
+        </div>
+      </a>
+
+    </div><!-- /post-list -->
+
+    <!-- NEWSLETTER -->
+    <div class="newsletter fade-up delay-3">
+      <h3>다음 글 놓치지 마세요</h3>
+      <p>World Model, Harness Engineering, AI 에이전트 운영 인사이트를 메일로 받아보세요.</p>
+      <div class="newsletter-form">
+        <input class="newsletter-input" type="email" placeholder="your@email.com" />
+        <button class="newsletter-btn" onclick="alert('준비 중입니다. 곧 오픈됩니다!')">구독하기</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  // filter tabs (UI only — 실제 필터링은 추후 구현)
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // scroll fade
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; }
+    });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.post-card, .newsletter').forEach(el => {
+    el.style.opacity='0'; el.style.transform='translateY(16px)';
+    el.style.transition='opacity .5s ease, transform .5s ease';
+    obs.observe(el);
+  });
+</script>
+</body>
+</html>

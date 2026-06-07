@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld Optimize — 맞춤 최적화 로드맵 자동 생성</title>
+  <meta name="description" content="Scan 진단 결과를 기반으로 L1→L2→L3 최적화 로드맵, 하네스 규칙 코드, CostAwareRouter 설정을 자동 생성합니다." />
+  <style>
+    :root {
+      --bg: #07080d; --bg-2: #0e1018; --bg-3: #141722; --border: #1e2235;
+      --accent: #5b7fff; --accent-2: #8b5cf6; --accent-glow: rgba(91,127,255,0.18);
+      --green: #22d3a5; --yellow: #f59e0b; --red: #f43f5e; --orange: #fb923c;
+      --cyan: #06b6d4;
+      --text: #e8eaf0; --text-muted: #6b7280; --text-dim: #9ca3af;
+      --mono: 'JetBrains Mono','Fira Code',monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      line-height: 1.7; overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 64px;
+      background: rgba(7,8,13,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 1.1rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a {
+      color: var(--text-dim); text-decoration: none; font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 0.25rem 0.7rem;
+      background: rgba(34,211,165,0.15); border: 1px solid rgba(34,211,165,0.3);
+      color: var(--green); border-radius: 999px; letter-spacing: 0.04em;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 8rem 1.5rem 5rem; position: relative; overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
+      width: 700px; height: 350px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(91,127,255,0.12), transparent 70%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute; inset: 0; opacity: 0.04;
+      background-image:
+        linear-gradient(var(--accent) 1px, transparent 1px),
+        linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-inner {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5rem;
+      max-width: 1100px; width: 100%; align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+      padding: 0.35rem 0.9rem; border-radius: 999px;
+      background: rgba(91,127,255,0.12); border: 1px solid rgba(91,127,255,0.3);
+      color: var(--accent); margin-bottom: 1.5rem;
+    }
+    .hero-eyebrow {
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;
+    }
+    .hero-title {
+      font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 900;
+      line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 1.25rem;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: 1.05rem; color: var(--text-dim); margin-bottom: 2rem;
+      max-width: 460px; line-height: 1.8;
+    }
+    .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-primary {
+      padding: 0.9rem 2rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+    .btn-secondary {
+      padding: 0.9rem 1.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600;
+      background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+
+    /* 히어로 우측: 로드맵 미리보기 */
+    .roadmap-preview {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; box-shadow: 0 0 60px rgba(91,127,255,0.15);
+    }
+    .rp-header {
+      padding: 1rem 1.25rem; background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .rp-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .rp-title { font-size: 0.78rem; color: var(--text-muted); font-family: var(--mono); margin-left: 0.25rem; }
+    .rp-body { padding: 1.25rem; font-family: var(--mono); font-size: 0.78rem; line-height: 1.9; }
+    .rp-phase {
+      border-left: 2px solid var(--border); margin: 0.5rem 0;
+      padding-left: 0.75rem;
+    }
+    .rp-phase-header { font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; }
+    .c-acc { color: var(--accent); }
+    .c-acc2 { color: var(--accent-2); }
+    .c-green { color: var(--green); }
+    .c-yellow { color: var(--yellow); }
+    .c-cyan { color: var(--cyan); }
+    .c-muted { color: var(--text-muted); }
+    .c-dim { color: #374151; }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 900;
+      line-height: 1.2; margin-bottom: 1rem;
+    }
+    .section-desc { font-size: 1rem; color: var(--text-dim); max-width: 540px; }
+
+    /* ── DELIVERABLES ── */
+    #deliverables { background: var(--bg-2); }
+    .deliver-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+      margin-top: 3.5rem;
+    }
+    .deliver-card {
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.75rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .deliver-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .deliver-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1rem;
+    }
+    .icon-roadmap { background: rgba(91,127,255,0.2); }
+    .icon-harness { background: rgba(139,92,246,0.2); }
+    .icon-router  { background: rgba(34,211,165,0.2); }
+    .icon-report  { background: rgba(245,158,11,0.2); }
+    .icon-mcts    { background: rgba(6,182,212,0.2); }
+    .icon-bench   { background: rgba(251,146,60,0.2); }
+    .deliver-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .deliver-card p { font-size: 0.87rem; color: var(--text-dim); line-height: 1.6; }
+    .deliver-tag {
+      display: inline-block; margin-top: 0.75rem;
+      font-size: 0.7rem; font-weight: 700; padding: 0.25rem 0.7rem;
+      border-radius: 999px; border: 1px solid;
+    }
+    .tag-blue { background: rgba(91,127,255,0.12); border-color: rgba(91,127,255,0.3); color: var(--accent); }
+    .tag-purple { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: #a78bfa; }
+    .tag-green { background: rgba(34,211,165,0.12); border-color: rgba(34,211,165,0.3); color: var(--green); }
+    .tag-amber { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: var(--yellow); }
+    .tag-cyan { background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.3); color: var(--cyan); }
+    .tag-orange { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.3); color: var(--orange); }
+
+    /* ── CODE OUTPUT ── */
+    #code-output { background: var(--bg); }
+    .code-split { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .code-tabs { display: flex; gap: 0; margin-bottom: -1px; }
+    .code-tab {
+      padding: 0.55rem 1.1rem; font-size: 0.78rem; font-weight: 600;
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 8px 8px 0 0;
+      cursor: pointer; color: var(--text-muted); transition: color 0.2s;
+    }
+    .code-tab.active { background: var(--bg-2); color: var(--accent); border-bottom: 1px solid var(--bg-2); }
+    .code-panel {
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 0 12px 12px 12px; padding: 1.5rem;
+      font-family: var(--mono); font-size: 0.77rem; line-height: 1.85;
+      display: none; overflow-x: auto; max-height: 480px; overflow-y: auto;
+    }
+    .code-panel.active { display: block; }
+
+    /* ── PROCESS ── */
+    #process { background: var(--bg-2); }
+    .process-steps {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
+      margin-top: 3.5rem; position: relative;
+    }
+    .process-steps::before {
+      content: ''; position: absolute; top: 2rem; left: 12.5%; right: 12.5%; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--green));
+      opacity: 0.3; z-index: 0;
+    }
+    .pstep { text-align: center; position: relative; z-index: 1; }
+    .pstep-num {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 900; margin: 0 auto 1rem;
+      border: 2px solid;
+    }
+    .ps1 .pstep-num { background: rgba(91,127,255,0.15);  border-color: var(--accent);  color: var(--accent); }
+    .ps2 .pstep-num { background: rgba(139,92,246,0.15); border-color: var(--accent-2); color: var(--accent-2); }
+    .ps3 .pstep-num { background: rgba(34,211,165,0.15); border-color: var(--green);   color: var(--green); }
+    .ps4 .pstep-num { background: rgba(245,158,11,0.15); border-color: var(--yellow);  color: var(--yellow); }
+    .pstep h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .pstep p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* ── ROI ── */
+    #roi { background: var(--bg); }
+    .roi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-top: 3.5rem; }
+    .roi-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .roi-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem 1.5rem; text-align: center;
+    }
+    .roi-value { font-size: 2rem; font-weight: 900; font-family: var(--mono); line-height: 1.1; margin-bottom: 0.4rem; }
+    .roi-label { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── WAITLIST FORM ── */
+    #waitlist { background: var(--bg-2); }
+    .waitlist-inner {
+      max-width: 520px; margin: 3.5rem auto 0;
+      background: var(--bg-3); border: 1px solid var(--border); border-radius: 16px;
+      padding: 2.5rem;
+    }
+    .form-field { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.4rem; letter-spacing: 0.02em; }
+    input[type=text], input[type=email], select {
+      width: 100%; padding: 0.8rem 1rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.92rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    select option { background: var(--bg-3); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .radio-group { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.25rem; }
+    .radio-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 1rem; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; transition: border-color 0.2s; font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .radio-btn:has(input:checked) { border-color: var(--accent); color: var(--text); background: rgba(91,127,255,0.08); }
+    .radio-btn input { accent-color: var(--accent); }
+    .btn-submit {
+      width: 100%; margin-top: 1.5rem; padding: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-submit:hover { opacity: 0.88; }
+    .form-note { margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+
+    /* 제출 완료 */
+    #success-msg {
+      display: none; text-align: center; padding: 2rem;
+    }
+    #success-msg .check-icon { font-size: 3rem; margin-bottom: 1rem; }
+    #success-msg h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    #success-msg p { font-size: 0.9rem; color: var(--text-dim); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem; text-align: center;
+    }
+    .footer-inner { max-width: 600px; margin: 0 auto; }
+    .footer-logo {
+      font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .footer-links { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem; }
+    .footer-links a { font-size: 0.82rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { font-size: 0.75rem; color: #374151; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.6s ease both; }
+    .d1 { animation-delay: 0.1s; } .d2 { animation-delay: 0.2s; }
+    .d3 { animation-delay: 0.3s; } .d4 { animation-delay: 0.4s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 3rem; }
+      .roadmap-preview { display: none; }
+      .deliver-grid { grid-template-columns: 1fr 1fr; }
+      .code-split { grid-template-columns: 1fr; }
+      .process-steps { grid-template-columns: 1fr 1fr; }
+      .process-steps::before { display: none; }
+      .roi-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .deliver-grid { grid-template-columns: 1fr; }
+      .process-steps { grid-template-columns: 1fr; }
+      .roi-metrics { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html">홈</a>
+    <a href="scan.html">무료 Scan</a>
+    <a href="blog.html">Blog</a>
+    <span class="nav-badge">✦ Optimize — 얼리 액세스</span>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner container">
+
+    <!-- 왼쪽: 카피 -->
+    <div>
+      <div class="hero-badge fade-up">⚡ HAchillesWorld Optimize</div>
+      <div class="hero-eyebrow fade-up d1">Scan → Optimize → Operate</div>
+      <h1 class="hero-title fade-up d2">
+        진단 결과를<br/>
+        <span class="gradient-text">즉시 코드로</span><br/>
+        변환합니다
+      </h1>
+      <p class="hero-desc fade-up d3">
+        Scan 리포트의 모든 개선 항목을 분석해<br/>
+        <strong>단계별 로드맵 + 하네스 규칙 코드 + 비용 라우터</strong>를<br/>
+        자동 생성합니다. 개발자가 즉시 실행할 수 있는 형태로.
+      </p>
+      <div class="hero-actions fade-up d4">
+        <a href="#waitlist" class="btn-primary">얼리 액세스 신청</a>
+        <a href="#deliverables" class="btn-secondary">무엇을 받나요?</a>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 로드맵 미리보기 -->
+    <div class="roadmap-preview fade-up d3">
+      <div class="rp-header">
+        <div class="rp-dot" style="background:#f43f5e"></div>
+        <div class="rp-dot" style="background:#f59e0b"></div>
+        <div class="rp-dot" style="background:#22d3a5"></div>
+        <span class="rp-title">optimize --report ./scan_report.json --target L3</span>
+      </div>
+      <div class="rp-body">
+        <div><span class="c-green">✓</span> <span class="c-muted">리포트 분석 완료 — supply-chain-agent</span></div>
+        <div><span class="c-green">✓</span> <span class="c-muted">현재 Level: L2.3 × Digital Laws (74/100)</span></div>
+        <div><span class="c-green">✓</span> <span class="c-muted">목표 Level: L3 (3개 Phase)</span></div>
+        <br/>
+        <div class="c-acc" style="font-weight:700">📋 최적화 로드맵 생성됨</div>
+        <br/>
+        <div class="rp-phase" style="border-color:#5b7fff">
+          <div class="rp-phase-header c-acc">PHASE 1 · Week 1-8 · 기반 강화</div>
+          <div class="c-muted"> ├─ <span class="c-yellow">우선</span> ECE Calibration 개선 (+12점)</div>
+          <div class="c-muted"> ├─ <span class="c-yellow">우선</span> Harness Coverage 확장 (3→20개)</div>
+          <div class="c-muted"> └─ Self-Correction 루틴 추가</div>
+        </div>
+        <br/>
+        <div class="rp-phase" style="border-color:#8b5cf6">
+          <div class="rp-phase-header c-acc2">PHASE 2 · Week 9-16 · 시뮬레이션</div>
+          <div class="c-muted"> ├─ MCTS 계획기 통합</div>
+          <div class="c-muted"> └─ Counterfactual 추론 레이어</div>
+        </div>
+        <br/>
+        <div class="rp-phase" style="border-color:#22d3a5">
+          <div class="rp-phase-header c-green">PHASE 3 · Week 17-24 · L3 진화</div>
+          <div class="c-muted"> ├─ Meta-Harness 자기 수정</div>
+          <div class="c-muted"> └─ 실시간 모델 재보정</div>
+        </div>
+        <br/>
+        <div><span class="c-acc">📦 생성된 파일:</span></div>
+        <div class="c-green"> ├─ harness_rules.py <span class="c-dim">(즉시 실행 가능)</span></div>
+        <div class="c-green"> ├─ cost_router.py  <span class="c-dim">(예상 절감 $18K/년)</span></div>
+        <div class="c-green"> └─ mcts_planner.py <span class="c-dim">(L3 계획기)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DELIVERABLES ── -->
+<section id="deliverables">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 1rem;">
+      <p class="section-label">What You Get</p>
+      <h2 class="section-title">6개 산출물을<br/><span class="gradient-text">즉시 사용 가능한 코드로</span></h2>
+      <p class="section-desc" style="margin: 0 auto;">
+        Scan 리포트 하나를 입력하면 Optimize가 6가지 맞춤 산출물을 자동으로 생성합니다.
+      </p>
+    </div>
+    <div class="deliver-grid">
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-roadmap">📋</div>
+        <h3>단계별 최적화 로드맵</h3>
+        <p>현재 Level에서 목표 Level까지의 Phase별 태스크, 기간, 예상 점수 향상을 담은 실행 계획서.</p>
+        <span class="deliver-tag tag-blue">JSON + Markdown</span>
+      </div>
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-harness">🛡️</div>
+        <h3>하네스 규칙 코드 자동 생성</h3>
+        <p>Scan에서 감지된 약점을 해결하는 <code>HarnessSpec</code> 클래스를 Python 코드로 즉시 출력. 복사해서 바로 실행.</p>
+        <span class="deliver-tag tag-purple">harness_rules.py</span>
+      </div>
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-router">💰</div>
+        <h3>CostAwareRouter 설정</h3>
+        <p>에이전트의 태스크 복잡도를 분석해 어떤 태스크에 어떤 모델을 쓸지 라우팅 규칙을 자동 설계. 평균 30% LLM 비용 절감.</p>
+        <span class="deliver-tag tag-green">cost_router.py</span>
+      </div>
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-mcts">🌳</div>
+        <h3>MCTS 계획기 스캐폴드</h3>
+        <p>L3 목표 에이전트를 위한 Monte Carlo Tree Search 기반 계획기 기초 코드. 에이전트 구조에 맞춰 파라미터 자동 설정.</p>
+        <span class="deliver-tag tag-cyan">mcts_planner.py</span>
+      </div>
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-bench">📊</div>
+        <h3>개선 벤치마크 체크리스트</h3>
+        <p>각 Phase 완료 후 실행할 검증 테스트 목록. "이 수치가 이 값을 넘으면 다음 Phase로 진행"하는 명확한 기준 제시.</p>
+        <span class="deliver-tag tag-orange">benchmark.md</span>
+      </div>
+
+      <div class="deliver-card">
+        <div class="deliver-icon icon-report">📈</div>
+        <h3>ROI 분석 보고서</h3>
+        <p>각 개선 항목의 예상 비용 절감액, 실패율 감소율, 개발 공수를 계산한 경영진 보고용 요약 PDF.</p>
+        <span class="deliver-tag tag-amber">roi_report.pdf</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── CODE OUTPUT ── -->
+<section id="code-output">
+  <div class="container">
+    <div class="code-split">
+      <div>
+        <p class="section-label">Output Preview</p>
+        <h2 class="section-title">생성되는<br/><span class="gradient-text">코드 예시</span></h2>
+        <p class="section-desc">
+          Optimize가 자동 생성하는 코드는 복사해서 바로 실행할 수 있습니다.
+          에이전트 구조, Level, 도메인에 맞춰 파라미터가 자동 조정됩니다.
+        </p>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.87rem;color:var(--text-dim)">
+            <span style="color:var(--green);font-weight:700">✓</span>
+            에이전트 이름, Level, 도메인에 맞춘 파라미터 자동 설정
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.87rem;color:var(--text-dim)">
+            <span style="color:var(--green);font-weight:700">✓</span>
+            Scan 보고서의 약점 항목이 규칙에 직접 반영됨
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.87rem;color:var(--text-dim)">
+            <span style="color:var(--green);font-weight:700">✓</span>
+            Python 3.11+ 호환, HAchillesWorld SDK 1.0 기준
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="code-tabs">
+          <div class="code-tab active" onclick="switchTab('harness')">하네스 규칙</div>
+          <div class="code-tab" onclick="switchTab('router')">비용 라우터</div>
+          <div class="code-tab" onclick="switchTab('mcts')">MCTS 계획기</div>
+        </div>
+
+        <div id="tab-harness" class="code-panel active">
+<span class="c-muted"># harness_rules.py — supply-chain-agent용 자동 생성</span>
+<span class="c-muted"># Optimize v1.0 · HAchillesWorld</span>
+
+<span class="c-acc">from</span> hachillesworld.harness <span class="c-acc">import</span> HarnessSpec, Rule
+
+<span class="c-acc2">class</span> <span class="c-yellow">SupplyChainHarness</span>(HarnessSpec):
+    <span class="c-muted">"""L2.3 → L3 전환을 위한 하네스 규칙"""</span>
+
+    <span class="c-acc">def</span> <span class="c-green">calibration_check</span>(self, pred, actual):
+        <span class="c-muted"># ECE 0.22 → 0.10 미만 목표 (Scan §12 기반)</span>
+        ece = self._compute_ece(pred, actual)
+        <span class="c-acc">if</span> ece > <span class="c-yellow">0.10</span>:
+            <span class="c-acc">return</span> Rule.REJECT(
+                reason=<span class="c-green">f"Calibration ECE {ece:.3f} > 0.10"</span>,
+                action=<span class="c-green">"recalibrate"</span>
+            )
+        <span class="c-acc">return</span> Rule.PASS()
+
+    <span class="c-acc">def</span> <span class="c-green">self_correction_check</span>(self, episode):
+        <span class="c-muted"># Self-Correction Rate 0% → 10% 이상 목표</span>
+        <span class="c-acc">if</span> episode.has_error <span class="c-acc">and not</span> episode.self_corrected:
+            <span class="c-acc">return</span> Rule.RETRY(
+                prompt=<span class="c-green">"이전 응답에서 오류를 감지했습니다. 다시 시도하세요."</span>,
+                max_attempts=<span class="c-yellow">3</span>
+            )
+        <span class="c-acc">return</span> Rule.PASS()
+
+    <span class="c-acc">def</span> <span class="c-green">harness_coverage_check</span>(self, action):
+        <span class="c-muted"># 커버리지 3개 → 20개 목표 (자동 확장 중)</span>
+        <span class="c-acc">return</span> self._validate_action_bounds(action)
+        </div>
+
+        <div id="tab-router" class="code-panel">
+<span class="c-muted"># cost_router.py — 예상 절감 $18,320/년</span>
+<span class="c-muted"># CostAwareRouter for supply-chain-agent (L2.3)</span>
+
+<span class="c-acc">from</span> hachillesworld.optimize <span class="c-acc">import</span> CostAwareRouter
+
+router = CostAwareRouter(
+    agent_name=<span class="c-green">"supply-chain-agent"</span>,
+    <span class="c-muted"># Scan §15: 복잡도 분포 분석 결과 반영</span>
+    tiers=[
+        {<span class="c-green">"complexity"</span>: <span class="c-green">"low"</span>,    <span class="c-green">"model"</span>: <span class="c-green">"claude-haiku-4-5"</span>,  <span class="c-green">"threshold"</span>: <span class="c-yellow">0.3</span>},
+        {<span class="c-green">"complexity"</span>: <span class="c-green">"medium"</span>, <span class="c-green">"model"</span>: <span class="c-green">"claude-sonnet-4-6"</span>, <span class="c-green">"threshold"</span>: <span class="c-yellow">0.7</span>},
+        {<span class="c-green">"complexity"</span>: <span class="c-green">"high"</span>,   <span class="c-green">"model"</span>: <span class="c-green">"claude-opus-4-8"</span>,   <span class="c-green">"threshold"</span>: <span class="c-yellow">1.0</span>},
+    ],
+    <span class="c-muted"># 현재 분포: low 12% / medium 61% / high 27%</span>
+    <span class="c-muted"># 목표 분포: low 35% / medium 55% / high 10%</span>
+)
+
+<span class="c-acc">def</span> <span class="c-green">route_and_call</span>(task: str, context: dict):
+    model = router.select(task, context)
+    <span class="c-acc">return</span> model.invoke(task)
+    <span class="c-muted"># 예상 월 절감: $1,527</span>
+        </div>
+
+        <div id="tab-mcts" class="code-panel">
+<span class="c-muted"># mcts_planner.py — L3 목표 계획기 스캐폴드</span>
+<span class="c-muted"># MCTS for supply-chain-agent (L2.3 → L3)</span>
+
+<span class="c-acc">from</span> hachillesworld.optimize.mcts <span class="c-acc">import</span> MCTSPlanner
+
+planner = MCTSPlanner(
+    agent_name=<span class="c-green">"supply-chain-agent"</span>,
+    <span class="c-muted"># Scan §8: 계획 깊이 분석 기반 파라미터</span>
+    n_simulations=<span class="c-yellow">50</span>,        <span class="c-muted"># 현재 L2.3 기준 권장값</span>
+    exploration_c=<span class="c-yellow">1.414</span>,    <span class="c-muted"># UCB1 상수</span>
+    max_depth=<span class="c-yellow">5</span>,            <span class="c-muted"># 롤아웃 최대 깊이</span>
+    rollout_policy=<span class="c-green">"random"</span>, <span class="c-muted"># Phase 2에서 "neural"로 업그레이드</span>
+)
+
+<span class="c-acc">def</span> <span class="c-green">plan_action</span>(state, goal, world_model):
+    root = planner.build_tree(state, goal, world_model)
+    best_action = planner.best_action(root)
+    <span class="c-acc">return</span> best_action
+    <span class="c-muted"># Phase 3: Meta-Harness와 연동해 자기 수정</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROCESS ── -->
+<section id="process">
+  <div class="container">
+    <div style="text-align:center;">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">4단계로<br/><span class="gradient-text">산출물 수령</span></h2>
+    </div>
+    <div class="process-steps">
+      <div class="pstep ps1">
+        <div class="pstep-num">1</div>
+        <h4>Scan 리포트 업로드</h4>
+        <p>무료 Scan에서 받은 <code>scan_report.json</code>을 Optimize에 입력합니다.</p>
+      </div>
+      <div class="pstep ps2">
+        <div class="pstep-num">2</div>
+        <h4>자동 분석</h4>
+        <p>20개 섹션의 진단 결과를 분석해 우선순위와 의존성을 계산합니다.</p>
+      </div>
+      <div class="pstep ps3">
+        <div class="pstep-num">3</div>
+        <h4>코드 생성</h4>
+        <p>에이전트에 맞게 파라미터가 설정된 6개 산출물을 자동 생성합니다.</p>
+      </div>
+      <div class="pstep ps4">
+        <div class="pstep-num">4</div>
+        <h4>실행 및 재측정</h4>
+        <p>코드를 적용하고 재진단으로 점수 향상을 검증합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ROI ── -->
+<section id="roi">
+  <div class="container">
+    <div class="roi-grid">
+      <div>
+        <p class="section-label">Expected Impact</p>
+        <h2 class="section-title">측정 가능한<br/><span class="gradient-text">실제 ROI</span></h2>
+        <p class="section-desc">
+          L2.3 기준 에이전트를 L3으로 전환한 레퍼런스 사례 기반 예상 수치입니다.
+          에이전트마다 편차가 있으며 Optimize 리포트에 맞춤 수치가 제공됩니다.
+        </p>
+        <div style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; font-size: 0.82rem; color: var(--text-muted);">
+          * 레퍼런스: supply-chain-agent L2.3 → L3 전환 (24주) 기준.<br/>
+          이론적 기반: 《Agentic World Modeling 2027》 — 박성훈
+        </div>
+      </div>
+      <div class="roi-metrics">
+        <div class="roi-card">
+          <div class="roi-value" style="color:var(--green)">$18K</div>
+          <div class="roi-label">연간 LLM 비용 절감<br/>(라우터 최적화)</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value" style="color:var(--accent)">70%</div>
+          <div class="roi-label">에이전트 실패율<br/>감소</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value" style="color:var(--accent-2)">+26점</div>
+          <div class="roi-label">종합 점수 향상<br/>(74 → 100 목표)</div>
+        </div>
+        <div class="roi-card">
+          <div class="roi-value" style="color:var(--yellow)">24주</div>
+          <div class="roi-label">L2.3 → L3<br/>전환 기간</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── WAITLIST ── -->
+<section id="waitlist">
+  <div class="container">
+    <div style="text-align:center;">
+      <span style="display:inline-block;padding:0.3rem 0.9rem;background:rgba(34,211,165,0.12);border:1px solid rgba(34,211,165,0.3);color:var(--green);border-radius:999px;font-size:0.72rem;font-weight:700;margin-bottom:1rem">
+        ✦ 오픈 베타 준비 중
+      </span>
+      <p class="section-label">Early Access</p>
+      <h2 class="section-title">얼리 액세스 신청<br/><span class="gradient-text">가장 먼저 사용하세요</span></h2>
+      <p class="section-desc" style="margin: 0 auto;">
+        베타 오픈 시 우선 알림을 드립니다. 얼리 액세스 신청자에게는<br/>
+        첫 Optimize 리포트를 무료로 제공합니다.
+      </p>
+    </div>
+
+    <div class="waitlist-inner">
+      <form id="waitlist-form" onsubmit="submitForm(event)">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="name">이름</label>
+            <input type="text" id="name" placeholder="홍길동" required />
+          </div>
+          <div class="form-field">
+            <label for="email">이메일</label>
+            <input type="email" id="email" placeholder="you@company.com" required />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="company">회사 / 프로젝트명</label>
+          <input type="text" id="company" placeholder="스타트업, 사이드 프로젝트 등" />
+        </div>
+
+        <div class="form-field">
+          <label for="agent-type">에이전트 유형</label>
+          <select id="agent-type">
+            <option value="">선택해주세요</option>
+            <option value="supply-chain">공급망 / 물류</option>
+            <option value="customer-service">고객 서비스 / CS 자동화</option>
+            <option value="code-gen">코드 생성 / 개발 보조</option>
+            <option value="data-analysis">데이터 분석 / 리포팅</option>
+            <option value="research">리서치 / 정보 수집</option>
+            <option value="finance">금융 / 투자 분석</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>현재 Level (Scan을 받으셨다면)</label>
+          <div class="radio-group">
+            <label class="radio-btn"><input type="radio" name="level" value="L1" /> L1 — Predictor</label>
+            <label class="radio-btn"><input type="radio" name="level" value="L2" /> L2 — Simulator</label>
+            <label class="radio-btn"><input type="radio" name="level" value="L3" /> L3 — Evolver</label>
+            <label class="radio-btn"><input type="radio" name="level" value="unsure" checked /> 모름 / 미진단</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">얼리 액세스 신청하기 →</button>
+        <p class="form-note">스팸 없음. 베타 오픈 시 1회 이메일만 발송됩니다.</p>
+      </form>
+
+      <div id="success-msg">
+        <div class="check-icon">✅</div>
+        <h3>신청 완료!</h3>
+        <p>베타 오픈 시 <strong id="confirm-email"></strong>으로 안내 드리겠습니다.<br/>
+        잠시 후 Optimize 리포트 샘플로 이동합니다…</p>
+        <div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+          <a href="scan.html" class="btn-primary" style="font-size:0.9rem;padding:0.75rem 1.5rem">🔍 무료 Scan 시작</a>
+          <a href="index.html" class="btn-secondary" style="font-size:0.9rem;padding:0.75rem 1.5rem">홈으로</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">HAchillesWorld</div>
+    <div class="footer-links">
+      <a href="index.html">홈</a>
+      <a href="scan.html">무료 Scan</a>
+      <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+      <a href="mailto:suhopark1@gmail.com">문의</a>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. · 이론 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 코드 탭 전환
+  function switchTab(name) {
+    const tabs = document.querySelectorAll('.code-tab');
+    const panels = document.querySelectorAll('.code-panel');
+    const names = ['harness', 'router', 'mcts'];
+    tabs.forEach((t, i) => t.classList.toggle('active', names[i] === name));
+    panels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  }
+
+  // 스크롤 페이드인
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.deliver-card, .roi-card, .pstep').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+
+  // 폼 제출
+  function submitForm(e) {
+    e.preventDefault();
+    const name      = document.getElementById('name').value;
+    const email     = document.getElementById('email').value;
+    const agentType = document.getElementById('agent-type').value;
+    const level     = document.querySelector('input[name="level"]:checked')?.value || 'unsure';
+
+    // sessionStorage에 저장 → optimize_report.html에서 활용
+    const agentLabel = {
+      'supply-chain': '공급망 에이전트',
+      'customer-service': '고객서비스 에이전트',
+      'code-gen': '코드 생성 에이전트',
+      'data-analysis': '데이터 분석 에이전트',
+      'research': '리서치 에이전트',
+      'finance': '금융 분석 에이전트',
+      'other': '에이전트',
+    }[agentType] || '에이전트';
+    const agentName = name ? `${name}의 ${agentLabel}` : agentLabel;
+
+    sessionStorage.setItem('haw_scan', JSON.stringify({
+      name: agentName,
+      domain: 'Digital',
+      email,
+      date: new Date().toISOString(),
+    }));
+
+    document.getElementById('confirm-email').textContent = email;
+    document.getElementById('waitlist-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+
+    // 2.5초 후 Optimize 리포트로 이동
+    setTimeout(() => { location.href = 'optimize_report.html'; }, 2500);
+  }
+
+  // 네비 스크롤 효과
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 40 ? 'rgba(7,8,13,0.97)' : 'rgba(7,8,13,0.92)';
+  });
+</script>
+</body>
+</html>

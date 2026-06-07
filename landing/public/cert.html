@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAchillesWorld 인증 프로그램 — HAchilles Certified AI Native</title>
+  <meta name="description" content="AI 에이전트 World Model 역량을 공식 인증하는 HAchillesWorld 인증 프로그램. HCP·HCE·HCAN 3단계 체계." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b; --danger:#ef4444;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+      --gold:#f59e0b; --silver:#94a3b8; --navy:#1e3a5f;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── UTILITIES ── */
+    .container{max-width:1120px;margin:0 auto;padding:0 24px}
+    .gradient-text{background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .gradient-gold{background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:.75rem;font-weight:600;border:1px solid}
+    .badge-purple{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.4);color:#c4b5fd}
+    .badge-cyan{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.4);color:#67e8f9}
+    .badge-green{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:#6ee7b7}
+    .badge-gold{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:#fcd34d}
+    .badge-navy{background:rgba(30,58,95,.4);border-color:rgba(99,140,200,.5);color:#93c5fd}
+    section{padding:100px 0}
+    .section-label{font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+    .section-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.2;margin-bottom:16px}
+    .section-desc{font-size:1rem;color:var(--muted);max-width:580px}
+    .section-header{margin-bottom:64px}
+    .section-header.center{text-align:center}
+    .section-header.center .section-desc{margin-inline:auto}
+
+    /* ── HERO ── */
+    #hero{min-height:100vh;display:flex;align-items:center;padding:120px 0 80px;position:relative;overflow:hidden}
+    .hero-grid{position:absolute;inset:0;opacity:.05;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .hero-glow{position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);width:800px;height:400px;border-radius:50%;background:radial-gradient(ellipse,rgba(139,92,246,.12),transparent 70%);pointer-events:none}
+    .hero-content{position:relative;z-index:1;text-align:center}
+    .hero-title{font-size:clamp(2.2rem,5.5vw,4rem);font-weight:900;line-height:1.1;margin-bottom:16px;letter-spacing:-.02em}
+    .hero-subtitle{font-size:clamp(1rem,2.5vw,1.3rem);color:var(--muted);margin-bottom:48px;max-width:640px;margin-inline:auto}
+    .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:80px}
+    .btn-primary{padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s,background .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);background:rgba(139,92,246,.08);text-decoration:none}
+
+    /* ── SEAL / BADGE ── */
+    .seal-showcase{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin-top:16px}
+    .seal{text-align:center}
+    .seal-ring{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto 16px}
+    .seal-ring.silver{background:radial-gradient(circle at 35% 35%,#cbd5e1,#64748b);box-shadow:0 0 30px rgba(148,163,184,.3),inset 0 2px 4px rgba(255,255,255,.2)}
+    .seal-ring.gold{background:radial-gradient(circle at 35% 35%,#fde68a,#d97706);box-shadow:0 0 30px rgba(245,158,11,.4),inset 0 2px 4px rgba(255,255,255,.2)}
+    .seal-ring.navy{background:radial-gradient(circle at 35% 35%,#3b82f6,#1e3a5f);box-shadow:0 0 40px rgba(99,140,200,.5),inset 0 2px 4px rgba(255,255,255,.15)}
+    .seal-inner{width:110px;height:110px;border-radius:50%;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.1)}
+    .seal-abbr{font-family:var(--mono);font-size:1.5rem;font-weight:800;letter-spacing:.04em}
+    .seal-abbr.silver{color:#cbd5e1}
+    .seal-abbr.gold{color:#fde68a}
+    .seal-abbr.navy{color:#93c5fd}
+    .seal-label{font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+    .seal-name{font-size:.85rem;font-weight:700;margin-bottom:4px}
+    .seal-year{font-size:.72rem;color:var(--muted)}
+
+    /* ── GUILLOCHE EFFECT (CSS) ── */
+    .guilloche{position:relative}
+    .guilloche::before,.guilloche::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
+    .seal-ring.navy::before{inset:-8px;border-radius:50%;border:2px dashed rgba(99,140,200,.4);animation:rotate 20s linear infinite}
+    .seal-ring.navy::after{inset:-16px;border-radius:50%;border:1px dashed rgba(99,140,200,.25);animation:rotate 30s linear infinite reverse}
+    @keyframes rotate{to{transform:rotate(360deg)}}
+
+    /* ── CERT LEVEL CARDS ── */
+    #levels{background:var(--bg2)}
+    .levels-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    @media(max-width:900px){.levels-grid{grid-template-columns:1fr}}
+    .level-card{background:var(--surface);border-radius:20px;overflow:hidden;border:1px solid var(--border);transition:transform .2s,box-shadow .2s;position:relative}
+    .level-card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(139,92,246,.15)}
+    .level-card.featured{border-color:rgba(245,158,11,.4);box-shadow:0 0 40px rgba(245,158,11,.1)}
+    .level-card.elite{border-color:rgba(99,140,200,.5);box-shadow:0 0 50px rgba(99,140,200,.15)}
+    .level-card-top{padding:32px 28px 24px;border-bottom:1px solid var(--border)}
+    .level-tag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.72rem;font-weight:700;margin-bottom:16px}
+    .tag-silver{background:rgba(148,163,184,.15);color:var(--silver)}
+    .tag-gold{background:rgba(245,158,11,.15);color:var(--gold)}
+    .tag-navy{background:rgba(30,58,95,.4);color:#93c5fd}
+    .level-abbr{font-size:2.2rem;font-weight:900;font-family:var(--mono);margin-bottom:4px}
+    .level-fullname{font-size:.95rem;font-weight:700;color:var(--muted);margin-bottom:12px}
+    .level-desc{font-size:.88rem;color:var(--muted);line-height:1.6}
+    .level-card-body{padding:24px 28px}
+    .level-price{font-size:1.8rem;font-weight:900;font-family:var(--mono);margin-bottom:4px}
+    .level-period{font-size:.8rem;color:var(--muted);margin-bottom:20px}
+    .feat-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+    .feat-list li{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--text)}
+    .feat-list li::before{content:"✓";color:var(--accent3);font-weight:700;flex-shrink:0;margin-top:2px}
+    .feat-list li.dim{color:var(--muted)}
+    .feat-list li.dim::before{content:"—";color:#334155}
+    .btn-level{display:block;width:100%;padding:12px;border-radius:10px;font-size:.9rem;font-weight:700;text-align:center;cursor:pointer;transition:.2s;border:1px solid var(--border);color:var(--text);background:transparent;text-decoration:none}
+    .btn-level:hover{background:rgba(139,92,246,.1);border-color:var(--accent);text-decoration:none}
+    .btn-level.gold{background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:#0a0a0f}
+    .btn-level.gold:hover{opacity:.9}
+    .btn-level.navy{background:linear-gradient(135deg,#3b82f6,#1e3a5f);border:none;color:#fff}
+    .btn-level.navy:hover{opacity:.9}
+
+    /* ── CURRICULUM ── */
+    .curriculum-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+    @media(max-width:768px){.curriculum-grid{grid-template-columns:1fr}}
+    .phase-block{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px}
+    .phase-block h3{font-size:1rem;font-weight:800;margin-bottom:6px}
+    .phase-block .phase-meta{font-size:.78rem;color:var(--muted);margin-bottom:16px}
+    .module-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .module-item{display:flex;gap:10px;align-items:flex-start;font-size:.85rem;padding:8px 12px;background:var(--bg3);border-radius:8px}
+    .module-num{font-family:var(--mono);font-size:.7rem;color:var(--muted);width:28px;flex-shrink:0;padding-top:2px}
+    .module-title{font-weight:600;color:var(--text)}
+    .module-sub{font-size:.75rem;color:var(--muted)}
+    .week-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700;margin-left:6px;vertical-align:middle}
+    .wb-p1{background:rgba(139,92,246,.2);color:#c4b5fd}
+    .wb-p2{background:rgba(6,182,212,.2);color:#67e8f9}
+    .wb-p3{background:rgba(16,185,129,.2);color:#6ee7b7}
+
+    /* ── CURRICULUM TABS ── */
+    .curr-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:12px;padding:4px}
+    .curr-tab-btn{flex:1;padding:10px 20px;border:none;background:transparent;color:var(--muted);font-size:.875rem;font-weight:700;border-radius:8px;cursor:pointer;transition:.2s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap}
+    .curr-tab-btn.active{background:var(--surface);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .curr-panel{display:none}
+    .curr-panel.active{display:block}
+
+    .prereq-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;align-items:center}
+    .prereq-label{font-size:.75rem;color:var(--muted);font-weight:600;margin-right:4px}
+    .prereq-chip{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:.76rem;color:var(--muted)}
+    .prereq-chip.req{border-color:rgba(139,92,246,.4);color:#c4b5fd;background:rgba(139,92,246,.08)}
+
+    .time-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:28px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+    .time-item{display:flex;flex-direction:column;gap:2px}
+    .time-item .ti-val{font-family:var(--mono);font-size:1.05rem;font-weight:800}
+    .time-item .ti-label{font-size:.72rem;color:var(--muted)}
+
+    .week-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;margin-bottom:32px}
+    .week-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:transform .2s,box-shadow .2s}
+    .week-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,.25)}
+    .week-card-head{padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+    .wk-label{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+    .week-card-head h4{font-size:.9rem;font-weight:800;line-height:1.35;margin-bottom:4px}
+    .week-card-head .wk-sub{font-size:.72rem;color:var(--muted)}
+    .week-card-body{padding:14px 20px}
+    .sess-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .sess-item{font-size:.78rem;color:var(--text);display:flex;gap:8px;line-height:1.4}
+    .sess-item::before{content:'▸';color:var(--accent);flex-shrink:0;font-size:.65rem;margin-top:3px}
+    .sess-item.lab{color:var(--accent3)}
+    .sess-item.lab::before{content:'⚗';font-size:.72rem;margin-top:1px}
+    .milestone-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:700;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+
+    .module-blocks{display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+    .mod-block{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .mod-block.star{border-color:rgba(245,158,11,.4);box-shadow:0 0 24px rgba(245,158,11,.07)}
+    .mod-head{padding:16px 22px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;cursor:pointer;transition:background .15s;user-select:none}
+    .mod-head:hover{background:rgba(139,92,246,.05)}
+    .mod-code-badge{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;font-weight:800;flex-shrink:0}
+    .mod-info h4{font-size:.88rem;font-weight:800;margin-bottom:2px}
+    .mod-info .mod-weeks{font-size:.72rem;color:var(--muted)}
+    .mod-toggle{color:var(--muted);font-size:.75rem;transition:transform .25s;flex-shrink:0}
+    .mod-block.open .mod-toggle{transform:rotate(180deg)}
+    .mod-body{max-height:0;overflow:hidden;transition:max-height .38s ease,padding .3s ease;padding:0 22px}
+    .mod-block.open .mod-body{max-height:600px;padding:4px 22px 20px}
+    .sess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:14px}
+    .sess-card{background:var(--bg3);border-radius:8px;padding:10px 12px}
+    .sess-card .sc-num{font-family:var(--mono);font-size:.64rem;color:var(--muted);margin-bottom:3px}
+    .sess-card .sc-title{font-size:.78rem;font-weight:700;margin-bottom:2px;color:var(--text)}
+    .sess-card .sc-sub{font-size:.7rem;color:var(--muted)}
+    .mod-milestone{display:flex;align-items:center;gap:8px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);border-radius:8px;padding:9px 14px;font-size:.78rem;color:#6ee7b7;font-weight:600}
+
+    .code-showcase{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:28px}
+    .code-showcase-head{background:var(--bg3);padding:10px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .code-showcase-head span{font-family:var(--mono);font-size:.75rem;color:var(--accent)}
+    .code-showcase-head .cs-badge{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+    .code-body{padding:20px 22px;font-family:var(--mono);font-size:.76rem;line-height:1.9;color:#c4b5fd;overflow-x:auto}
+
+    .depth-roadmap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+    .depth-roadmap h3{font-size:1rem;font-weight:800;margin-bottom:6px}
+    .depth-roadmap .dr-sub{font-size:.82rem;color:var(--muted);margin-bottom:22px}
+    .depth-track{position:relative;padding-left:24px}
+    .depth-track::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(to bottom,#8b5cf6,#06b6d4,#10b981);border-radius:2px}
+    .depth-row{display:flex;align-items:flex-start;gap:14px;padding:9px 0;position:relative}
+    .depth-dot{position:absolute;left:-24px;top:11px;width:12px;height:12px;border-radius:50%;border:2px solid;background:var(--surface);flex-shrink:0}
+    .depth-row .d-depth{font-family:var(--mono);font-size:.8rem;font-weight:800;min-width:90px;flex-shrink:0;padding-top:1px}
+    .depth-row .d-name{font-size:.8rem;font-weight:700;margin-bottom:1px}
+    .depth-row .d-desc{font-size:.73rem;color:var(--muted)}
+    .depth-row .d-tag{margin-left:auto;font-family:var(--mono);font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:4px;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:2px}
+
+    /* ── EXAM STRUCTURE ── */
+    #exam{background:var(--bg2)}
+    .exam-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    @media(max-width:900px){.exam-grid{grid-template-columns:1fr}}
+    .exam-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+    .exam-card h3{font-size:1.05rem;font-weight:800;margin-bottom:8px}
+    .exam-card p{font-size:.85rem;color:var(--muted);margin-bottom:16px}
+    .exam-stat{display:flex;flex-direction:column;gap:8px}
+    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+    .stat-row:last-child{border-bottom:none}
+    .stat-label{color:var(--muted)}
+    .stat-val{font-family:var(--mono);font-weight:700}
+
+    /* ── FLOW ── */
+    .flow-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative}
+    .flow-steps::before{content:'';position:absolute;top:32px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));opacity:.4;z-index:0}
+    @media(max-width:768px){.flow-steps{grid-template-columns:1fr 1fr};.flow-steps::before{display:none}}
+    .flow-step{text-align:center;padding:0 8px;position:relative;z-index:1}
+    .flow-num{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;margin:0 auto 12px;border:2px solid}
+    .fn1{background:rgba(139,92,246,.15);border-color:var(--accent);color:var(--accent)}
+    .fn2{background:rgba(148,163,184,.15);border-color:var(--silver);color:var(--silver)}
+    .fn3{background:rgba(245,158,11,.15);border-color:var(--gold);color:var(--gold)}
+    .fn4{background:rgba(99,140,200,.2);border-color:#3b82f6;color:#93c5fd}
+    .fn5{background:rgba(16,185,129,.15);border-color:var(--accent3);color:var(--accent3)}
+    .flow-step h4{font-size:.9rem;font-weight:700;margin-bottom:6px}
+    .flow-step p{font-size:.75rem;color:var(--muted)}
+
+    /* ── BENEFIT TABLE ── */
+    .benefit-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .benefit-table th{background:var(--bg3);padding:14px 16px;text-align:left;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .benefit-table td{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text-dim,#9ca3af)}
+    .benefit-table tr:last-child td{border-bottom:none}
+    .benefit-table tr:hover td{background:rgba(139,92,246,.03)}
+    .check-y{color:var(--accent3);font-weight:700}
+    .check-n{color:#334155}
+    .check-s{color:var(--gold);font-weight:700}
+
+    /* ── FAQ ── */
+    .faq-list{display:flex;flex-direction:column;gap:12px}
+    .faq-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .faq-q{padding:20px 24px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.92rem;transition:background .15s}
+    .faq-q:hover{background:rgba(139,92,246,.06)}
+    .faq-arrow{transition:transform .25s;color:var(--muted)}
+    .faq-item.open .faq-arrow{transform:rotate(180deg)}
+    .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 24px;font-size:.87rem;color:var(--muted);line-height:1.7}
+    .faq-item.open .faq-a{max-height:200px;padding-bottom:20px}
+
+    /* ── CTA ── */
+    #cta{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(6,182,212,.08));border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;padding:120px 0}
+    #cta h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:16px}
+    #cta p{color:var(--muted);font-size:1rem;margin-bottom:48px;max-width:500px;margin-inline:auto}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:60px 0 40px;border-top:1px solid var(--border)}
+    .footer-inner{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap;margin-bottom:40px}
+    .footer-brand h3{font-size:1.2rem;font-weight:900;margin-bottom:8px}
+    .footer-brand p{font-size:.82rem;color:var(--muted);max-width:260px}
+    .footer-links h4{font-size:.82rem;font-weight:700;margin-bottom:12px}
+    .footer-links ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .footer-links ul li a{font-size:.82rem;color:var(--muted);transition:color .2s}
+    .footer-links ul li a:hover{color:var(--text);text-decoration:none}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:28px;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted);flex-wrap:wrap;gap:12px}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s} .delay-2{animation-delay:.2s} .delay-3{animation-delay:.3s} .delay-4{animation-delay:.4s}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="container hero-content">
+
+    <div class="fade-up" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
+      <span class="badge badge-purple">◈ HAchilles Certified AI Native</span>
+      <span class="badge badge-cyan">공식 인증 체계 v1.0 · 2026</span>
+    </div>
+
+    <h1 class="hero-title fade-up delay-1">
+      AI 에이전트 역량을<br/>
+      <span class="gradient-text">공식 인증받으세요</span>
+    </h1>
+
+    <p class="hero-subtitle fade-up delay-2">
+      World Model 진단·MCTS 계획·L3 Evolver 운영까지.<br/>
+      HAchillesWorld 인증은 에이전트 역량을 객관적으로 증명합니다.
+    </p>
+
+    <div class="hero-actions fade-up delay-3">
+      <a href="#levels" class="btn-primary">인증 등급 보기</a>
+      <a href="scan.html" class="btn-secondary">무료 진단 먼저</a>
+    </div>
+
+    <!-- 배지 쇼케이스 -->
+    <div class="seal-showcase fade-up delay-4">
+
+      <div class="seal">
+        <div class="seal-ring silver">
+          <div class="seal-inner">
+            <span class="seal-abbr silver" style="font-size:1.2rem">HCP</span>
+            <span class="seal-label">Level 1</span>
+          </div>
+        </div>
+        <div class="seal-name" style="color:var(--silver)">Certified Practitioner</div>
+        <div class="seal-year">₩100,000</div>
+      </div>
+
+      <div class="seal">
+        <div class="seal-ring gold">
+          <div class="seal-inner">
+            <span class="seal-abbr gold" style="font-size:1.2rem">HCE</span>
+            <span class="seal-label">Level 2</span>
+          </div>
+        </div>
+        <div class="seal-name" style="color:var(--gold)">Certified Engineer</div>
+        <div class="seal-year">₩300,000</div>
+      </div>
+
+      <div class="seal">
+        <div class="seal-ring navy guilloche">
+          <div class="seal-inner">
+            <span class="seal-abbr navy" style="font-size:1.1rem">HCAN</span>
+            <span class="seal-label">Level 3 ◈</span>
+          </div>
+        </div>
+        <div class="seal-name" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Certified AI Native</div>
+        <div class="seal-year">₩500,000</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── 3 LEVELS ── -->
+<section id="levels">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">인증 등급 체계</p>
+      <h2 class="section-title">3단계 역량 인증<br/><span class="gradient-text">HCP → HCE → HCAN</span></h2>
+      <p class="section-desc">입문 진단가부터 L3 Evolver 설계자까지, 실제 역량을 단계별로 공인합니다.</p>
+    </div>
+    <div class="levels-grid">
+
+      <!-- HCP -->
+      <div class="level-card">
+        <div class="level-card-top">
+          <span class="level-tag tag-silver">Level 1</span>
+          <div class="level-abbr" style="color:var(--silver)">HCP</div>
+          <div class="level-fullname">HAchilles Certified Practitioner</div>
+          <p class="level-desc">AI 에이전트를 진단하고 문제를 정의하며 해결 방향을 제시할 수 있다.</p>
+        </div>
+        <div class="level-card-body">
+          <div class="level-price" style="color:var(--silver)">₩100,000</div>
+          <div class="level-period">유효기간 2년 · 4~6주 학습</div>
+          <ul class="feat-list">
+            <li>HAchillesWorld Scan 독립 실행</li>
+            <li>15개 진단 지표 해석</li>
+            <li>Levels × Laws 에이전트 분류</li>
+            <li>기본 하네스 규칙 5개 작성</li>
+            <li>Phase 1 로드맵 초안 설계</li>
+            <li class="dim">MCTS 계획기 구현</li>
+            <li class="dim">L3 Evolver 운영</li>
+          </ul>
+          <a href="mailto:suhopark1@gmail.com?subject=HCP 인증 응시 문의" class="btn-level">HCP 시작하기</a>
+        </div>
+      </div>
+
+      <!-- HCE -->
+      <div class="level-card featured">
+        <div class="level-card-top">
+          <span class="level-tag tag-gold">Level 2 · 추천</span>
+          <div class="level-abbr" style="color:var(--gold)">HCE</div>
+          <div class="level-fullname">HAchilles Certified Engineer</div>
+          <p class="level-desc">L2 Simulator 수준의 에이전트를 직접 구현하고 최적화할 수 있다.</p>
+        </div>
+        <div class="level-card-body">
+          <div class="level-price" style="color:var(--gold)">₩300,000</div>
+          <div class="level-period">유효기간 2년 · 6~10주 학습 · HCP 필요</div>
+          <ul class="feat-list">
+            <li>ECE 0.10 이하 캘리브레이션</li>
+            <li>MCTS Planning Depth 15스텝</li>
+            <li>Counterfactual 추론 통합</li>
+            <li>Harness 20개 Grade 체계 구현</li>
+            <li>DriftMonitor + 자동 재보정</li>
+            <li>CostRouter 30% 비용 절감</li>
+            <li class="dim">Meta-Harness 자기수정</li>
+          </ul>
+          <a href="mailto:suhopark1@gmail.com?subject=HCE 인증 응시 문의" class="btn-level gold">HCE 응시하기</a>
+        </div>
+      </div>
+
+      <!-- HCAN -->
+      <div class="level-card elite">
+        <div class="level-card-top">
+          <span class="level-tag tag-navy">Level 3 ◈ 최고 등급</span>
+          <div class="level-abbr" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">HCAN</div>
+          <div class="level-fullname">HAchilles Certified AI Native</div>
+          <p class="level-desc">L3 Evolver를 설계·구현·운영하고 타인을 교육할 수 있다. 공식 길로셰 배지 수여.</p>
+        </div>
+        <div class="level-card-body">
+          <div class="level-price" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">₩500,000</div>
+          <div class="level-period">유효기간 1년 · 8~12주 · HCE + 실무 6개월</div>
+          <ul class="feat-list">
+            <li>Meta-Harness 자기수정 구현</li>
+            <li>온라인 학습 루프 (24h 적응)</li>
+            <li>Neural Rollout Depth 20+</li>
+            <li>Red-teaming 자동화</li>
+            <li>L3 인증 심사 참여 자격</li>
+            <li>경영진 대상 발표 역량</li>
+          </ul>
+          <a href="mailto:suhopark1@gmail.com?subject=HCAN 인증 응시 문의" class="btn-level navy">HCAN 도전하기 ◈</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── CURRICULUM ── -->
+<section id="curriculum" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">커리큘럼</p>
+      <h2 class="section-title">주차별 <span class="gradient-text">상세 학습 경로</span></h2>
+      <p class="section-desc">이론 30% + 실습 50% + 복습·평가 20%. 각 주차는 독립적으로 완결되며 이전 결과물이 다음 주차의 입력이 됩니다.</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div style="display:flex;justify-content:center;margin-bottom:40px">
+      <div class="curr-tabs">
+        <button class="curr-tab-btn active" onclick="switchCurrTab('hcp',this)">HCP · 4주</button>
+        <button class="curr-tab-btn" onclick="switchCurrTab('hce',this)">HCE · 8주</button>
+        <button class="curr-tab-btn" onclick="switchCurrTab('hcan',this)">HCAN · 10주</button>
+      </div>
+    </div>
+
+    <!-- ══════════════ HCP PANEL ══════════════ -->
+    <div id="tab-hcp" class="curr-panel active">
+
+      <div class="prereq-row">
+        <span class="prereq-label">필수 선행:</span>
+        <span class="prereq-chip req">Python 기초</span>
+        <span class="prereq-chip req">LLM API 경험</span>
+        <span class="prereq-chip req">JSON 읽기·쓰기</span>
+        <span class="prereq-chip">AI/ML 기초 (권장)</span>
+      </div>
+
+      <div class="time-row">
+        <div class="time-item"><span class="ti-val" style="color:var(--accent)">4주</span><span class="ti-label">총 학습 기간</span></div>
+        <div class="time-item"><span class="ti-val">30h</span><span class="ti-label">이론 강의</span></div>
+        <div class="time-item"><span class="ti-val">20h</span><span class="ti-label">실습·과제</span></div>
+        <div class="time-item"><span class="ti-val" style="color:var(--silver)">50h</span><span class="ti-label">총 학습시간</span></div>
+        <div class="time-item"><span class="ti-val">12~15h</span><span class="ti-label">주당 권장 시간</span></div>
+      </div>
+
+      <div class="week-cards-grid">
+
+        <!-- W1 -->
+        <div class="week-card">
+          <div class="week-card-head">
+            <div class="wk-label" style="color:var(--accent)">Week 1</div>
+            <h4>AI 에이전트와 World Model 이해</h4>
+            <div class="wk-sub">에이전트 실패 해부 · Levels × Laws · DEOR 루프</div>
+          </div>
+          <div class="week-card-body">
+            <ul class="sess-list">
+              <li class="sess-item">에이전트 실패 유형 4가지 분류 (코드 버그 vs WM 오류)</li>
+              <li class="sess-item">World Model & Simulation Drift 개념</li>
+              <li class="sess-item">L1·L2·L3 수준 정의 + 4개 Laws 도메인</li>
+              <li class="sess-item">DEOR 자율 루프와 Planning Depth 관계</li>
+              <li class="sess-item lab">실습 — 에이전트 3개 Levels × Laws 분류 보고서</li>
+            </ul>
+            <span class="milestone-chip">✓ L1/L2/L3 사례로 구분 가능</span>
+          </div>
+        </div>
+
+        <!-- W2 -->
+        <div class="week-card">
+          <div class="week-card-head">
+            <div class="wk-label" style="color:var(--accent)">Week 2</div>
+            <h4>HAchillesWorld Scan 실행과 해석</h4>
+            <div class="wk-sub">15개 지표 심화 · 우선순위 매트릭스</div>
+          </div>
+          <div class="week-card-body">
+            <ul class="sess-list">
+              <li class="sess-item"><code style="font-family:var(--mono);font-size:.7rem">pip install hachillesworld</code> · CLI 실행</li>
+              <li class="sess-item">World Model 품질 5개 지표 (Drift·ECE·OOD 등)</li>
+              <li class="sess-item">에이전시·운영 건전성 10개 지표 해석</li>
+              <li class="sess-item">긴급도 × 영향도 우선순위 매트릭스</li>
+              <li class="sess-item lab">실습 — 샘플 로그 100개 에피소드 Scan + 위험 3개 분석</li>
+            </ul>
+            <span class="milestone-chip">✓ 독립 Scan + 우선순위 3개 도출</span>
+          </div>
+        </div>
+
+        <!-- W3 -->
+        <div class="week-card">
+          <div class="week-card-head">
+            <div class="wk-label" style="color:var(--accent)">Week 3</div>
+            <h4>Harness Engineering 기초</h4>
+            <div class="wk-sub">3등급 체계 · REJECT·WARN·PASS · HITL 원칙</div>
+          </div>
+          <div class="week-card-body">
+            <ul class="sess-list">
+              <li class="sess-item">하네스 개념 — Hashimoto 원칙 vs 프롬프트 차이</li>
+              <li class="sess-item">Grade A(절대)·B(경보)·C(학습) 3등급 체계</li>
+              <li class="sess-item">REJECT·WARN·PASS 패턴 코드 작성법</li>
+              <li class="sess-item">HITL 필수 트리거 4가지 (비가역·고액·신뢰도·OOD)</li>
+              <li class="sess-item lab">실습 — 하네스 규칙 5개 코드 (Grade 분류 + 단위 테스트)</li>
+            </ul>
+            <span class="milestone-chip">✓ Grade A/B/C 규칙 5개 구현</span>
+          </div>
+        </div>
+
+        <!-- W4 -->
+        <div class="week-card">
+          <div class="week-card-head">
+            <div class="wk-label" style="color:var(--accent)">Week 4</div>
+            <h4>진단 리포트 + Phase 1 로드맵</h4>
+            <div class="wk-sub">퀵스캔 리포트 5페이지 · 8주 로드맵 설계</div>
+          </div>
+          <div class="week-card-body">
+            <ul class="sess-list">
+              <li class="sess-item">퀵스캔 리포트 5페이지 구조 (표지·스코어카드·분석·로드맵·ROI)</li>
+              <li class="sess-item">긴급도 × 영향도 매트릭스 실전 적용</li>
+              <li class="sess-item">Phase 1 8주 로드맵 태스크 순서 설계</li>
+              <li class="sess-item">HCP 핵심 포인트 30선 복습 + 시험 대비</li>
+              <li class="sess-item lab">최종 과제 — 퀵스캔 리포트 + 하네스 5개 + 로드맵 제출</li>
+            </ul>
+            <span class="milestone-chip">✓ HCP 실습 과제 제출 → 시험 응시 자격</span>
+          </div>
+        </div>
+
+      </div><!-- /week-cards-grid -->
+
+      <!-- HCP code -->
+      <div class="code-showcase">
+        <div class="code-showcase-head">
+          <span>hachillesworld_scan.py — HCP 핵심 실습</span>
+          <span class="cs-badge">Week 2 실습</span>
+        </div>
+        <div class="code-body">
+<span style="color:#67e8f9">from</span> hachillesworld <span style="color:#67e8f9">import</span> HAchillesWorldClient<br/><br/>
+client = HAchillesWorldClient(agent_name=<span style="color:#86efac">"my-agent"</span>)<br/>
+report = client.scan(log_path=<span style="color:#86efac">"./logs/episodes.json"</span>)<br/><br/>
+<span style="color:#6b7280">print</span>(<span style="color:#86efac">f"종합 점수: </span><span style="color:#fda4af">{report.overall_score:.1f}</span><span style="color:#86efac">"</span>)<br/>
+<span style="color:#6b7280">print</span>(<span style="color:#86efac">f"Level 판정: </span><span style="color:#fda4af">{report.level}</span><span style="color:#86efac">"</span>)  <span style="color:#4b5563"># L2.3 × Digital</span><br/><br/>
+<span style="color:#67e8f9">for</span> metric <span style="color:#67e8f9">in</span> report.metrics:<br/>
+&nbsp;&nbsp;status = <span style="color:#86efac">"✅"</span> <span style="color:#67e8f9">if</span> metric.is_ok <span style="color:#67e8f9">else</span> <span style="color:#86efac">"⚠️"</span><br/>
+&nbsp;&nbsp;<span style="color:#6b7280">print</span>(<span style="color:#86efac">f"</span><span style="color:#fda4af">{status}</span><span style="color:#86efac"> </span><span style="color:#fda4af">{metric.name}</span><span style="color:#86efac">: </span><span style="color:#fda4af">{metric.value:.3f}</span><span style="color:#86efac">"</span>)
+        </div>
+      </div>
+
+    </div><!-- /tab-hcp -->
+
+    <!-- ══════════════ HCE PANEL ══════════════ -->
+    <div id="tab-hce" class="curr-panel">
+
+      <div class="prereq-row">
+        <span class="prereq-label">필수 선행:</span>
+        <span class="prereq-chip req">HCP 보유</span>
+        <span class="prereq-chip req">Python 중급 (클래스·async)</span>
+        <span class="prereq-chip req">LLM API 실무 2개월+</span>
+        <span class="prereq-chip req">numpy·pandas 기초</span>
+        <span class="prereq-chip">확률·통계 기초 (권장)</span>
+      </div>
+
+      <div class="time-row">
+        <div class="time-item"><span class="ti-val" style="color:var(--gold)">8주</span><span class="ti-label">총 학습 기간</span></div>
+        <div class="time-item"><span class="ti-val">50h</span><span class="ti-label">이론 강의</span></div>
+        <div class="time-item"><span class="ti-val">60h</span><span class="ti-label">실습·과제</span></div>
+        <div class="time-item"><span class="ti-val" style="color:var(--gold)">110h</span><span class="ti-label">총 학습시간</span></div>
+        <div class="time-item"><span class="ti-val">15~20h</span><span class="ti-label">주당 권장 시간</span></div>
+      </div>
+
+      <div class="module-blocks">
+
+        <!-- M1 -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(139,92,246,.15);color:#c4b5fd">M1</div>
+            <div class="mod-info">
+              <h4>ECE Calibration & World Model 품질</h4>
+              <div class="mod-weeks">Week 1~2 &nbsp;·&nbsp; 이론 10h + 실습 12h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">M1-1</div><div class="sc-title">Calibration 실패 유형</div><div class="sc-sub">과신·과소신·불안정 진단</div></div>
+              <div class="sess-card"><div class="sc-num">M1-2</div><div class="sc-title">Temperature Scaling</div><div class="sc-sub"><code style="font-family:var(--mono)">TemperatureScaling.fit()</code></div></div>
+              <div class="sess-card"><div class="sc-num">M1-3</div><div class="sc-title">Platt Scaling 심화</div><div class="sc-sub">ECE 0.08 미만 달성</div></div>
+              <div class="sess-card"><div class="sc-num">M1-4</div><div class="sc-title">자동 재보정 파이프라인</div><div class="sc-sub">OnlineCalibrator + DriftMonitor</div></div>
+              <div class="sess-card"><div class="sc-num">M1-5</div><div class="sc-title">ECE 모니터링 자동화</div><div class="sc-sub">Slack 경보 연동</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: ECE 0.08 이하 달성 (제공 데이터셋 3회 연속 검증)</div>
+          </div>
+        </div>
+
+        <!-- M2 -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(6,182,212,.15);color:#67e8f9">M2</div>
+            <div class="mod-info">
+              <h4>Harness Engineering 심화</h4>
+              <div class="mod-weeks">Week 2~3 &nbsp;·&nbsp; 이론 8h + 실습 14h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">M2-1</div><div class="sc-title">하네스 아키텍처 설계</div><div class="sc-sub">Grade A/B/C 분류 전략</div></div>
+              <div class="sess-card"><div class="sc-num">M2-2</div><div class="sc-title">비가역 행동 식별</div><div class="sc-sub">도메인별 HITL 필수 행동</div></div>
+              <div class="sess-card"><div class="sc-num">M2-3</div><div class="sc-title">HarnessGenerator 활용</div><div class="sc-sub">자동 생성 규칙 검토</div></div>
+              <div class="sess-card"><div class="sc-num">M2-4</div><div class="sc-title">복합·연쇄 규칙 작성</div><div class="sc-sub">다중 조건 Grade 체계</div></div>
+              <div class="sess-card"><div class="sc-num">M2-5</div><div class="sc-title">하네스 테스트 전략</div><div class="sc-sub">단위 테스트·엣지 케이스</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: Harness 20개 구현 (Grade A ≥ 8개)</div>
+          </div>
+        </div>
+
+        <!-- M3 MCTS -->
+        <div class="mod-block star" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(245,158,11,.2);color:#fcd34d">M3</div>
+            <div class="mod-info">
+              <h4>MCTS 계획기 통합 ⭐ 핵심 모듈</h4>
+              <div class="mod-weeks">Week 3~5 &nbsp;·&nbsp; 이론 12h + 실습 18h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">M3-1</div><div class="sc-title">MCTS 이론</div><div class="sc-sub">Selection·Expansion·Rollout·Backprop 4단계</div></div>
+              <div class="sess-card"><div class="sc-num">M3-2</div><div class="sc-title">UCB1 탐색 정책</div><div class="sc-sub">exploration_c 최적화 A/B 테스트</div></div>
+              <div class="sess-card"><div class="sc-num">M3-3</div><div class="sc-title">MCTSPlanner 구현</div><div class="sc-sub">World Model 래퍼 + 4단계 루프</div></div>
+              <div class="sess-card"><div class="sc-num">M3-4</div><div class="sc-title">Planning Depth 확장</div><div class="sc-sub">Depth 3 → 5 → 10 → 15 단계별</div></div>
+              <div class="sess-card"><div class="sc-num">M3-5</div><div class="sc-title">Latency 최적화</div><div class="sc-sub">Early Stopping · 결과 캐싱</div></div>
+              <div class="sess-card"><div class="sc-num">M3-6</div><div class="sc-title">도메인 World Model 작성</div><div class="sc-sub">State·simulate_step·estimate_value</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: Planning Depth 15스텝 + Latency ≤ 200ms (10회 평균)</div>
+          </div>
+        </div>
+
+        <!-- M4 -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(16,185,129,.15);color:#6ee7b7">M4</div>
+            <div class="mod-info">
+              <h4>Counterfactual 추론 레이어</h4>
+              <div class="mod-weeks">Week 5~6 &nbsp;·&nbsp; 이론 8h + 실습 10h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">M4-1</div><div class="sc-title">Counterfactual 개념</div><div class="sc-sub">"다른 결정을 했다면?" 시뮬레이션</div></div>
+              <div class="sess-card"><div class="sc-num">M4-2</div><div class="sc-title">CounterfactualLayer 구현</div><div class="sc-sub">대안 5개 동시 시뮬레이션</div></div>
+              <div class="sess-card"><div class="sc-num">M4-3</div><div class="sc-title">후회 최소화 (Regret)</div><div class="sc-sub">minimize_regret() 구현</div></div>
+              <div class="sess-card"><div class="sc-num">M4-4</div><div class="sc-title">WM 업데이트 연계</div><div class="sc-sub">CF 데이터로 Phase 3 온라인 학습 준비</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: Counterfactual 정확도 70% 이상 (100개 에피소드)</div>
+          </div>
+        </div>
+
+        <!-- M5 -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(99,140,200,.2);color:#93c5fd">M5</div>
+            <div class="mod-info">
+              <h4>Operate 기초 구축</h4>
+              <div class="mod-weeks">Week 6~8 &nbsp;·&nbsp; 이론 12h + 실습 16h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">M5-1</div><div class="sc-title">DriftMonitor 설정</div><div class="sc-sub">임계값·윈도우·자동 재보정</div></div>
+              <div class="sess-card"><div class="sc-num">M5-2</div><div class="sc-title">Slack/Teams 경보</div><div class="sc-sub">Webhook 핸들러 연동</div></div>
+              <div class="sess-card"><div class="sc-num">M5-3</div><div class="sc-title">Replay Debugger</div><div class="sc-sub">실패 에피소드 10분 내 분석</div></div>
+              <div class="sess-card"><div class="sc-num">M5-4</div><div class="sc-title">CostAwareRouter</div><div class="sc-sub">3-tier 모델 라우팅 (30% 절감)</div></div>
+              <div class="sess-card"><div class="sc-num">M5-5</div><div class="sc-title">OpenTelemetry 계측</div><div class="sc-sub">전체 DEOR 루프 추적</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: Phase 1·2 통합 검증 통과 (6개 완료 기준)</div>
+          </div>
+        </div>
+
+      </div><!-- /module-blocks -->
+
+      <!-- MCTS Code Showcase -->
+      <div class="code-showcase">
+        <div class="code-showcase-head">
+          <span>mcts_planner.py — HCE M3 핵심 실습 (4단계 완전 구현)</span>
+          <span class="cs-badge">⭐ M3 핵심</span>
+        </div>
+        <div class="code-body">
+<span style="color:#67e8f9">from</span> hachillesworld.optimize.mcts <span style="color:#67e8f9">import</span> MCTSPlanner, MCTSNode<br/><br/>
+<span style="color:#4b5563"># HCE 목표: Depth 15 · n_simulations 50 · latency ≤ 200ms</span><br/>
+planner = MCTSPlanner(<br/>
+&nbsp;&nbsp;agent_name=<span style="color:#86efac">"hce-cert-agent"</span>,<br/>
+&nbsp;&nbsp;n_simulations=<span style="color:#fda4af">50</span>,<br/>
+&nbsp;&nbsp;exploration_c=<span style="color:#fda4af">1.414</span>,&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># UCB1 √2</span><br/>
+&nbsp;&nbsp;max_depth=<span style="color:#fda4af">15</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># HCE 달성 기준</span><br/>
+&nbsp;&nbsp;rollout_policy=<span style="color:#86efac">"random"</span>,<br/>
+&nbsp;&nbsp;discount_factor=<span style="color:#fda4af">0.95</span>,<br/>
+)<br/><br/>
+<span style="color:#4b5563"># 4단계: Select → Expand → Rollout → Backprop</span><br/>
+root = MCTSNode(state=initial_state)<br/>
+<span style="color:#67e8f9">for</span> _ <span style="color:#67e8f9">in</span> range(planner.n_simulations):<br/>
+&nbsp;&nbsp;node&nbsp;&nbsp;= planner.select(root)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># UCB1 탐색</span><br/>
+&nbsp;&nbsp;child = planner.expand(node, world_model)&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># 자식 확장</span><br/>
+&nbsp;&nbsp;rew&nbsp;&nbsp; = planner.rollout(child, world_model)&nbsp;&nbsp;<span style="color:#4b5563"># 시뮬레이션</span><br/>
+&nbsp;&nbsp;planner.backpropagate(child, rew)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># 보상 전파</span><br/>
+best_action = planner.best_action(root)<br/><br/>
+<span style="color:#4b5563"># HCAN 업그레이드: Neural Rollout + Depth 22</span><br/>
+<span style="color:#4b5563"># MCTSPlanner(max_depth=22, n_simulations=200,</span><br/>
+<span style="color:#4b5563">#&nbsp;&nbsp;rollout_policy=NeuralRolloutPolicy(world_model))</span>
+        </div>
+      </div>
+
+    </div><!-- /tab-hce -->
+
+    <!-- ══════════════ HCAN PANEL ══════════════ -->
+    <div id="tab-hcan" class="curr-panel">
+
+      <div class="prereq-row">
+        <span class="prereq-label">필수 선행:</span>
+        <span class="prereq-chip req">HCE 보유</span>
+        <span class="prereq-chip req">실제 에이전트 운영 6개월+</span>
+        <span class="prereq-chip req">Python 고급 (async·metaclass)</span>
+        <span class="prereq-chip req">ML 기초 (온라인 학습·EWC)</span>
+        <span class="prereq-chip">팀 리드 또는 발표 경험 (권장)</span>
+      </div>
+
+      <div class="time-row">
+        <div class="time-item"><span class="ti-val" style="color:#93c5fd">10주</span><span class="ti-label">총 학습 기간</span></div>
+        <div class="time-item"><span class="ti-val">60h</span><span class="ti-label">이론 강의</span></div>
+        <div class="time-item"><span class="ti-val">100h</span><span class="ti-label">실습·과제</span></div>
+        <div class="time-item"><span class="ti-val" style="color:#93c5fd">160h</span><span class="ti-label">총 학습시간</span></div>
+        <div class="time-item"><span class="ti-val">18~25h</span><span class="ti-label">주당 권장 시간</span></div>
+      </div>
+
+      <div class="module-blocks">
+
+        <!-- Module A -->
+        <div class="mod-block star" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(139,92,246,.2);color:#c4b5fd">A</div>
+            <div class="mod-info">
+              <h4>Meta-Harness 자기수정 ⭐ L3의 핵심</h4>
+              <div class="mod-weeks">Week 1~3 &nbsp;·&nbsp; 이론 14h + 실습 22h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">A-1</div><div class="sc-title">Meta-Harness 아키텍처</div><div class="sc-sub">학습하는 하네스 설계</div></div>
+              <div class="sess-card"><div class="sc-num">A-2</div><div class="sc-title">실패 패턴 추출</div><div class="sc-sub">에피소드 → 패턴 분류 알고리즘</div></div>
+              <div class="sess-card"><div class="sc-num">A-3</div><div class="sc-title">규칙 자동 생성 품질 관리</div><div class="sc-sub">SafeMetaHarness 오규칙 방지</div></div>
+              <div class="sess-card"><div class="sc-num">A-4</div><div class="sc-title">인간 검토 프로세스</div><div class="sc-sub">Slack 제안 → 24h 승인 워크플로</div></div>
+              <div class="sess-card"><div class="sc-num">A-5</div><div class="sc-title">Meta-Harness 보안</div><div class="sc-sub">보호된 패턴·충돌 감지</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: 10회 실패 → 규칙 8개 자동 생성 + 1건 이상 실제 차단 시연</div>
+          </div>
+        </div>
+
+        <!-- Module B -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(6,182,212,.15);color:#67e8f9">B</div>
+            <div class="mod-info">
+              <h4>온라인 학습 루프</h4>
+              <div class="mod-weeks">Week 3~5 &nbsp;·&nbsp; 이론 12h + 실습 18h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">B-1</div><div class="sc-title">온라인 vs 배치 학습</div><div class="sc-sub">적응 속도 트레이드오프</div></div>
+              <div class="sess-card"><div class="sc-num">B-2</div><div class="sc-title">EWC — Catastrophic Forgetting 방지</div><div class="sc-sub">Fisher Information Matrix 활용</div></div>
+              <div class="sess-card"><div class="sc-num">B-3</div><div class="sc-title">Counterfactual 데이터 활용</div><div class="sc-sub">Phase 2 CF 데이터 가중치 적용</div></div>
+              <div class="sess-card"><div class="sc-num">B-4</div><div class="sc-title">환경 변화 감지</div><div class="sc-sub">Drift 트리거 → 자동 학습 시작</div></div>
+              <div class="sess-card"><div class="sc-num">B-5</div><div class="sc-title">업데이트 검증·롤백</div><div class="sc-sub">적응 품질 검증 + 실패 시 롤백</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: 환경 변화 감지 후 24시간 이내 World Model 업데이트 자동화</div>
+          </div>
+        </div>
+
+        <!-- Module C -->
+        <div class="mod-block star" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(245,158,11,.2);color:#fcd34d">C</div>
+            <div class="mod-info">
+              <h4>Neural Rollout & L3 계획 ⭐</h4>
+              <div class="mod-weeks">Week 4~6 &nbsp;·&nbsp; 이론 14h + 실습 22h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">C-1</div><div class="sc-title">Neural Rollout Policy 학습 이론</div><div class="sc-sub">Random → 학습된 정책으로 업그레이드</div></div>
+              <div class="sess-card"><div class="sc-num">C-2</div><div class="sc-title">World Model 기반 Rollout 구현</div><div class="sc-sub">NeuralRolloutPolicy 클래스</div></div>
+              <div class="sess-card"><div class="sc-num">C-3</div><div class="sc-title">Depth 20+ 파라미터 튜닝</div><div class="sc-sub">n_simulations=200 · exploration_c=1.2</div></div>
+              <div class="sess-card"><div class="sc-num">C-4</div><div class="sc-title">Latency 최적화</div><div class="sc-sub">비동기·캐싱·Early Stopping 3가지</div></div>
+              <div class="sess-card"><div class="sc-num">C-5</div><div class="sc-title">MCTS + Neural Rollout 통합 검증</div><div class="sc-sub">Depth 22 + Latency ≤ 120ms</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: Planning Depth 22 + Latency ≤ 120ms (10회 평균)</div>
+          </div>
+        </div>
+
+        <!-- Module D -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(239,68,68,.15);color:#fca5a5">D</div>
+            <div class="mod-info">
+              <h4>Red-teaming 자동화</h4>
+              <div class="mod-weeks">Week 6~7 &nbsp;·&nbsp; 이론 10h + 실습 18h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">D-1</div><div class="sc-title">AI 에이전트 취약점 유형</div><div class="sc-sub">Reward Hacking·Goal Misalignment·OOD</div></div>
+              <div class="sess-card"><div class="sc-num">D-2</div><div class="sc-title">Reward Hacking 탐지</div><div class="sc-sub">극단 행동으로 비정상 보상 달성 탐지</div></div>
+              <div class="sess-card"><div class="sc-num">D-3</div><div class="sc-title">OOD 입력 자동 생성</div><div class="sc-sub">분포 밖 입력으로 에이전트 혼란 유발</div></div>
+              <div class="sess-card"><div class="sc-num">D-4</div><div class="sc-title">취약점 → 하네스 자동 변환</div><div class="sc-sub">vulnerability_to_rule() 구현</div></div>
+              <div class="sess-card"><div class="sc-num">D-5</div><div class="sc-title">Red-teaming 자동화 파이프라인</div><div class="sc-sub">1,000회 시뮬레이션 자동화</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: 취약점 10개 발견 + 자동 패치 8개 이상</div>
+          </div>
+        </div>
+
+        <!-- Module E -->
+        <div class="mod-block" onclick="toggleMod(this)">
+          <div class="mod-head">
+            <div class="mod-code-badge" style="background:rgba(16,185,129,.15);color:#6ee7b7">E</div>
+            <div class="mod-info">
+              <h4>L3 인증 심사 & 교육 역량</h4>
+              <div class="mod-weeks">Week 7~10 &nbsp;·&nbsp; 이론 10h + 실습 20h</div>
+            </div>
+            <span class="mod-toggle">▼</span>
+          </div>
+          <div class="mod-body">
+            <div class="sess-grid">
+              <div class="sess-card"><div class="sc-num">E-1</div><div class="sc-title">L3 인증 6개 기준 실전 적용</div><div class="sc-sub">자가 점검 → 공식 심사 준비</div></div>
+              <div class="sess-card"><div class="sc-num">E-2</div><div class="sc-title">인증 심사 참여 방법론</div><div class="sc-sub">검토위원 역할·평가 기준</div></div>
+              <div class="sess-card"><div class="sc-num">E-3</div><div class="sc-title">Levels × Laws 교육 설계</div><div class="sc-sub">HCP·HCE 수강생 대상 강의 설계</div></div>
+              <div class="sess-card"><div class="sc-num">E-4</div><div class="sc-title">경영진 대상 5분 발표</div><div class="sc-sub">"Simulation Drift를 CEO에게" 훈련</div></div>
+              <div class="sess-card"><div class="sc-num">E-5</div><div class="sc-title">새 도메인 Laws 적용</div><div class="sc-sub">프레임워크 이식 사례 연구</div></div>
+            </div>
+            <div class="mod-milestone">✓ 마일스톤: 모의 인증 심사 진행 + 교육 세션 1회 + 구술 심사 통과</div>
+          </div>
+        </div>
+
+      </div><!-- /module-blocks -->
+
+      <!-- HCAN Neural Rollout Code -->
+      <div class="code-showcase" style="margin-bottom:28px">
+        <div class="code-showcase-head">
+          <span>neural_rollout.py — HCAN Module C (Depth 22 달성)</span>
+          <span class="cs-badge">⭐ Module C</span>
+        </div>
+        <div class="code-body">
+<span style="color:#67e8f9">from</span> hachillesworld.optimize.mcts <span style="color:#67e8f9">import</span> MCTSPlanner, NeuralRolloutPolicy<br/><br/>
+<span style="color:#4b5563"># HCAN: random rollout → Neural Policy 업그레이드</span><br/>
+neural_policy = NeuralRolloutPolicy(world_model)<br/>
+neural_policy.train(success_episodes)&nbsp;&nbsp;<span style="color:#4b5563"># Phase 2 CF 데이터 활용</span><br/><br/>
+planner = MCTSPlanner(<br/>
+&nbsp;&nbsp;agent_name=<span style="color:#86efac">"hcan-cert-agent"</span>,<br/>
+&nbsp;&nbsp;n_simulations=<span style="color:#fda4af">200</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># HCE 50 → 4배</span><br/>
+&nbsp;&nbsp;max_depth=<span style="color:#fda4af">22</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># HCAN 달성 기준</span><br/>
+&nbsp;&nbsp;exploration_c=<span style="color:#fda4af">1.2</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#4b5563"># 활용 비중 증가</span><br/>
+&nbsp;&nbsp;rollout_policy=neural_policy,<br/>
+)<br/><br/>
+<span style="color:#4b5563"># Latency 최적화: 비동기 + Early Stopping</span><br/>
+action = <span style="color:#67e8f9">await</span> async_mcts_plan(planner, state, world_model)<br/>
+<span style="color:#4b5563"># 목표: avg latency ≤ 120ms (10회 측정)</span>
+        </div>
+      </div>
+
+      <!-- Planning Depth Roadmap -->
+      <div class="depth-roadmap">
+        <h3>Planning Depth 학습 로드맵</h3>
+        <p class="dr-sub">Depth 3(진단 시작)부터 Depth 22(L3 인증)까지 — HCP·HCE·HCAN 전체 여정</p>
+        <div class="depth-track">
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--silver);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--silver)">Depth 3</div>
+            <div><div class="d-name">반사적 반응 · 진단 시작점</div><div class="d-desc">HAchillesWorld Scan으로 현재 Depth 측정 — HCP Week 2</div></div>
+            <span class="d-tag" style="background:rgba(148,163,184,.15);color:var(--silver)">HCP</span>
+          </div>
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--accent);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--accent)">Depth 5</div>
+            <div><div class="d-name">결과 확인 · Phase 2 초기</div><div class="d-desc">MCTSPlanner(max_depth=5, n_simulations=50) — HCE M3 Week 3</div></div>
+            <span class="d-tag" style="background:rgba(139,92,246,.15);color:#c4b5fd">HCE M3</span>
+          </div>
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--accent);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--accent)">Depth 10</div>
+            <div><div class="d-name">조달 사이클 완성</div><div class="d-desc">UCB1 최적화 + rollout 100회 — HCE M3 Week 4</div></div>
+            <span class="d-tag" style="background:rgba(139,92,246,.15);color:#c4b5fd">HCE M3</span>
+          </div>
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--gold);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--gold)">Depth 15 ⭐</div>
+            <div><div class="d-name">L2 Simulator 완성 — HCE 달성 목표</div><div class="d-desc">중기 전략 계획 가능 · latency 91ms 실전 달성 — HCE M3 Week 5</div></div>
+            <span class="d-tag" style="background:rgba(245,158,11,.2);color:#fcd34d">HCE 목표</span>
+          </div>
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--accent2);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--accent2)">Depth 18</div>
+            <div><div class="d-name">L2→L3 전환 구간</div><div class="d-desc">Neural Rollout 도입 + n_simulations=150 — HCAN Module C Week 5</div></div>
+            <span class="d-tag" style="background:rgba(6,182,212,.15);color:#67e8f9">HCAN C</span>
+          </div>
+
+          <div class="depth-row">
+            <div class="depth-dot" style="border-color:var(--accent3);background:var(--bg2)"></div>
+            <div class="d-depth" style="color:var(--accent3)">Depth 22 ◈</div>
+            <div><div class="d-name">L3 Evolver — HCAN 달성 목표 · L3 인증</div><div class="d-desc">자율 전략 · Meta-Harness 연동 · n_simulations=200 — HCAN Module C Week 6</div></div>
+            <span class="d-tag" style="background:rgba(16,185,129,.2);color:#6ee7b7">HCAN 목표</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /tab-hcan -->
+
+  </div>
+</section>
+
+<!-- ── 시험 구조 ── -->
+<section id="exam">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">시험 및 평가</p>
+      <h2 class="section-title">이론 + 실습 + <span class="gradient-text">구술 3단계</span></h2>
+      <p class="section-desc">HCAN은 이론 시험·실전 프로젝트·구술 심사를 모두 통과해야 합니다.</p>
+    </div>
+    <div class="exam-grid">
+      <div class="exam-card">
+        <span class="badge badge-purple" style="margin-bottom:16px">Level 1 · HCP</span>
+        <h3>이론 + 실습 과제</h3>
+        <p>이론 50문항 + 72시간 실습 제출</p>
+        <div class="exam-stat">
+          <div class="stat-row"><span class="stat-label">이론 문항</span><span class="stat-val">50문항 · 90분</span></div>
+          <div class="stat-row"><span class="stat-label">합격 기준</span><span class="stat-val">이론 70점+</span></div>
+          <div class="stat-row"><span class="stat-label">실습 내용</span><span class="stat-val">Scan + 하네스 5개</span></div>
+          <div class="stat-row"><span class="stat-label">응시 비용</span><span class="stat-val">₩100,000</span></div>
+          <div class="stat-row"><span class="stat-label">재응시</span><span class="stat-val">30일 후 · ₩50,000</span></div>
+        </div>
+      </div>
+      <div class="exam-card" style="border-color:rgba(245,158,11,.3)">
+        <span class="badge badge-gold" style="margin-bottom:16px">Level 2 · HCE</span>
+        <h3>이론 + 2주 프로젝트</h3>
+        <p>이론 60문항 + Phase 1·2 구현 프로젝트</p>
+        <div class="exam-stat">
+          <div class="stat-row"><span class="stat-label">이론 문항</span><span class="stat-val">60문항 · 120분</span></div>
+          <div class="stat-row"><span class="stat-label">합격 기준</span><span class="stat-val">이론 75점+ · 프로젝트 75점+</span></div>
+          <div class="stat-row"><span class="stat-label">프로젝트</span><span class="stat-val">ECE·MCTS·CF·Harness</span></div>
+          <div class="stat-row"><span class="stat-label">응시 비용</span><span class="stat-val">₩300,000</span></div>
+          <div class="stat-row"><span class="stat-label">재응시</span><span class="stat-val">30일 후 · ₩150,000</span></div>
+        </div>
+      </div>
+      <div class="exam-card" style="border-color:rgba(99,140,200,.4)">
+        <span class="badge badge-navy" style="margin-bottom:16px">Level 3 ◈ · HCAN</span>
+        <h3>이론 + 4주 프로젝트 + 구술</h3>
+        <p>3단계 심사 — 모두 통과해야 인증</p>
+        <div class="exam-stat">
+          <div class="stat-row"><span class="stat-label">이론 문항</span><span class="stat-val">80문항 · 150분</span></div>
+          <div class="stat-row"><span class="stat-label">합격 기준</span><span class="stat-val">이론 80점+ · 프로젝트 80점+</span></div>
+          <div class="stat-row"><span class="stat-label">구술 심사</span><span class="stat-val">60분 · 심사위원 2인</span></div>
+          <div class="stat-row"><span class="stat-label">응시 비용</span><span class="stat-val">₩500,000</span></div>
+          <div class="stat-row"><span class="stat-label">갱신</span><span class="stat-val">1년 · ₩150,000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 취득 프로세스 ── -->
+<section id="process" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">취득 프로세스</p>
+      <h2 class="section-title">5단계로 <span class="gradient-text">인증 완료</span></h2>
+    </div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num fn1">1</div>
+        <h4>학습 시작</h4>
+        <p>SDK 설치<br/>교재 학습</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num fn2">2</div>
+        <h4>시험 접수</h4>
+        <p>온라인 등록<br/>결제 + 일정</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num fn3">3</div>
+        <h4>시험 응시</h4>
+        <p>이론 + 실습<br/>프로젝트 제출</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num fn4">4</div>
+        <h4>결과 확인</h4>
+        <p>72h~7일<br/>피드백 수령</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num fn5">5</div>
+        <h4>배지 활성화</h4>
+        <p>LinkedIn·GitHub<br/>공식 게시</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 혜택 ── -->
+<section id="benefits">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">인증자 혜택</p>
+      <h2 class="section-title">등급별 <span class="gradient-text">혜택 비교</span></h2>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="benefit-table">
+        <thead>
+          <tr>
+            <th>혜택</th>
+            <th style="color:var(--silver)">HCP</th>
+            <th style="color:var(--gold)">HCE</th>
+            <th style="color:#93c5fd">HCAN ◈</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>공식 디지털 배지</td><td class="check-y">✓ 실버</td><td class="check-y">✓ 골드</td><td class="check-s">◈ 길로셰 배지</td></tr>
+          <tr><td>HAchillesWorld Pro 무료</td><td class="check-y">1개월</td><td class="check-y">3개월</td><td class="check-s">1년</td></tr>
+          <tr><td>인증자 디렉토리 등록</td><td class="check-y">✓</td><td class="check-y">✓</td><td class="check-s">공식 프로필</td></tr>
+          <tr><td>멘토링 수익 활동</td><td class="check-n">—</td><td class="check-y">✓ HCP 멘토</td><td class="check-s">전 등급 멘토</td></tr>
+          <tr><td>파트너 컨설턴트 자격</td><td class="check-n">—</td><td class="check-n">—</td><td class="check-s">✓</td></tr>
+          <tr><td>인증 심사 참여</td><td class="check-n">—</td><td class="check-n">—</td><td class="check-s">✓ 검토위원</td></tr>
+          <tr><td>분기별 기술 브리핑</td><td class="check-n">—</td><td class="check-y">✓</td><td class="check-s">✓ 우선 초청</td></tr>
+          <tr><td>박성훈 1:1 세션</td><td class="check-n">—</td><td class="check-n">—</td><td class="check-s">분기 1회</td></tr>
+          <tr><td>컨퍼런스 발표 추천서</td><td class="check-n">—</td><td class="check-n">—</td><td class="check-s">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section id="faq" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-header center">
+      <p class="section-label">FAQ</p>
+      <h2 class="section-title">자주 묻는 <span class="gradient-text">질문</span></h2>
+    </div>
+    <div class="faq-list" style="max-width:720px;margin:0 auto">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          HCP 없이 HCE에 바로 도전할 수 있나요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">원칙적으로 순서를 권장합니다. 실무 경험 2년 이상인 경우 HCP 면제 신청이 가능합니다(심사 비용 ₩50,000). 단, HCP 내용은 HCE 시험에 포함되므로 충분한 이해가 필요합니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          시험은 온라인으로 응시할 수 있나요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">이론 시험과 실습 제출은 모두 온라인으로 진행합니다. HCAN 구술 심사만 화상 미팅으로 진행되며, 월 2회 일정이 제공됩니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          개인 업무 데이터를 실습에 사용해도 되나요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">가능합니다. 제출 전 개인정보·영업비밀을 반드시 익명화해야 합니다. 제공되는 샘플 데이터셋으로도 모든 실습을 완료할 수 있습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          HCAN 갱신(1년)을 놓치면 어떻게 되나요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">만료 후 90일 이내에는 갱신 절차로 복원 가능합니다. 90일 초과 시 HCE부터 재취득이 필요합니다. 갱신 조건은 시험(40문항) + 사례 제출 + 커뮤니티 기여 중 1가지입니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          에이전트 L3 인증과 개인 HCAN 인증은 다른가요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">다릅니다. 개인 HCAN은 사람의 역량 인증이고, 에이전트 L3 인증은 시스템의 품질 인증입니다. HCAN 보유자는 에이전트 L3 인증 심사에 검토위원으로 참여할 수 있습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          학생·오픈소스 기여자 할인이 있나요?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">학생·취준생은 학생증 제출 시 50% 할인, GitHub hachillesworld 저장소 Merged PR 1건 이상 기여자는 30% 할인 쿠폰을 제공합니다. 팀 5인 이상은 20% 단체 할인이 적용됩니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section id="cta">
+  <div class="container">
+    <div class="badge badge-green" style="margin-bottom:20px">◈ 2026년 1기 인증 모집 중</div>
+    <h2>지금 바로 <span class="gradient-text">인증 여정을 시작하세요</span></h2>
+    <p>먼저 무료 Scan으로 현재 역량을 확인하고,<br/>어느 등급부터 시작할지 결정하세요.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
+      <a href="scan.html" class="btn-primary">🔍 무료 Scan으로 시작</a>
+      <a href="mailto:suhopark1@gmail.com?subject=HAchillesWorld 인증 문의" class="btn-secondary">✉ 인증 문의하기</a>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted)">
+      인증 번호 체계: HCAN-2026-XXXX &nbsp;·&nbsp;
+      문의: suhopark1@gmail.com &nbsp;·&nbsp;
+      이론 기반: 《Agentic World Modeling 2027》
+    </p>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <h3 class="gradient-text">HAchillesWorld</h3>
+        <p>World Model 진단·최적화·운영 플랫폼.<br/>Levels × Laws 프레임워크로 L3 Evolver까지.</p>
+      </div>
+      <div class="footer-links">
+        <h4>인증</h4>
+        <ul>
+          <li><a href="#levels">등급 체계</a></li>
+          <li><a href="#curriculum">커리큘럼</a></li>
+          <li><a href="#exam">시험 구조</a></li>
+          <li><a href="#benefits">인증자 혜택</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>제품</h4>
+        <ul>
+          <li><a href="scan.html">무료 Scan</a></li>
+          <li><a href="optimize.html">Optimize</a></li>
+          <li><a href="operate.html">Operate</a></li>
+          <li><a href="index.html#pricing">가격</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>리소스</h4>
+        <ul>
+          <li><a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a></li>
+          <li><a href="mailto:suhopark1@gmail.com">문의하기</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 HAchillesWorld. 박성훈. All rights reserved.</span>
+      <span>Built with ❤️ + Claude Sonnet 4.6</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── FAQ ── */
+  function toggleFaq(el) {
+    const item = el.closest('.faq-item');
+    item.classList.toggle('open');
+  }
+
+  /* ── CURRICULUM TABS ── */
+  function switchCurrTab(id, btn) {
+    // 패널 전환
+    document.querySelectorAll('.curr-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    // 버튼 상태
+    document.querySelectorAll('.curr-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  /* ── MODULE ACCORDION ── */
+  function toggleMod(block) {
+    // 같은 패널 내 다른 mod-block은 닫음
+    const panel = block.closest('.curr-panel');
+    panel.querySelectorAll('.mod-block').forEach(b => {
+      if (b !== block) b.classList.remove('open');
+    });
+    block.classList.toggle('open');
+  }
+
+  /* ── 스크롤 페이드인 ── */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll(
+    '.level-card, .exam-card, .flow-step, .week-card, .mod-block, .code-showcase, .depth-roadmap, .time-row'
+  ).forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(18px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+
+  /* ── 네비 스크롤 ── */
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.97)' : 'rgba(10,10,15,.9)';
+  });
+</script>
+</body>
+</html>
