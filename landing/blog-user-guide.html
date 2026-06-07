@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — HAchillesWorld 완전 사용 가이드 v2.1 | HAchillesWorld</title>
+  <meta name="description" content="설치부터 첫 진단, Optimize 로드맵, 실시간 Drift 모니터링까지 — HAchillesWorld v2.1을 15분 만에 내 에이전트에 연결하는 실전 가이드." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── LAYOUT ── */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+
+    /* ── HERO ── */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(6,182,212,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ── ARTICLE ── */
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1;padding-bottom:80px}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:52px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.05rem;font-weight:800;color:var(--text);margin:28px 0 10px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted)}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+
+    /* ── CODE BLOCK ── */
+    .code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:20px 0}
+    .code-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent);display:flex;align-items:center;justify-content:space-between}
+    .code-block-head .dots{display:flex;gap:5px}
+    .code-block-head .dot{width:10px;height:10px;border-radius:50%}
+    .code-block pre{padding:20px;font-family:var(--mono);font-size:.82rem;line-height:1.75;color:#c4b5fd;overflow-x:auto;margin:0}
+    .code-block pre .cm{color:#4b5563}
+    .code-block pre .kw{color:#67e8f9}
+    .code-block pre .st{color:#86efac}
+    .code-block pre .nm{color:#fda4af}
+    .code-block pre .ok{color:#6ee7b7}
+
+    /* ── STEP CARD ── */
+    .step-card{display:flex;gap:20px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:20px 0;transition:border-color .2s}
+    .step-card:hover{border-color:rgba(139,92,246,.45)}
+    .step-num{font-family:var(--mono);font-size:2.2rem;font-weight:900;color:rgba(139,92,246,.25);line-height:1;flex-shrink:0;min-width:48px}
+    .step-body h3{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:8px}
+    .step-body p{font-size:.9rem;color:var(--muted);margin:0;line-height:1.65}
+
+    /* ── OUTPUT BLOCK ── */
+    .output-block{background:var(--bg2);border:1px solid rgba(16,185,129,.3);border-radius:12px;overflow:hidden;margin:16px 0}
+    .output-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid rgba(16,185,129,.2);font-family:var(--mono);font-size:.72rem;color:var(--accent3);display:flex;align-items:center;gap:6px}
+    .output-block pre{padding:18px;font-family:var(--mono);font-size:.8rem;line-height:1.75;color:#d1fae5;overflow-x:auto;margin:0}
+
+    /* ── TIP BOX ── */
+    .tip-box{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:18px 22px;margin:20px 0;font-size:.9rem;color:#67e8f9;line-height:1.6}
+    .tip-box strong{color:#67e8f9}
+
+    /* ── WARN BOX ── */
+    .warn-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:18px 22px;margin:20px 0;font-size:.9rem;color:#fcd34d;line-height:1.6}
+
+    /* ── FLOW ── */
+    .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:20px;background:var(--surface);border-radius:12px;margin:20px 0}
+    .flow-item{padding:8px 16px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);border-radius:8px;font-size:.85rem;font-weight:700;color:#c4b5fd;font-family:var(--mono)}
+    .flow-arrow{color:var(--accent);font-size:1.2rem;font-weight:900}
+
+    /* ── VERSION BADGE ── */
+    .ver-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.65rem;font-weight:700;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#6ee7b7;margin-left:8px;vertical-align:middle}
+
+    /* ── TOC ── */
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:4px}
+    .toc-list li a{font-size:.78rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    .toc-divider{height:1px;background:var(--border);margin:8px 0}
+    @media(max-width:900px){.toc{display:none}}
+
+    /* ── CTA ── */
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#사용가이드</span>
+      <span class="blog-tag">#튜토리얼</span>
+      <span class="blog-tag">#Scan</span>
+      <span class="blog-tag">#Optimize</span>
+      <span class="blog-tag">#Operate</span>
+      <span class="blog-tag" style="border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08);color:#6ee7b7">v2.1</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      HAchillesWorld<br/>완전 사용 가이드
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      설치 → 첫 진단 → 로드맵 → 실시간 모니터링까지.<br/>15분이면 내 에이전트를 HAchillesWorld에 연결할 수 있습니다.
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 10월</span>
+      <span>약 5,500자 · 20분 읽기</span>
+      <span style="color:var(--accent3)">◈ 코드 예제 포함</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARTICLE + TOC ── -->
+<div class="article-layout">
+
+  <article class="article-body">
+
+    <p>HAchillesWorld를 처음 접하는 분들이 가장 많이 묻는 것은 <strong>"어디서부터 시작하면 되나요?"</strong>다.</p>
+
+    <p>이 글은 그 질문에 단계별로 답한다. 설치부터 첫 진단 리포트 해석, Optimize 로드맵 생성, 실시간 Drift 모니터링 연결까지 — 각 단계의 명령어와 출력 결과를 그대로 담았다.</p>
+
+    <blockquote>
+      이 가이드는 <strong>사용자 가이드 v2.1.0</strong> 기준이다. v2.1의 주요 신규 기능 — HAS 신뢰구간, HASInterpreter, 영구 스토리지, LocalJudge — 을 포함한다.
+    </blockquote>
+
+    <hr/>
+
+    <h2 id="overview">전체 흐름 한 눈에 보기</h2>
+
+    <div class="flow">
+      <div class="flow-item">① 설치</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">② 로그 수집</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">③ Scan 진단</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">④ 결과 해석</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">⑤ Optimize</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-item">⑥ Operate</div>
+    </div>
+
+    <p>각 단계는 독립적이다. 지금 당장 로그가 없어도 <strong>예제 데이터로 ①~④를 먼저 경험</strong>할 수 있고, SDK 연동 후 ②부터 다시 시작하면 된다.</p>
+
+    <hr/>
+
+    <h2 id="install">① 설치 — 3분</h2>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>bash</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="cm"># 저장소 클론</span>
+git clone https://github.com/suhopark1-tech/hachillesworld
+cd HAchillesWorld
+
+<span class="cm"># 개발 모드 설치 (소스 수정이 즉시 반영)</span>
+pip install -e .
+
+<span class="cm"># 설치 확인</span>
+hachillesworld version</pre>
+    </div>
+
+    <div class="output-block">
+      <div class="output-block-head"><span>●</span> 출력</div>
+      <pre>HAchillesWorld v2.1.0</pre>
+    </div>
+
+    <p>API 키는 로컬 진단에 필요하지 않다. CA 측정을 Anthropic API로 수행하거나 클라우드 기능을 사용할 때만 필요하다.</p>
+
+    <div class="tip-box">
+      <strong>Python 3.11 이상이 필요합니다.</strong> <code>python --version</code>으로 확인 후 필요하면 업그레이드하세요.
+    </div>
+
+    <hr/>
+
+    <h2 id="collect">② 로그 수집 — SDK 연동</h2>
+
+    <p>HAchillesWorld가 진단할 수 있는 데이터는 두 가지다. <strong>기존 JSON 로그</strong>가 있다면 바로 ③으로 건너뛰어도 된다. 없다면 SDK 데코레이터 하나로 자동 수집을 시작한다.</p>
+
+    <h3>방법 A: @instrument 데코레이터 (가장 간단)</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python — sdk_quickstart.py</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld <span class="kw">import</span> HAchillesWorldClient, instrument
+
+client = HAchillesWorldClient()
+
+<span class="cm"># 기존 에이전트 클래스에 데코레이터 하나만 붙인다</span>
+@instrument(client, agent_name=<span class="st">"my-agent"</span>)
+<span class="kw">class</span> MyAgent:
+    <span class="kw">def</span> plan(self, state, goal):
+        <span class="cm"># 기존 코드 그대로 유지</span>
+        <span class="kw">return</span> self._select_action(state, goal)
+
+    <span class="kw">def</span> execute(self, action):
+        <span class="kw">return</span> self._run_action(action)
+
+    <span class="kw">def</span> observe(self, result):
+        <span class="kw">return</span> self._update_state(result)
+
+    <span class="kw">def</span> reflect(self, observation):
+        self._update_world_model(observation)</pre>
+    </div>
+
+    <p><code>plan</code> / <code>execute</code> / <code>observe</code> / <code>reflect</code> 이름의 메서드가 자동으로 계측된다. 다른 메서드는 영향받지 않는다.</p>
+
+    <h3>방법 B: 개별 이벤트 기록</h3>
+
+    <p>메서드 이름이 다르거나 세부 정보를 추가로 기록하려면:</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">import</span> time
+
+client.track(
+    agent_name=<span class="st">"my-agent"</span>,
+    event_type=<span class="st">"plan"</span>,
+    payload={
+        <span class="st">"planning_depth"</span>: <span class="nm">12</span>,     <span class="cm"># 몇 스텝 앞을 보는가</span>
+        <span class="st">"uncertainty"</span>:    <span class="nm">0.12</span>,   <span class="cm"># 불확실성 수준</span>
+        <span class="st">"confidence"</span>:     <span class="nm">0.88</span>,   <span class="cm"># 자기 확신도</span>
+    }
+)
+
+client.track(
+    agent_name=<span class="st">"my-agent"</span>,
+    event_type=<span class="st">"observe"</span>,
+    payload={
+        <span class="st">"prediction_error"</span>: <span class="nm">0.08</span>,          <span class="cm"># 예측-현실 괴리</span>
+        <span class="st">"error_within_uncertainty"</span>: <span class="kw">True</span>,  <span class="cm"># 불확실성 구간 내인가</span>
+        <span class="st">"goal_achieved"</span>: <span class="kw">True</span>,
+    }
+)
+
+client.flush()  <span class="cm"># 버퍼 플러시</span></pre>
+    </div>
+
+    <div class="tip-box">
+      <strong>최소 50개 에피소드</strong>를 수집해야 통계적으로 의미 있는 95% 신뢰구간이 산출됩니다. 처음에는 예제 데이터로 시작해도 충분합니다.
+    </div>
+
+    <hr/>
+
+    <h2 id="scan">③ Scan 진단 — 첫 번째 HAS 점수</h2>
+
+    <h3>예제 데이터로 바로 실행</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>bash</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre>python examples/basic_scan.py</pre>
+    </div>
+
+    <div class="output-block">
+      <div class="output-block-head"><span>●</span> 출력 (v2.1)</div>
+      <pre>============================================================
+  HAchillesWorld v2.1 — 진단 데모
+============================================================
+
+🟡 [demo-agent] L2.2 × Digital Laws
+   종합 점수: 74/100 (B등급 — 감독 하 운용, 상위 42%)
+   95% CI: [71.2, 76.8]  가중치 버전: 2.1
+   WM품질: 80 | 에이전시: 50 | 운영: 100
+
+   ⚡ 가장 시급한 문제: SCR 0.0% — 자기 수정 루프 미구현
+
+   즉각 조치 (HAS +18 예상):
+     1. [즉시]    SCR: 0.0% → 10% — Self-Correction Engine 구현
+     2. [이번 주] PD:  2스텝 → 5스텝 — MCTS 계획 알고리즘 도입
+     3. [이번 달] ECE: 0.18 → 0.10 — 확신도 캘리브레이션 개선</pre>
+    </div>
+
+    <h3>내 로그로 진단 (CLI)</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>bash</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre>hachillesworld scan \
+  --logs  ./my_agent_logs.json \
+  --config ./agent_config.json \
+  --name  "my-agent" \
+  --output ./report.json</pre>
+    </div>
+
+    <h3>Python API로 진단</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">import</span> json
+<span class="kw">from</span> hachillesworld <span class="kw">import</span> HAchillesWorldClient
+
+client = HAchillesWorldClient()
+logs   = json.load(open(<span class="st">"my_agent_logs.json"</span>))
+config = {<span class="st">"laws_domain"</span>: <span class="st">"digital"</span>, <span class="st">"harness_rules"</span>: [...]}
+
+report = client.scan(logs=logs, config=config, agent_name=<span class="st">"my-agent"</span>)
+
+<span class="cm"># 기본 결과</span>
+<span class="kw">print</span>(report.summary())
+
+<span class="cm"># v2.1 신뢰구간</span>
+lo, hi = report.has_confidence_interval
+<span class="kw">print</span>(f<span class="st">"95% CI: [{lo:.1f}, {hi:.1f}]"</span>)
+
+<span class="cm"># 측정 불가 지표 확인</span>
+<span class="kw">if</span> report.not_measured_metrics:
+    <span class="kw">print</span>(f<span class="st">"측정 불가: {report.not_measured_metrics}"</span>)
+    <span class="kw">print</span>(<span class="st">"→ 해당 지표는 HAS 계산에서 제외됩니다 (분모 조정)"</span>)</pre>
+    </div>
+
+    <h3>로그 파일 형식 (최소 요건)</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>json — my_agent_logs.json</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre>[
+  {<span class="st">"event_type"</span>: <span class="st">"plan"</span>,
+   <span class="st">"payload"</span>: {<span class="st">"planning_depth"</span>: <span class="nm">12</span>, <span class="st">"uncertainty"</span>: <span class="nm">0.10</span>, <span class="st">"confidence"</span>: <span class="nm">0.90</span>}},
+
+  {<span class="st">"event_type"</span>: <span class="st">"execute"</span>,
+   <span class="st">"payload"</span>: {<span class="st">"action"</span>: <span class="st">"query_api"</span>, <span class="st">"cost_usd"</span>: <span class="nm">0.002</span>}},
+
+  {<span class="st">"event_type"</span>: <span class="st">"observe"</span>,
+   <span class="st">"payload"</span>: {<span class="st">"prediction_error"</span>: <span class="nm">0.08</span>, <span class="st">"goal_achieved"</span>: <span class="kw">true</span>}},
+
+  {<span class="st">"event_type"</span>: <span class="st">"reflect"</span>,
+   <span class="st">"payload"</span>: {<span class="st">"recalibrated"</span>: <span class="kw">false</span>}}
+]</pre>
+    </div>
+
+    <hr/>
+
+    <h2 id="interpret">④ 결과 해석 — HASInterpreter <span class="ver-badge">v2.1 신규</span></h2>
+
+    <p>v2.1의 가장 큰 변화 중 하나다. HAS 점수가 나왔을 때 "이게 좋은 건지 나쁜 건지, 다음에 뭘 해야 하는지"를 5초 안에 알 수 있다.</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.interpret.has_interpreter <span class="kw">import</span> HASInterpreter
+
+interp = HASInterpreter().interpret(report)
+
+<span class="kw">print</span>(f<span class="st">"등급:      {interp.grade} ({interp.grade_label})"</span>)
+<span class="kw">print</span>(f<span class="st">"배포 권고: {interp.deployment_status}"</span>)
+<span class="kw">print</span>(f<span class="st">"산업 평균 대비: 상위 {interp.percentile:.0f}%"</span>)
+<span class="kw">print</span>(f<span class="st">"즉각 조치 시 예상 HAS 향상: +{interp.estimated_improvement:.0f}점"</span>)
+
+<span class="kw">print</span>(<span class="st">"\n[즉각 조치 목록]"</span>)
+<span class="kw">for</span> action <span class="kw">in</span> interp.next_actions:
+    urgency = [<span class="st">"즉시"</span>, <span class="st">"이번 주"</span>, <span class="st">"이번 달"</span>][action.priority - <span class="nm">1</span>]
+    <span class="kw">print</span>(f<span class="st">"  [{urgency}] {action.metric}: {action.current_value:.2f} → {action.target_value:.2f}"</span>)
+    <span class="kw">print</span>(f<span class="st">"           {action.action}"</span>)
+    <span class="kw">print</span>(f<span class="st">"           예상 HAS 향상: +{action.estimated_has_gain:.0f}점"</span>)</pre>
+    </div>
+
+    <div class="output-block">
+      <div class="output-block-head"><span>●</span> 출력</div>
+      <pre>등급:      B (감독 하 운용)
+배포 권고: 감독 하 제한적 운용
+산업 평균 대비: 상위 42%
+즉각 조치 시 예상 HAS 향상: +18점
+
+[즉각 조치 목록]
+  [즉시] SCR: 0.00 → 0.10
+         Self-Correction Engine 구현 — reflect 단계에서 correction_applied 활성화
+         예상 HAS 향상: +8점
+
+  [이번 주] PD: 2.00 → 5.00
+             MCTS 기반 Planning 알고리즘 도입 검토
+             예상 HAS 향상: +6점
+
+  [이번 달] ECE: 0.18 → 0.10
+              Temperature scaling 또는 Platt scaling 캘리브레이션 적용
+              예상 HAS 향상: +4점</pre>
+    </div>
+
+    <h3>HAS 등급 기준표</h3>
+
+    <div style="overflow-x:auto;margin:16px 0 24px">
+      <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead>
+          <tr style="background:var(--bg3)">
+            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--muted);border-bottom:1px solid var(--border)">점수</th>
+            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--muted);border-bottom:1px solid var(--border)">등급</th>
+            <th style="padding:10px 14px;text-align:left;font-size:.72rem;color:var(--muted);border-bottom:1px solid var(--border)">배포 권고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);color:#6ee7b7">90~100</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:#6ee7b7;font-weight:700">A+ 우수</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted)">전면 배포 가능</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);color:#86efac">80~89</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:#86efac;font-weight:700">A 양호</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted)">조건부 배포</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);color:#fcd34d">70~79</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:#fcd34d;font-weight:700">B 개선 필요</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted)">감독 하 운용</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);color:#fb923c">60~69</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:#fb923c;font-weight:700">C 주의</td><td style="padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted)">제한적 운영</td></tr>
+          <tr><td style="padding:10px 14px;font-family:var(--mono);color:#f87171">0~59</td><td style="padding:10px 14px;color:#f87171;font-weight:700">D 위험</td><td style="padding:10px 14px;color:var(--muted)">배포 보류</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip-box">
+      <strong>HAS 95% 신뢰구간 활용법:</strong> HAS 74.1 [71.8, 76.4]과 HAS 73.5 [70.9, 76.1]의 차이는 통계적으로 유의하지 않을 수 있습니다. 개선 전후 비교 시 CI 중첩 여부를 먼저 확인하세요.
+    </div>
+
+    <hr/>
+
+    <h2 id="optimize">⑤ Optimize — 개선 로드맵 생성</h2>
+
+    <p>진단 결과를 바탕으로 다음 레벨까지의 구체적 로드맵이 자동으로 생성된다.</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.optimize.roadmap <span class="kw">import</span> RoadmapGenerator
+
+<span class="cm"># 자동 목표 설정 (현재 레벨 기준 다음 레벨)</span>
+roadmap = RoadmapGenerator().generate(report)
+
+<span class="cm"># 또는 명시적 목표</span>
+roadmap = RoadmapGenerator().generate(report, target_level=<span class="st">"L3"</span>)
+
+RoadmapGenerator().print_roadmap(roadmap)</pre>
+    </div>
+
+    <div class="output-block">
+      <div class="output-block-head"><span>●</span> 출력</div>
+      <pre>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HAchillesWorld Optimize — 로드맵
+  L2.2 → L3  (Digital Laws)  |  총 기간: 24주
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Phase 1: L3 기반 준비 (6주)   +8점 예상
+    ★ Self-Correction Engine 구현       ← 최우선
+    • EWC 적용 (Elastic Weight Consolidation)
+    • DEOR 자율 루프 설계
+
+  Phase 2: 자율성 확장 (10주)   +12점 예상
+    ★ MCTS Planning 알고리즘 도입
+    • Counterfactual Reasoning 강화
+    • OOD 감지 임계값 튜닝
+
+  Phase 3: 안정화 (8주)         +6점 예상
+    • 프로덕션 Drift 모니터링 연결
+    • Meta-Harness 규칙 자동 학습</pre>
+    </div>
+
+    <h3>하네스 규칙 자동 생성</h3>
+
+    <p>진단 결과에서 Critical 지표가 있으면, 해당 위험을 차단할 하네스 코드를 자동으로 생성할 수 있다.</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.optimize.harness_generator <span class="kw">import</span> HarnessGenerator
+
+spec = HarnessGenerator().generate(report)
+<span class="kw">print</span>(spec.to_python())  <span class="cm"># 생성된 하네스 코드 확인</span></pre>
+    </div>
+
+    <div class="warn-box">
+      ⚠️ 생성된 하네스 코드는 <strong>초안</strong>입니다. 특히 <code>severity="hard"</code> 규칙은 에이전트를 완전히 차단할 수 있으므로, 반드시 엔지니어가 검토한 후 프로덕션에 적용하세요.
+    </div>
+
+    <hr/>
+
+    <h2 id="operate">⑥ Operate — 실시간 모니터링</h2>
+
+    <p>에이전트가 프로덕션에 배포된 후 World Model이 현실과 멀어지는 것을 실시간으로 추적한다.</p>
+
+    <h3>Drift 모니터링 연결</h3>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python — production_loop.py</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.operate.monitor <span class="kw">import</span> DriftMonitor
+
+monitor = DriftMonitor(
+    agent_name=<span class="st">"production-agent"</span>,
+    threshold=<span class="nm">0.15</span>,           <span class="cm"># 이 값 초과 시 드리프트로 판단</span>
+    window_size=<span class="nm">20</span>,           <span class="cm"># 최근 N개 기록으로 안정성 판단</span>
+    alert_rate_threshold=<span class="nm">0.20</span>  <span class="cm"># 20% 이상이면 경보</span>
+)
+
+@monitor.on_alert
+<span class="kw">def</span> handle_alert(alert):
+    <span class="kw">print</span>(f<span class="st">"⚡ Drift: {alert.drift_value:.4f}"</span>)
+    <span class="kw">print</span>(f<span class="st">"   권장 조치: {alert.recommended_action}"</span>)
+    <span class="cm"># → Slack 알림, 자동 재보정 트리거 등 연결</span>
+
+<span class="cm"># 에이전트 운영 루프 내에서 매 스텝 호출</span>
+<span class="kw">for</span> step <span class="kw">in</span> range(n_steps):
+    action    = agent.plan(state, goal)
+    result    = agent.execute(action)
+    predicted = world_model.predict(state, action)
+    actual    = env.observe()
+
+    drift = monitor.record(
+        predicted={<span class="st">"value"</span>: predicted.value, <span class="st">"cost"</span>: predicted.cost},
+        actual=   {<span class="st">"value"</span>: actual.value,    <span class="st">"cost"</span>: actual.cost},
+    )
+
+    <span class="kw">if</span> drift > monitor.threshold:
+        world_model.recalibrate(actual)
+
+summary = monitor.summary()
+<span class="kw">print</span>(f<span class="st">"경보 횟수: {summary['alert_count']}"</span>)
+<span class="kw">print</span>(f<span class="st">"안정 상태: {summary['is_stable']}"</span>)</pre>
+    </div>
+
+    <h3>실패 에피소드 Replay 디버깅</h3>
+
+    <p>에이전트가 잘못된 결정을 내렸을 때 — 어떤 스텝에서 World Model이 틀어졌는지 재생하며 근본 원인을 찾는다.</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.operate.replay <span class="kw">import</span> ReplayDebugger
+
+debugger = ReplayDebugger()
+session  = debugger.load(episode_id=<span class="st">"ep-fail-001"</span>, events=failed_episode_logs)
+debugger.print_session(session)
+
+<span class="kw">print</span>(f<span class="st">"근본 원인: {session.root_cause}"</span>)
+<span class="kw">print</span>(f<span class="st">"실패 스텝: Step {session.failure_step}"</span>)</pre>
+    </div>
+
+    <div class="output-block">
+      <div class="output-block-head"><span>●</span> 출력</div>
+      <pre>  ⚡ 근본 원인: Step 2 (observe): Simulation Drift 0.420 > 0.15 — 재보정 미실행
+
+  Step  0 [plan   ]: planning_depth=3, uncertainty=0.08
+  Step  1 [execute]: action=update_inventory
+🔴Step  2 [observe]: ⚠ Drift 0.42 — prediction_error: 0.42
+  Step  3 [reflect]: recalibrated=False  ← 문제 원인</pre>
+    </div>
+
+    <hr/>
+
+    <h2 id="storage">히스토리 관리 <span class="ver-badge">v2.1 신규</span></h2>
+
+    <p>v2.1부터 진단 결과가 영구적으로 저장된다. 재시작 후에도 HAS 히스토리를 조회하고 시계열 비교가 가능하다.</p>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.storage <span class="kw">import</span> ReportStore
+
+<span class="cm"># SQLite (로컬) 또는 PostgreSQL (프로덕션)</span>
+store = ReportStore(db_url=<span class="st">"sqlite:///hachillesworld.db"</span>)
+
+<span class="cm"># 리포트 저장</span>
+store.save(report)
+
+<span class="cm"># 히스토리 조회</span>
+history = store.get_history(agent_name=<span class="st">"my-agent"</span>, limit=<span class="nm">30</span>)
+<span class="kw">for</span> r <span class="kw">in</span> history:
+    <span class="kw">print</span>(f<span class="st">"{r.created_at:%Y-%m-%d}: HAS {r.has_score:.0f}"</span>)
+
+<span class="cm"># 가중치 버전별 점수 비교 (시계열 비교 가능성)</span>
+score_v21 = report.composite_score_at_version(<span class="st">"2.1"</span>)
+<span class="kw">print</span>(f<span class="st">"v2.1 기준 점수: {score_v21:.0f}"</span>)</pre>
+    </div>
+
+    <hr/>
+
+    <h2 id="privacy">데이터 보호 체크리스트</h2>
+
+    <p>HAchillesWorld는 기본적으로 로컬에서만 작동한다. 다음 체크리스트를 확인하자.</p>
+
+    <ul>
+      <li><strong>LocalJudge 사용 확인</strong> — 기본값(<code>HACHILLESWORLD_CA_JUDGE=local</code>)이면 로그가 외부로 나가지 않는다.</li>
+      <li><strong>Privacy Filter 적용</strong> — 로그에 개인식별정보가 포함된 경우 <code>PrivacyFilter</code>로 사전 처리한다.</li>
+      <li><strong>감사 로그 활성화</strong> — 엔터프라이즈 환경에서는 <code>AuditLogger</code>로 누가 어떤 리포트를 조회했는지 기록한다.</li>
+      <li><strong>AnthropicJudge 사용 시 동의</strong> — CA 측정에 외부 API를 쓰는 경우 조직의 데이터 처리 정책을 확인한다.</li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-block-head">
+        <span>python — privacy_example.py</span>
+        <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+      </div>
+      <pre><span class="kw">from</span> hachillesworld.privacy <span class="kw">import</span> PrivacyFilter
+
+pf = PrivacyFilter(
+    anonymize_fields=[<span class="st">"user_id"</span>, <span class="st">"email"</span>],     <span class="cm"># 해시 처리</span>
+    redact_patterns=[r<span class="st">"\d{6}-\d{7}"</span>]            <span class="cm"># 주민번호 마스킹</span>
+)
+
+sanitized_logs = pf.apply(raw_logs)
+report = client.scan(logs=sanitized_logs, config=config, agent_name=<span class="st">"my-agent"</span>)</pre>
+    </div>
+
+    <hr/>
+
+    <h2 id="tips">알아두면 좋은 팁</h2>
+
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <h3>로그 없이 시작해도 괜찮다</h3>
+        <p><code>python examples/basic_scan.py</code>만으로 전체 흐름을 경험할 수 있다. 먼저 결과를 보고, 그 다음 SDK를 붙이는 순서가 오히려 빠르다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <h3>planning_depth 키가 Level 판정의 핵심</h3>
+        <p>plan 이벤트의 payload에 <code>planning_depth</code>가 없으면 기본값 1이 사용되어 L1으로 낮게 판정된다. 이 키 하나만 추가해도 진단 정확도가 크게 올라간다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <h3>95% CI로 개선 효과를 객관적으로 증명한다</h3>
+        <p>개선 전 HAS 72.1 [69.8, 74.4] → 개선 후 HAS 83.5 [81.2, 85.8]. CI가 겹치지 않으면 개선 효과가 통계적으로 유의하다. 경영진 보고에 바로 활용할 수 있다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <h3>WMQ가 낮으면 다른 지표를 먼저 보지 말 것</h3>
+        <p>WMQ는 HAS의 45%를 차지한다. WMQ가 60 미만이면 ALM·OHM을 먼저 고치는 것은 순서가 잘못된 것이다. HASInterpreter의 즉각 조치 목록은 항상 우선순위가 올바르게 정렬되어 있다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">05</div>
+      <div class="step-body">
+        <h3>DriftMonitor threshold는 2주 후 조정한다</h3>
+        <p>처음에는 기본값(0.15)으로 시작한다. 2주간 운영 후 <code>np.percentile(monitor.get_all_drifts(), 95)</code>로 실제 95백분위를 새 임계값으로 설정하면 과잉 경보를 줄일 수 있다.</p>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="article-cta">
+      <h3>바로 시작해 보세요</h3>
+      <p>설치 → 예제 실행 → 첫 HAS 점수까지 15분이면 충분합니다.</p>
+      <div class="cta-btns">
+        <a href="scan.html" class="btn-primary">무료 Scan 시작</a>
+        <a href="blog-glossary.html" class="btn-secondary">용어 해설 보기</a>
+      </div>
+    </div>
+
+  </article>
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h4>목차</h4>
+    <ul class="toc-list">
+      <li><a href="#overview">전체 흐름</a></li>
+      <div class="toc-divider"></div>
+      <li><a href="#install">① 설치</a></li>
+      <li><a href="#collect">② 로그 수집</a></li>
+      <li><a href="#scan">③ Scan 진단</a></li>
+      <li><a href="#interpret">④ 결과 해석</a></li>
+      <li><a href="#optimize">⑤ Optimize</a></li>
+      <li><a href="#operate">⑥ Operate</a></li>
+      <div class="toc-divider"></div>
+      <li><a href="#storage">히스토리 관리</a></li>
+      <li><a href="#privacy">데이터 보호</a></li>
+      <li><a href="#tips">알아두면 좋은 팁</a></li>
+    </ul>
+  </aside>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div style="max-width:1120px;margin:0 auto;padding:0 24px">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  // TOC 활성 항목
+  const headings = document.querySelectorAll('[id]');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const href = '#' + e.target.id;
+        tocLinks.forEach(a => {
+          const active = a.getAttribute('href') === href;
+          a.style.color = active ? 'var(--text)' : '';
+          a.style.borderLeftColor = active ? 'var(--accent)' : '';
+        });
+      }
+    });
+  }, { rootMargin: '-64px 0px -60% 0px' });
+  headings.forEach(h => obs.observe(h));
+
+  // 스텝 카드 페이드
+  const fadeObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.05 });
+  document.querySelectorAll('.step-card, .code-block, .output-block').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(12px)';
+    el.style.transition = 'opacity .4s ease, transform .4s ease';
+    fadeObs.observe(el);
+  });
+</script>
+</body>
+</html>

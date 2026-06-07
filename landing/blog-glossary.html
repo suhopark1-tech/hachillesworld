@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — HAchillesWorld 플랫폼 용어 완전 해설 | HAchillesWorld</title>
+  <meta name="description" content="HAS, WMQ, ALM, OHM, Levels × Laws, Planning Depth, World Model Drift… HAchillesWorld 플랫폼에서 자주 등장하는 핵심 용어 20개를 한 글에서 완전히 정리합니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    /* ── LAYOUT ── */
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+
+    /* ── HERO ── */
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    /* ── ARTICLE LAYOUT ── */
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+
+    /* ── ARTICLE BODY ── */
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1;padding-bottom:80px}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:56px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.05rem;font-weight:800;color:var(--text);margin:28px 0 10px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+
+    /* ── GLOSSARY CARD ── */
+    .glossary-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin:24px 0;position:relative;transition:border-color .2s}
+    .glossary-card:hover{border-color:rgba(139,92,246,.5)}
+    .glossary-anchor{position:absolute;top:-80px}
+    .glossary-term{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent2);margin-bottom:4px;letter-spacing:.04em}
+    .glossary-ko{font-size:.85rem;color:var(--muted);margin-bottom:14px;font-weight:500}
+    .glossary-body{font-size:.92rem;color:#cbd5e1;line-height:1.75}
+    .glossary-body p{margin-bottom:12px}
+    .glossary-body p:last-child{margin-bottom:0}
+    .glossary-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:700;margin-bottom:12px}
+    .tag-wm{border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .tag-metric{border:1px solid rgba(6,182,212,.4);background:rgba(6,182,212,.08);color:#67e8f9}
+    .tag-arch{border:1px solid rgba(16,185,129,.4);background:rgba(16,185,129,.08);color:#6ee7b7}
+    .tag-ops{border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fcd34d}
+
+    /* ── INDEX TABLE ── */
+    .index-table{width:100%;border-collapse:collapse;font-size:.85rem;margin:0 0 32px}
+    .index-table th{background:var(--bg3);padding:8px 14px;text-align:left;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.05em;border-bottom:1px solid var(--border)}
+    .index-table td{padding:9px 14px;border-bottom:1px solid rgba(139,92,246,.1)}
+    .index-table tr:last-child td{border-bottom:none}
+    .index-table td:first-child{font-family:var(--mono);color:var(--accent2);font-weight:700}
+    .index-table td:nth-child(2){color:var(--text);font-weight:600}
+    .index-table td:nth-child(3){color:var(--muted)}
+    .index-table a{color:inherit;text-decoration:none}
+    .index-table a:hover{color:var(--accent);text-decoration:underline}
+
+    /* ── FORMULA BOX ── */
+    .formula-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin:16px 0;font-family:var(--mono);font-size:.85rem;color:#c4b5fd;line-height:1.65;overflow-x:auto}
+
+    /* ── SECTION INTRO ── */
+    .section-intro{background:linear-gradient(135deg,rgba(139,92,246,.05),rgba(6,182,212,.03));border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 10px 10px 0;margin:0 0 32px;font-size:.9rem;color:var(--muted);line-height:1.6}
+
+    /* ── TOC ── */
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:4px}
+    .toc-list li a{font-size:.78rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+
+    /* ── CTA ── */
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#용어해설</span>
+      <span class="blog-tag">#HAchillesWorld</span>
+      <span class="blog-tag">#HAS</span>
+      <span class="blog-tag">#WorldModel</span>
+      <span class="blog-tag">#AgenticAI</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      HAchillesWorld<br/>플랫폼 용어 완전 해설
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      HAS·WMQ·ALM·OHM·Levels × Laws… 처음 보면 낯선 용어들의 의미와 연결 관계를 한 글에서 완전히 정리합니다.
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 4,800자 · 18분 읽기</span>
+      <span style="color:var(--accent2)">◈ 레퍼런스 가이드</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARTICLE + TOC ── -->
+<div class="article-layout">
+
+  <!-- BODY -->
+  <article class="article-body">
+
+    <p>HAchillesWorld를 처음 접하면 낯선 약어들이 눈에 들어온다. HAS가 90이라는 게 무슨 뜻인지, WMQ와 ALM이 왜 따로 존재하는지, L2와 L3의 차이가 실제로 무엇인지 — 한 번에 명확히 정리하기 어렵다.</p>
+
+    <p>이 글은 플랫폼 전체를 관통하는 핵심 용어 20개를 <strong>개념 → 측정 방법 → 해석 방법</strong> 순서로 설명한다. 북마크해 두고, 리포트를 볼 때마다 참고하면 된다.</p>
+
+    <hr/>
+
+    <!-- 용어 인덱스 -->
+    <h2 id="index">용어 빠른 인덱스</h2>
+
+    <div style="overflow-x:auto;margin-bottom:12px">
+      <table class="index-table">
+        <thead>
+          <tr>
+            <th>약어</th>
+            <th>한글 명칭</th>
+            <th>카테고리</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="#has">HAS</a></td><td>HAchilles Score</td><td>종합 지표</td></tr>
+          <tr><td><a href="#wmq">WMQ</a></td><td>World Model Quality</td><td>카테고리 A</td></tr>
+          <tr><td><a href="#alm">ALM</a></td><td>Agency Level Metrics</td><td>카테고리 B</td></tr>
+          <tr><td><a href="#ohm">OHM</a></td><td>Operational Health Metrics</td><td>카테고리 C</td></tr>
+          <tr><td><a href="#levels">Levels</a></td><td>에이전트 역량 레벨 (L1/L2/L3)</td><td>분류 체계</td></tr>
+          <tr><td><a href="#laws">Laws</a></td><td>운영 도메인 법칙</td><td>분류 체계</td></tr>
+          <tr><td><a href="#per">PER</a></td><td>Prediction Error Rate</td><td>WMQ 지표</td></tr>
+          <tr><td><a href="#ece">ECE</a></td><td>Expected Calibration Error</td><td>WMQ 지표</td></tr>
+          <tr><td><a href="#sdr">SDR</a></td><td>Simulation Drift Rate</td><td>WMQ 지표</td></tr>
+          <tr><td><a href="#odr">ODR</a></td><td>OOD Detection Rate</td><td>WMQ 지표</td></tr>
+          <tr><td><a href="#pd">PD</a></td><td>Planning Depth</td><td>WMQ 지표</td></tr>
+          <tr><td><a href="#scr">SCR</a></td><td>Self-Correction Rate</td><td>ALM 지표</td></tr>
+          <tr><td><a href="#ca">CA</a></td><td>Counterfactual Accuracy</td><td>ALM 지표</td></tr>
+          <tr><td><a href="#wmul">WMUL</a></td><td>World Model Update Latency</td><td>OHM 지표</td></tr>
+          <tr><td><a href="#irt">IRT</a></td><td>Incident Recovery Time</td><td>OHM 지표</td></tr>
+          <tr><td><a href="#hitl">HITL</a></td><td>Human-in-the-Loop Rate</td><td>OHM 지표</td></tr>
+          <tr><td><a href="#drift">World Model Drift</a></td><td>월드 모델 표류</td><td>개념</td></tr>
+          <tr><td><a href="#episode">Episode</a></td><td>에피소드</td><td>데이터 단위</td></tr>
+          <tr><td><a href="#harness">Harness</a></td><td>하네스 (테스트 프레임워크)</td><td>아키텍처</td></tr>
+          <tr><td><a href="#roadmap">Roadmap</a></td><td>최적화 로드맵</td><td>Optimize 모듈</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr/>
+
+    <!-- ── 종합 지표 ── -->
+    <h2 id="scores">종합 지표 — HAS와 세 카테고리</h2>
+
+    <div class="section-intro">
+      HAchillesWorld의 모든 측정은 <strong>15개 세부 지표 → 3개 카테고리 점수 → 1개 종합 점수</strong>로 집계된다. 트리 구조를 이해하면 리포트 해석이 훨씬 명확해진다.
+    </div>
+
+    <!-- HAS -->
+    <span class="glossary-anchor" id="has"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-metric">종합 지표</div>
+      <div class="glossary-term">HAS — HAchilles Score</div>
+      <div class="glossary-ko">하킬레스 종합 점수 · 0~100</div>
+      <div class="glossary-body">
+        <p>에이전트 배포 준비도를 하나의 숫자로 표현한 HAchillesWorld의 핵심 지표다. 세 카테고리(WMQ · ALM · OHM)의 가중 평균으로 계산된다.</p>
+        <div class="formula-box">HAS = WMQ × 0.45 + ALM × 0.30 + OHM × 0.25</div>
+        <p><strong>해석 기준:</strong> 90 이상(A+) 즉시 배포 가능 · 80~89(A) 조건부 배포 · 70~79(B) 제한적 운영 · 60~69(C) 개선 필요 · 60 미만(D) 배포 보류.</p>
+        <p>HAW-STUDY-001 실증 연구에서 HAS와 실제 비즈니스 성과 간 상관계수 <strong>ρ = 0.9948</strong>이 측정됐다. 24주 개선 세션에서 HAS 670→910 상승 시 연간 ₩4,400만 절감 효과가 확인됐다.</p>
+        <p><em>가중치(0.45 / 0.30 / 0.25)는 실증 데이터 축적에 따라 버전별로 업데이트되며, 시계열 비교가능성을 위해 버전 정보가 리포트에 함께 기록된다.</em></p>
+      </div>
+    </div>
+
+    <!-- WMQ -->
+    <span class="glossary-anchor" id="wmq"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">카테고리 A</div>
+      <div class="glossary-term">WMQ — World Model Quality</div>
+      <div class="glossary-ko">월드 모델 품질 · 0~100</div>
+      <div class="glossary-body">
+        <p>에이전트가 세상을 얼마나 정확하게 이해하고 예측하는지를 측정한다. HAS 가중치의 45%를 차지하는 가장 중요한 카테고리다.</p>
+        <p>세부 지표 5개: <code>PER</code>(예측 오차율) · <code>ECE</code>(보정 오차) · <code>SDR</code>(시뮬레이션 표류율) · <code>ODR</code>(이상 탐지율) · <code>PD</code>(계획 깊이).</p>
+        <p>WMQ가 낮으면 에이전트는 현실과 다른 세상을 기반으로 의사결정을 내린다. 코드와 인프라가 완벽해도 WMQ가 낮은 에이전트는 반드시 실패한다.</p>
+      </div>
+    </div>
+
+    <!-- ALM -->
+    <span class="glossary-anchor" id="alm"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-metric">카테고리 B</div>
+      <div class="glossary-term">ALM — Agency Level Metrics</div>
+      <div class="glossary-ko">에이전시 수준 지표 · 0~100</div>
+      <div class="glossary-body">
+        <p>에이전트가 얼마나 자율적이고 유연하게 행동할 수 있는지를 측정한다. HAS 가중치의 30%.</p>
+        <p>세부 지표 5개: <code>SCR</code>(자기 수정율) · <code>CA</code>(반사실 정확도) · <code>GAR</code>(목표 달성율) · <code>AS</code>(적응 속도) · <code>HC</code>(계층 일관성).</p>
+        <p>ALM이 낮은 에이전트는 예상치 못한 상황에서 방향을 잃는다. "잘 작동하다가 갑자기 이상한 결정을 내린다"는 증상의 대부분은 ALM 문제에서 비롯된다.</p>
+      </div>
+    </div>
+
+    <!-- OHM -->
+    <span class="glossary-anchor" id="ohm"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-ops">카테고리 C</div>
+      <div class="glossary-term">OHM — Operational Health Metrics</div>
+      <div class="glossary-ko">운영 건전성 지표 · 0~100</div>
+      <div class="glossary-body">
+        <p>에이전트가 프로덕션 환경에서 얼마나 안정적으로 운영되는지를 측정한다. HAS 가중치의 25%.</p>
+        <p>세부 지표 5개: <code>WMUL</code>(월드 모델 갱신 지연) · <code>IRT</code>(장애 복구 시간) · <code>HITL</code>(사람 개입 비율) · <code>HR</code>(할루시네이션 비율) · <code>SU</code>(시스템 활용률).</p>
+        <p>OHM은 장기 운영의 신뢰성을 결정한다. 초기에 잘 작동했던 에이전트가 3개월 후 성능이 떨어지는 이유가 여기에 있다.</p>
+      </div>
+    </div>
+
+    <hr/>
+
+    <!-- ── 분류 체계 ── -->
+    <h2 id="framework">분류 체계 — Levels × Laws</h2>
+
+    <div class="section-intro">
+      HAchillesWorld는 모든 에이전트를 <strong>역량 레벨(Levels)</strong>과 <strong>운영 도메인(Laws)</strong>의 2차원 좌표로 배치한다. 이 좌표가 리포트 해석과 개선 목표 설정의 기준이 된다.
+    </div>
+
+    <!-- LEVELS -->
+    <span class="glossary-anchor" id="levels"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-arch">분류 체계</div>
+      <div class="glossary-term">Levels — 에이전트 역량 레벨</div>
+      <div class="glossary-ko">L1 Predictor · L2 Simulator · L3 Evolver</div>
+      <div class="glossary-body">
+        <p>에이전트가 미래를 얼마나 멀리, 얼마나 복잡하게 시뮬레이션할 수 있는지를 나타낸다.</p>
+        <p><strong>L1 Predictor</strong> — 패턴 매칭과 단일 스텝 예측. 현재 상태에서 한 걸음 앞을 본다. 재고 경보, 이상 탐지 등 단순 반응형 작업에 적합하다.</p>
+        <p><strong>L2 Simulator</strong> — 멀티스텝 롤아웃과 계획 수립. 3~10스텝 앞을 시뮬레이션하며 최적 경로를 찾는다. 공급망 최적화, 일정 계획 등에 적합하다.</p>
+        <p><strong>L3 Evolver</strong> — 환경 변화에 자율 적응. 새로운 규칙을 스스로 학습하고 World Model을 갱신한다. 가장 복잡한 동적 환경에 배치된다.</p>
+        <p>리포트의 <code>L2.3</code>과 같은 표기는 "L2 레벨 내에서 30% 진행됐다"는 뜻이다. 소수점은 0~9 스케일의 레벨 내 진행도다.</p>
+      </div>
+    </div>
+
+    <!-- LAWS -->
+    <span class="glossary-anchor" id="laws"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-arch">분류 체계</div>
+      <div class="glossary-term">Laws — 운영 도메인 법칙</div>
+      <div class="glossary-ko">Digital · Physical · Social · Scientific</div>
+      <div class="glossary-body">
+        <p>에이전트가 작동하는 세계의 물리적·논리적 규칙 체계다. 같은 레벨의 에이전트라도 Laws에 따라 완전히 다른 진단 기준이 적용된다.</p>
+        <p><strong>Digital Laws</strong> — API·소프트웨어·데이터 처리. 결정론적 규칙과 명확한 피드백이 특징이다. 대부분의 엔터프라이즈 에이전트가 여기에 속한다.</p>
+        <p><strong>Physical Laws</strong> — 로봇·제조·물리 환경. 뉴턴 역학과 실시간 센서 피드백이 지배한다. 지연과 불확실성이 가장 높다.</p>
+        <p><strong>Social Laws</strong> — 멀티에이전트·협상·고객 대응. 언어 화용론과 사회 규범이 작동한다. 상황 의존성이 극도로 높다.</p>
+        <p><strong>Scientific Laws</strong> — 연구·분석·가설 검증. 실험 설계와 통계적 추론이 핵심이다. 장기 학습 루프가 특징이다.</p>
+      </div>
+    </div>
+
+    <hr/>
+
+    <!-- ── WMQ 세부 지표 ── -->
+    <h2 id="wmq-metrics">WMQ 세부 지표 5개</h2>
+
+    <!-- PER -->
+    <span class="glossary-anchor" id="per"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">WMQ 지표</div>
+      <div class="glossary-term">PER — Prediction Error Rate</div>
+      <div class="glossary-ko">예측 오차율 · 목표: &lt; 0.15</div>
+      <div class="glossary-body">
+        <p>에이전트가 예측한 결과와 실제 결과 사이의 평균 괴리율이다. WMQ의 가장 기본적인 지표.</p>
+        <p>PER이 0.15라면 에이전트의 예측이 평균적으로 15% 빗나간다는 뜻이다. 공급망 맥락에서 비용 예측 PER이 0.296이면, 482만 원을 예측했을 때 실제로는 625만 원이 된다는 의미다.</p>
+        <div class="formula-box">PER = mean(|예측값 − 실제값| / 실제값)  &lt; 0.15 → OK · 0.15~0.30 → Warning · &gt;0.30 → Critical</div>
+      </div>
+    </div>
+
+    <!-- ECE -->
+    <span class="glossary-anchor" id="ece"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">WMQ 지표</div>
+      <div class="glossary-term">ECE — Expected Calibration Error</div>
+      <div class="glossary-ko">기대 보정 오차 · 목표: &lt; 0.10</div>
+      <div class="glossary-body">
+        <p>에이전트의 <strong>자기 확신과 실제 정확도가 얼마나 일치하는지</strong>를 측정한다. ECE = 0은 "80% 확신한다"고 할 때 정말로 80% 맞힌다는 뜻이다.</p>
+        <p>ECE가 높은 에이전트는 위험하다. 틀릴 때도 자신 있게 말하기 때문이다. "80% 확신한다"고 했는데 실제로 50%만 맞힌다면 ECE는 0.30이다.</p>
+        <p>PER이 낮아도 ECE가 높으면 에이전트를 신뢰하기 어렵다. 리포트에서 두 지표를 함께 확인해야 한다.</p>
+      </div>
+    </div>
+
+    <!-- SDR -->
+    <span class="glossary-anchor" id="sdr"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">WMQ 지표</div>
+      <div class="glossary-term">SDR — Simulation Drift Rate</div>
+      <div class="glossary-ko">시뮬레이션 표류율 · 목표: &lt; 0.20</div>
+      <div class="glossary-body">
+        <p>에이전트가 내부적으로 시뮬레이션하는 미래 상태와 실제 미래가 얼마나 빠르게 벌어지는지를 측정한다. "World Model이 현실로부터 얼마나 빠르게 이탈하는가"의 지표다.</p>
+        <p>SDR은 특히 L2 이상의 에이전트에게 중요하다. 멀티스텝 계획을 세울 때 초반의 작은 오차가 후반에 눈덩이처럼 커지는 현상을 포착한다.</p>
+        <p><em>관련 개념: <a href="#drift">World Model Drift</a></em></p>
+      </div>
+    </div>
+
+    <!-- ODR -->
+    <span class="glossary-anchor" id="odr"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">WMQ 지표</div>
+      <div class="glossary-term">ODR — OOD Detection Rate</div>
+      <div class="glossary-ko">분포 이탈 탐지율 · 목표: &gt; 0.80</div>
+      <div class="glossary-body">
+        <p>에이전트가 학습·운영 데이터 분포를 벗어난 입력(Out-of-Distribution)을 얼마나 잘 감지하는지 측정한다. ODR이 높을수록 에이전트는 "나는 이 상황을 잘 모른다"고 적시에 알린다.</p>
+        <p>ODR이 낮은 에이전트는 전혀 경험하지 못한 상황에서도 높은 확신으로 잘못된 결정을 내린다. 블랙스완 이벤트에 특히 취약하다.</p>
+      </div>
+    </div>
+
+    <!-- PD -->
+    <span class="glossary-anchor" id="pd"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">WMQ 지표</div>
+      <div class="glossary-term">PD — Planning Depth</div>
+      <div class="glossary-ko">계획 깊이 · 단위: 스텝 수</div>
+      <div class="glossary-body">
+        <p>에이전트가 의사결정 시 몇 스텝 앞까지 시뮬레이션하는지를 측정한다. 바둑으로 비유하면 "몇 수 앞을 읽는가"다.</p>
+        <p><strong>PD 1~2</strong>: 즉각 반응형. 단순 패턴 매칭. <strong>PD 3~5</strong>: 단기 계획. 일반 업무 자동화에 충분. <strong>PD 6~10</strong>: 중기 계획. 공급망·프로젝트 관리에 적합. <strong>PD 10+</strong>: 전략적 사고. 연구·복잡 시스템에 필요.</p>
+        <p>MCTS(Monte Carlo Tree Search)를 사용하는 에이전트는 Planning Depth가 훨씬 높다. → <a href="blog-mcts-planning-depth.html">MCTS Planning Depth 상세 해설</a> 참조.</p>
+      </div>
+    </div>
+
+    <hr/>
+
+    <!-- ── ALM + OHM 핵심 지표 ── -->
+    <h2 id="alm-ohm-metrics">ALM · OHM 핵심 지표</h2>
+
+    <!-- SCR -->
+    <span class="glossary-anchor" id="scr"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-metric">ALM 지표</div>
+      <div class="glossary-term">SCR — Self-Correction Rate</div>
+      <div class="glossary-ko">자기 수정율 · 목표: &gt; 0.70</div>
+      <div class="glossary-body">
+        <p>에이전트가 실행 중 오류를 스스로 감지하고 경로를 수정한 비율이다. SCR이 높을수록 사람의 개입 없이 스스로 궤도를 유지한다.</p>
+        <p>SCR은 에이전트의 "메타인지" 능력을 반영한다. 틀렸음을 모르는 에이전트는 SCR이 낮다. L3 에이전트의 핵심 역량이다.</p>
+      </div>
+    </div>
+
+    <!-- CA -->
+    <span class="glossary-anchor" id="ca"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-metric">ALM 지표</div>
+      <div class="glossary-term">CA — Counterfactual Accuracy</div>
+      <div class="glossary-ko">반사실 정확도 · 목표: &gt; 0.65</div>
+      <div class="glossary-body">
+        <p>"만약 X가 달랐다면 결과가 어떻게 됐을까?"라는 반사실 질문에 에이전트가 얼마나 정확하게 답하는지를 측정한다.</p>
+        <p>CA가 높은 에이전트는 인과관계를 이해하고, 단순 상관관계에 속지 않는다. 전략적 의사결정을 맡길 때 특히 중요하다.</p>
+      </div>
+    </div>
+
+    <!-- WMUL -->
+    <span class="glossary-anchor" id="wmul"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-ops">OHM 지표</div>
+      <div class="glossary-term">WMUL — World Model Update Latency</div>
+      <div class="glossary-ko">월드 모델 갱신 지연 · 목표: &lt; 300초</div>
+      <div class="glossary-body">
+        <p>환경이 변화했을 때 에이전트의 내부 World Model이 그 변화를 반영하기까지 걸리는 시간이다. 시장이 급변하거나 외부 API 스펙이 바뀔 때 에이전트가 얼마나 빨리 적응하는지를 나타낸다.</p>
+        <p>WMUL이 길수록 에이전트는 구식 정보로 결정을 내린다. 실시간성이 중요한 트레이딩·물류 에이전트에서 특히 치명적이다.</p>
+      </div>
+    </div>
+
+    <!-- IRT -->
+    <span class="glossary-anchor" id="irt"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-ops">OHM 지표</div>
+      <div class="glossary-term">IRT — Incident Recovery Time</div>
+      <div class="glossary-ko">장애 복구 시간 · 단위: 분</div>
+      <div class="glossary-body">
+        <p>에이전트가 비정상 상태(임계값 위반, 목표 달성 실패, 연속 오류)에서 정상 상태로 복구하는 데 걸리는 평균 시간이다.</p>
+        <p>IRT는 에이전트의 회복 탄력성(Resilience)을 나타낸다. IRT가 낮을수록 서비스 연속성이 높다.</p>
+      </div>
+    </div>
+
+    <!-- HITL -->
+    <span class="glossary-anchor" id="hitl"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-ops">OHM 지표</div>
+      <div class="glossary-term">HITL — Human-in-the-Loop Rate</div>
+      <div class="glossary-ko">사람 개입 비율 · 목표: 역할에 따라 다름</div>
+      <div class="glossary-body">
+        <p>전체 의사결정 중 사람이 개입한 비율이다. HITL이 낮다는 것이 반드시 좋은 것은 아니다 — 역할에 따라 적정 수준이 다르다.</p>
+        <p>고위험 결정(의료·금융·법률)에서는 HITL이 높은 것이 설계 목표일 수 있다. 반면 반복적 데이터 처리에서 HITL이 높다면 에이전트가 제 역할을 못 하고 있다는 신호다.</p>
+        <p>리포트에서는 역할 기준 대비 HITL 수준을 비교해 해석해야 한다.</p>
+      </div>
+    </div>
+
+    <hr/>
+
+    <!-- ── 핵심 개념 ── -->
+    <h2 id="concepts">핵심 개념</h2>
+
+    <!-- World Model Drift -->
+    <span class="glossary-anchor" id="drift"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-wm">개념</div>
+      <div class="glossary-term">World Model Drift</div>
+      <div class="glossary-ko">월드 모델 표류</div>
+      <div class="glossary-body">
+        <p>에이전트의 내부 World Model이 시간이 지남에 따라 현실로부터 점차 멀어지는 현상이다. 코드 버그나 인프라 장애와 달리 조용히, 서서히 진행되기 때문에 감지하기 어렵다.</p>
+        <p>Drift의 주요 원인: ① 데이터 분포 변화(Data Drift) ② 외부 환경 규칙 변화 ③ 누적된 예측 오류의 피드백 ④ 모델 가중치의 점진적 변화.</p>
+        <p>HAchillesWorld의 SDR과 WMUL이 Drift를 실시간으로 추적한다. Operate 모듈은 Drift가 임계값을 초과하면 자동으로 알림을 발송한다.</p>
+      </div>
+    </div>
+
+    <!-- Episode -->
+    <span class="glossary-anchor" id="episode"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-arch">데이터 단위</div>
+      <div class="glossary-term">Episode</div>
+      <div class="glossary-ko">에피소드 — 에이전트 행동의 기본 단위</div>
+      <div class="glossary-body">
+        <p>에이전트가 하나의 목표를 달성하기 위해 수행한 일련의 행동 시퀀스다. Observe(관찰) → Plan(계획) → Execute(실행) → Reflect(반성)의 사이클이 한 Episode를 구성한다.</p>
+        <p>HAchillesWorld의 모든 지표는 Episode 단위로 측정된다. Episode가 충분히 쌓여야 통계적으로 신뢰할 수 있는 진단이 가능하다. 최소 권장 샘플: 50 Episodes.</p>
+        <p>SDK의 <code>EpisodeRecord</code>와 <code>LogCollector</code>가 Episode 데이터를 자동으로 수집한다.</p>
+      </div>
+    </div>
+
+    <!-- Harness -->
+    <span class="glossary-anchor" id="harness"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-arch">아키텍처</div>
+      <div class="glossary-term">Harness</div>
+      <div class="glossary-ko">하네스 — 에이전트 테스트 프레임워크</div>
+      <div class="glossary-body">
+        <p>에이전트를 통제된 환경에서 실행하고 성능을 측정하는 테스트 프레임워크다. 자동차 충돌 테스트대처럼, 에이전트를 다양한 시나리오에 노출시켜 World Model의 약점을 찾아낸다.</p>
+        <p>Harness는 Rule-based Judge와 AI Judge(Claude Sonnet)를 혼합해 판정한다. 규칙으로 명확히 판단할 수 있는 것은 Rule Judge가, 맥락과 뉘앙스가 필요한 것은 AI Judge가 담당한다.</p>
+        <p>Scan 모듈의 진단은 Harness에서 수집된 데이터를 기반으로 한다.</p>
+      </div>
+    </div>
+
+    <!-- Roadmap -->
+    <span class="glossary-anchor" id="roadmap"></span>
+    <div class="glossary-card">
+      <div class="glossary-tag tag-ops">Optimize 모듈</div>
+      <div class="glossary-term">Optimization Roadmap</div>
+      <div class="glossary-ko">최적화 로드맵</div>
+      <div class="glossary-body">
+        <p>Scan 진단 결과를 바탕으로 Optimize 모듈이 생성하는 단계별 개선 계획이다. 현재 레벨에서 목표 레벨까지 도달하기 위한 구체적 과제와 예상 기간이 포함된다.</p>
+        <p>각 Phase는 <strong>예상 점수 상승폭</strong>과 <strong>우선 과제 목록</strong>을 제시한다. 단순 권고가 아니라 HAW-STUDY-001 실증 데이터 기반의 수치 예측이다.</p>
+        <p>Multi-Agent Optimizer는 여러 개의 에이전트를 동시에 진단하고, 리소스를 최적 배분하는 조직 수준의 로드맵도 생성한다.</p>
+      </div>
+    </div>
+
+    <hr/>
+
+    <h2 id="reading">리포트 읽는 법 — 용어 연결 관계</h2>
+
+    <p>HAchillesWorld 리포트를 처음 받았을 때 권장하는 순서는 다음과 같다.</p>
+
+    <ol>
+      <li><strong>HAS 종합 점수와 등급 확인</strong> — 배포 가능 여부의 1차 판단</li>
+      <li><strong>세 카테고리(WMQ / ALM / OHM) 점수 비교</strong> — 가장 낮은 카테고리가 우선 개선 대상</li>
+      <li><strong>Critical 지표 목록 확인</strong> — 임계값을 초과한 지표별 즉시 조치 필요</li>
+      <li><strong>Levels × Laws 좌표 확인</strong> — 현재 레벨이 배치 환경에 적합한지 판단</li>
+      <li><strong>Optimization Roadmap 검토</strong> — 다음 레벨로 이동하기 위한 구체적 계획 수립</li>
+    </ol>
+
+    <blockquote>
+      WMQ가 낮으면서 HAS가 높은 경우는 드물다. WMQ는 HAS의 45%를 차지하기 때문이다. 반대로 OHM이 낮아도 WMQ가 매우 높으면 HAS가 상대적으로 선방할 수 있다. 하지만 OHM 문제는 장기 운영에서 반드시 표면화된다.
+    </blockquote>
+
+    <!-- CTA -->
+    <div class="article-cta">
+      <h3>직접 진단해 보세요</h3>
+      <p>이 용어들이 내 에이전트에서는 어떤 숫자로 나오는지 — 10분이면 알 수 있습니다.</p>
+      <div class="cta-btns">
+        <a href="scan.html" class="btn-primary">무료 Scan 시작</a>
+        <a href="blog.html" class="btn-secondary">다른 글 보기</a>
+      </div>
+    </div>
+
+  </article>
+
+  <!-- TOC -->
+  <aside class="toc">
+    <h4>목차</h4>
+    <ul class="toc-list">
+      <li><a href="#index">용어 인덱스</a></li>
+      <li><a href="#scores">종합 지표 — HAS</a></li>
+      <li><a href="#framework">Levels × Laws</a></li>
+      <li><a href="#wmq-metrics">WMQ 세부 지표 5개</a></li>
+      <li><a href="#alm-ohm-metrics">ALM · OHM 핵심 지표</a></li>
+      <li><a href="#concepts">핵심 개념</a></li>
+      <li><a href="#reading">리포트 읽는 법</a></li>
+    </ul>
+  </aside>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div style="max-width:1120px;margin:0 auto;padding:0 24px">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  // TOC 활성 항목 하이라이트
+  const sections = document.querySelectorAll('[id]');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(a => {
+          a.style.color = a.getAttribute('href') === '#' + e.target.id
+            ? 'var(--text)' : '';
+          a.style.borderLeftColor = a.getAttribute('href') === '#' + e.target.id
+            ? 'var(--accent)' : '';
+        });
+      }
+    });
+  }, { rootMargin: '-64px 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // 스크롤 페이드
+  const fadeObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.04 });
+  document.querySelectorAll('.glossary-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(14px)';
+    el.style.transition = 'opacity .45s ease, transform .45s ease';
+    fadeObs.observe(el);
+  });
+</script>
+</body>
+</html>
