@@ -72,7 +72,7 @@ Admin 로그인 → 토큰 입력란에 붙여넣기 → **연결** 클릭
 
 | 항목 | 데이터 소스 |
 |---|---|
-| 총 블로그 포스트 수 | **12개** (POST 01~12, admin.html BLOG_POSTS 배열 하드코딩) |
+| 총 블로그 포스트 수 | **13개** (POST 01~13, admin.html BLOG_POSTS 배열 하드코딩) |
 | 추적된 블로그 방문 수 | localStorage |
 | 평균 체류시간 (초) | localStorage (페이지 이탈 시 기록) |
 | 평균 스크롤 깊이 (%) | localStorage (25·50·75·90% 마일스톤) |
@@ -83,6 +83,7 @@ Admin 로그인 → 토큰 입력란에 붙여넣기 → **연결** 클릭
 
 | # | 파일 | 제목 |
 |---|------|------|
+| 13 | blog-deployment-checklist.html | AI 에이전트 배포 전 체크리스트 15 |
 | 12 | blog-harness-guide.html | HAchillesWorld Harness 완전 가이드 |
 | 11 | blog-planning-depth-cost.html | Planning Depth와 비용의 상관관계 |
 | 10 | blog-v3-roadmap.html | HAchillesWorld v3.0 로드맵 |
@@ -96,7 +97,7 @@ Admin 로그인 → 토큰 입력란에 붙여넣기 → **연결** 클릭
 | 02 | blog-mcts-planning-depth.html | MCTS Planning Depth |
 | 01 | blog-world-model.html | AI 에이전트 왜 실패하는가 |
 
-> 다음 포스트 번호: **13** — `/blog-add` 스킬 실행 시 자동 업데이트됨
+> 다음 포스트 번호: **14** — `/blog-add` 스킬 실행 시 자동 업데이트됨
 
 ### Tab 3 — Scan 진단
 

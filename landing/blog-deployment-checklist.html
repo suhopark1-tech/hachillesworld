@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — AI 에이전트 배포 전 체크리스트 15 | HAchillesWorld</title>
+  <meta name="description" content="프로덕션 배포 전 반드시 확인해야 할 15가지 — HAS·Calibration·Drift·Harness 기준으로 '배포해도 되는가'를 숫자로 판단하는 실전 가이드." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+    .article{padding:0 0 80px}
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:48px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.05rem;font-weight:800;color:var(--text);margin:28px 0 10px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+    .scan-output{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .scan-output-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent3);display:flex;align-items:center;gap:6px}
+    .scan-output pre{padding:18px;font-family:var(--mono);font-size:.79rem;line-height:1.75;color:#d1fae5;overflow-x:auto;margin:0}
+    /* 체크리스트 카드 */
+    .chk-group{margin:24px 0}
+    .chk-group-title{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:12px;font-family:var(--mono)}
+    .chk-item{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:border-color .2s}
+    .chk-item:hover{border-color:rgba(139,92,246,.4)}
+    .chk-num{font-family:var(--mono);font-size:.72rem;font-weight:800;color:var(--muted);min-width:24px;margin-top:2px}
+    .chk-body{flex:1}
+    .chk-name{font-weight:700;color:var(--text);font-size:.9rem;margin-bottom:4px}
+    .chk-desc{font-size:.82rem;color:var(--muted);line-height:1.5}
+    .chk-threshold{font-family:var(--mono);font-size:.75rem;margin-top:6px}
+    .thr-pass{color:var(--accent3)}
+    .thr-warn{color:var(--warn)}
+    .thr-fail{color:#f87171}
+    .chk-badge{padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:700;margin-left:8px;flex-shrink:0;align-self:flex-start;margin-top:3px}
+    .badge-critical{background:rgba(244,63,94,.12);color:#f87171;border:1px solid rgba(244,63,94,.25)}
+    .badge-important{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+    .badge-recommended{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.2)}
+    /* 요약 카드 */
+    .summary-card{background:var(--surface);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:28px;margin:32px 0}
+    .summary-card h3{font-size:1rem;font-weight:800;color:var(--warn);margin-bottom:16px}
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:600px){.summary-grid{grid-template-columns:1fr}}
+    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px;font-size:.82rem}
+    .summary-label{color:var(--muted)}
+    .summary-val{font-family:var(--mono);font-weight:700;color:var(--text)}
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag" style="border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fcd34d">#AgenticAI</span>
+      <span class="blog-tag" style="border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fcd34d">#배포</span>
+      <span class="blog-tag" style="border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fcd34d">#체크리스트</span>
+      <span class="blog-tag" style="border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fcd34d">#실전케이스</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      AI 에이전트 배포 전<br/>체크리스트 15
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      "배포해도 되는가"를 숫자로 판단하는 기준
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,200자 · 12분 읽기</span>
+      <span style="color:#fbbf24">◈ 배포 판단 기준</span>
+    </div>
+  </div>
+</div>
+
+<section class="article">
+  <div class="article-layout">
+    <div class="article-body">
+
+      <p>에이전트를 프로덕션에 배포하는 결정은 언제나 어렵다.</p>
+
+      <p>테스트는 통과했다. 스테이징에서는 잘 돌아간다. 그런데 배포해도 되는가? 이 질문에 "네" 또는 "아니오"를 말할 수 있는 기준이 있어야 한다.</p>
+
+      <p>HAchillesWorld는 15가지 지표를 측정한다. 각 지표에는 통과 기준이 있다. 모두 통과했을 때 배포해도 된다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#fbbf24">●</span> 배포 판단 명령어
+        </div>
+        <pre>hachillesworld scan --logs ./logs.json --name "my-agent" --deployment-check
+
+<span style="color:#6ee7b7">✅ DEPLOY READY</span>  또는  <span style="color:#f87171">❌ NOT READY (3 items failed)</span></pre>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-group1">그룹 1 — World Model 품질 (필수 4개)</h2>
+
+      <p>배포 불가 조건. 하나라도 미달이면 배포를 중단한다.</p>
+
+      <div class="chk-group">
+        <div class="chk-item">
+          <div class="chk-num">01</div>
+          <div class="chk-body">
+            <div class="chk-name">HAS (HAchilles Ability Score)</div>
+            <div class="chk-desc">에이전트의 종합 능력 점수. World Model 품질·에이전시 수준·운영 건전성의 가중 평균.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 75점 이상</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 60~74점</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 60점 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-critical">필수</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">02</div>
+          <div class="chk-body">
+            <div class="chk-name">Calibration ECE (Expected Calibration Error)</div>
+            <div class="chk-desc">에이전트가 "80% 확신"이라 할 때 실제로 80%인가. 과신은 재호출과 오판의 원인.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 0.10 미만</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 0.10~0.20</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 0.20 이상</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-critical">필수</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">03</div>
+          <div class="chk-body">
+            <div class="chk-name">Simulation Drift</div>
+            <div class="chk-desc">에이전트의 World Model이 현실에서 얼마나 이탈했는가. 드리프트가 크면 예측이 빗나간다.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 10% 미만</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 10~25%</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 25% 이상</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-critical">필수</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">04</div>
+          <div class="chk-body">
+            <div class="chk-name">World Model Quality (WMQ)</div>
+            <div class="chk-desc">에이전트가 환경을 얼마나 정확하게 이해하는가. 예측 정확도·인과 추론·상태 추정 종합.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 70점 이상</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 70점 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-critical">필수</span>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-group2">그룹 2 — 에이전시 수준 (중요 4개)</h2>
+
+      <p>두 개 이상 미달 시 배포 보류를 권장한다.</p>
+
+      <div class="chk-group">
+        <div class="chk-item">
+          <div class="chk-num">05</div>
+          <div class="chk-body">
+            <div class="chk-name">Planning Depth</div>
+            <div class="chk-desc">에이전트가 몇 스텝 앞까지 시뮬레이션하는가. 도메인별 권장 Depth를 확인한다.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 도메인 권장치 이상</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 권장치의 70% 이상</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 권장치의 70% 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">06</div>
+          <div class="chk-body">
+            <div class="chk-name">Self-Correction Rate</div>
+            <div class="chk-desc">에이전트가 자신의 오류를 스스로 감지하고 수정하는 비율.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 10% 이상</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 10% 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">07</div>
+          <div class="chk-body">
+            <div class="chk-name">OOD 감지율 (Out-of-Distribution)</div>
+            <div class="chk-desc">학습 분포를 벗어난 입력을 에이전트가 얼마나 잘 인식하는가. 미인식 시 자신 있게 틀린 결정을 내린다.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 80% 이상</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 60~79%</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 60% 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">08</div>
+          <div class="chk-body">
+            <div class="chk-name">Agency Level (AL)</div>
+            <div class="chk-desc">에이전트의 자율성 수준. L1(패턴 매칭) ~ L3(자율 적응) 스펙트럼에서 배포 목적에 맞는 수준인가.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 목적 수준 ±0.5 이내</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 목적 수준과 1 이상 괴리</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-group3">그룹 3 — 운영 안전성 (중요 4개)</h2>
+
+      <p>프로덕션 운영 중 문제를 막는 안전망이다.</p>
+
+      <div class="chk-group">
+        <div class="chk-item">
+          <div class="chk-num">09</div>
+          <div class="chk-body">
+            <div class="chk-name">Harness Coverage</div>
+            <div class="chk-desc">반복 오류를 차단하는 Harness 규칙이 충분히 등록되어 있는가.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 20개 이상</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 10~19개</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 10개 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">10</div>
+          <div class="chk-body">
+            <div class="chk-name">Operational Health (OH)</div>
+            <div class="chk-desc">에이전트의 운영 건전성 종합 점수. 응답 지연·오류율·리소스 사용량 포함.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 70점 이상</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 70점 미만</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">11</div>
+          <div class="chk-body">
+            <div class="chk-name">Escalation Rate</div>
+            <div class="chk-desc">에이전트가 인간 개입을 요청하는 빈도. 너무 높으면 자율성이 없고, 너무 낮으면 위험 상황을 무시한다.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 1~15%</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 15~30% 또는 0~0.5%</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 30% 이상 또는 0%</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">12</div>
+          <div class="chk-body">
+            <div class="chk-name">Incident Recovery Time</div>
+            <div class="chk-desc">오류 발생 후 정상 복구까지 걸리는 평균 시간.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 5분 미만</span> &nbsp;
+              <span class="thr-warn">⚠ 주의: 5~30분</span> &nbsp;
+              <span class="thr-fail">❌ 불가: 30분 이상</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-important">중요</span>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-group4">그룹 4 — 부가 검증 (권장 3개)</h2>
+
+      <p>필수는 아니지만 프로덕션 품질을 높이는 항목이다.</p>
+
+      <div class="chk-group">
+        <div class="chk-item">
+          <div class="chk-num">13</div>
+          <div class="chk-body">
+            <div class="chk-name">Multi-Agent 일관성 점수</div>
+            <div class="chk-desc">다른 에이전트와 함께 운영되는 경우, 시스템 수준 일관성을 확인한다.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 70점 이상 (단일 에이전트면 해당 없음)</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-recommended">권장</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">14</div>
+          <div class="chk-body">
+            <div class="chk-name">Drift 알림 설정</div>
+            <div class="chk-desc">배포 후 Simulation Drift가 임계치를 초과할 때 알림이 발송되는가.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: Slack/이메일/웹훅 중 하나 이상 설정됨</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-recommended">권장</span>
+        </div>
+
+        <div class="chk-item">
+          <div class="chk-num">15</div>
+          <div class="chk-body">
+            <div class="chk-name">롤백 플랜</div>
+            <div class="chk-desc">배포 후 심각한 문제 발생 시 이전 버전으로 롤백하는 절차가 문서화되어 있는가.</div>
+            <div class="chk-threshold">
+              <span class="thr-pass">✅ 통과: 롤백 명령어 + 담당자 + 판단 기준 문서화</span>
+            </div>
+          </div>
+          <span class="chk-badge badge-recommended">권장</span>
+        </div>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-summary">배포 판단 기준 요약</h2>
+
+      <div class="summary-card">
+        <h3>배포 가능 조건</h3>
+        <div class="summary-grid">
+          <div class="summary-row"><span class="summary-label">필수 4개</span><span class="summary-val" style="color:var(--accent3)">전부 통과</span></div>
+          <div class="summary-row"><span class="summary-label">중요 8개</span><span class="summary-val" style="color:#fbbf24">6개 이상 통과</span></div>
+          <div class="summary-row"><span class="summary-label">권장 3개</span><span class="summary-val" style="color:var(--muted)">1개 이상 통과</span></div>
+          <div class="summary-row"><span class="summary-label">HAS 종합 점수</span><span class="summary-val" style="color:var(--accent3)">75점 이상</span></div>
+        </div>
+      </div>
+
+      <blockquote>
+        "배포 판단은 '잘 될 것 같다'는 느낌이 아니라<br/>
+        숫자가 기준을 통과했는가 여부로 해야 한다."<br/>
+        — 15개 중 필수 4개가 모두 통과하지 않으면 배포하지 않는다.
+      </blockquote>
+
+      <hr/>
+
+      <h2 id="s-start">지금 내 에이전트를 점검하세요</h2>
+
+      <p>HAchillesWorld Scan이 15개 항목을 자동으로 측정하고 배포 가능 여부를 판단합니다.</p>
+
+      <div class="article-cta">
+        <h3>배포 전 <span style="background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">15개 항목</span> 자동 점검</h3>
+        <p>필수·중요·권장 항목을 한 번에 측정합니다.<br/>10분, 코드 변경 없이.</p>
+        <div class="cta-btns">
+          <a href="scan.html" class="btn-primary">🔍 무료 Scan 시작</a>
+          <a href="blog-world-model.html" class="btn-secondary">World Model 이해하기 →</a>
+        </div>
+      </div>
+
+      <div style="margin:48px 0 0">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px">관련 글</h3>
+        <a href="blog-harness-guide.html" style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none;margin-bottom:12px" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+          <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px">→</span>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px">HAchillesWorld Harness 완전 가이드</div>
+            <div style="font-size:.82rem;color:var(--muted)">체크리스트 09번 Harness Coverage를 충족하는 방법</div>
+          </div>
+        </a>
+        <a href="blog-world-model.html" style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+          <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px">→</span>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px">당신의 AI 에이전트, 왜 실패하는지 알고 있나요?</div>
+            <div style="font-size:.82rem;color:var(--muted)">체크리스트 01~04번의 기반이 되는 World Model 개념</div>
+          </div>
+        </a>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        이 글은 《Agentic World Modeling 2027》의 이론을 기반으로 실제 프로젝트 경험을 정리한 것입니다.<br/>
+        저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026
+      </p>
+
+    </div>
+
+    <aside class="toc">
+      <h4>목차</h4>
+      <ul class="toc-list">
+        <li><a href="#s-group1">그룹 1 — World Model (필수 4)</a></li>
+        <li><a href="#s-group2">그룹 2 — 에이전시 (중요 4)</a></li>
+        <li><a href="#s-group3">그룹 3 — 운영 안전성 (중요 4)</a></li>
+        <li><a href="#s-group4">그룹 4 — 부가 검증 (권장 3)</a></li>
+        <li><a href="#s-summary">배포 판단 기준 요약</a></li>
+        <li><a href="#s-start">지금 시작하기</a></li>
+      </ul>
+    </aside>
+  </div>
+</section>
+
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》 &nbsp;·&nbsp; <a href="admin.html" style="color:inherit;opacity:.5;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">HAchilles Labs</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => { l.style.color = ''; l.style.borderColor = ''; });
+        const active = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+        if (active) { active.style.color = 'var(--text)'; active.style.borderColor = 'var(--accent)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('h2[id]').forEach(h => observer.observe(h));
+</script>
+<script src="haw-analytics.js"></script>
+</body>
+</html>
