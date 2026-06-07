@@ -1,8 +1,10 @@
 # HAchillesWorld
 
+[![CI](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml/badge.svg)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
+[![Pages](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml/badge.svg)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml)
+[![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-77%20passed-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/tree/main/tests)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](./LICENSE)
 [![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20Sonnet%204.6-D97706?style=flat-square&logo=anthropic&logoColor=white)](https://www.anthropic.com)
 
