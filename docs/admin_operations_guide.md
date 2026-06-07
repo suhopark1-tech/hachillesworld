@@ -1,6 +1,6 @@
 # HAchillesWorld Admin 운용 가이드
 
-> 최종 업데이트: 2026-06-07  
+> 최종 업데이트: 2026-06-07 (POST 10 반영)  
 > 관리자: 박성훈
 
 ---
@@ -99,7 +99,7 @@ Admin 로그인 → 토큰 입력란에 붙여넣기 → **연결** 클릭
 | haw-analytics.js 로드 여부 | 런타임 감지 |
 | GA4 Measurement ID | `G-E78PZ2H8FG` (설정됨) |
 | localStorage 이벤트 수 | 누적 이벤트 수 + 초기화 버튼 |
-| 블로그 포스트 수 / 다음 번호 | 현황 표시 |
+| 블로그 포스트 수 / 다음 번호 | 10개 (POST 01~10) / 다음 번호: 11 |
 | GA4 설정 5단계 가이드 | 연동 방법 안내 |
 | Docker 스택 포트 안내 | 로컬 개발 참고 |
 
@@ -233,11 +233,14 @@ docker compose up
 
 ### 블로그 포스트 추가 시
 
+`/blog-add [제목]` 스킬이 아래 항목을 **자동** 처리합니다 (STEP 4):
+- `admin.html` BLOG_POSTS 배열 · KPI · System 탭 업데이트
+
+스킬 완료 후 수동으로 진행:
 ```
-[ ] /blog-add [제목] 스킬 실행
 [ ] docs/blog_add_workflow_prompt.md 현황 업데이트
-[ ] .claude/commands/blog-add.md 다음 번호 업데이트
-[ ] Admin Blog 탭 BLOG_POSTS 배열 업데이트 (admin.html 내 JS)
+[ ] .claude/commands/blog-add.md 다음 번호·태그 업데이트
+[ ] docs/admin_operations_guide.md 현황 업데이트 (이 파일)
 ```
 
 ### GitHub PAT 만료 시
@@ -259,4 +262,5 @@ docker compose up
 | `.github/workflows/pages.yml` | CI — HTML 검증 + GitHub Pages 배포 |
 | `.github/workflows/ci.yml` | CI — Python 테스트·린트 |
 | `.claude/commands/blog-add.md` | 블로그 추가 커스텀 커맨드 |
-| `docs/blog_add_workflow_prompt.md` | 블로그 추가 트리거 프롬프트 |
+| `docs/blog_add_workflow_prompt.md` | 블로그 추가 트리거 프롬프트 (포스트 현황 포함) |
+| `docs/admin_operations_guide.md` | Admin 운용 가이드 (이 파일) |
