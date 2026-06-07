@@ -36,7 +36,7 @@ class MLflowHASLogger:
         - Params: level, domain, has_version
         """
         try:
-            import mlflow
+            import mlflow  # type: ignore[import-not-found]
         except ImportError as exc:
             raise ImportError(
                 "MLflow가 설치되지 않았습니다. `pip install mlflow`를 실행하세요."

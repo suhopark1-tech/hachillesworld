@@ -17,7 +17,6 @@ from hachillesworld.storage.base import HAWRepository
 from hachillesworld.storage.memory import InMemoryRepository
 from hachillesworld.storage.sqlite import SQLiteRepository
 
-
 # ── 픽스처 ─────────────────────────────────────────────────────────────
 
 
@@ -56,7 +55,7 @@ def sqlite_repo(tmp_path) -> SQLiteRepository:
 
 @pytest.fixture
 def memory_repo() -> InMemoryRepository:
-    yield InMemoryRepository()
+    return InMemoryRepository()
 
 
 # ── 기본 CRUD ───────────────────────────────────────────────────────────

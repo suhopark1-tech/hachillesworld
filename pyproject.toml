@@ -44,6 +44,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "mypy>=1.10.0",
     "ruff>=0.4.4",
+    "types-PyYAML>=6.0",
 ]
 ml = [
     "torch>=2.3.0",

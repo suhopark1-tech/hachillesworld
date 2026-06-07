@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 
-
 _SUCCESS_KEYWORDS = frozenset(
     {
         "success",

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import math
+
 import pytest
 
 from hachillesworld.analyze.study_analysis import (
-    AgentRecord,
     H1Result,
     ShapleyWeights,
     StudyAnalyzer,
@@ -15,7 +15,6 @@ from hachillesworld.analyze.study_analysis import (
     _generate_synthetic_n25,
 )
 from hachillesworld.core.config import HAS_WEIGHTS, reset_has_weights
-
 
 # ── 픽스처 ────────────────────────────────────────────────────────────
 
@@ -41,9 +40,7 @@ def restore_has_weights():
 
 
 class TestLoadStudyData:
-    def test_synthetic_fallback_when_no_real_data(
-        self, analyzer: StudyAnalyzer, tmp_path
-    ) -> None:
+    def test_synthetic_fallback_when_no_real_data(self, analyzer: StudyAnalyzer, tmp_path) -> None:
         """실제 데이터 없으면 합성 n=25 데이터로 대체된다."""
         dataset = analyzer.load_study_data("HAW-TEST", study_base_dir=tmp_path)
         assert dataset.data_source == "synthetic"
@@ -53,8 +50,11 @@ class TestLoadStudyData:
         """합성 데이터는 5개 도메인을 포함한다."""
         assert len(synthetic_dataset.domains) == 5
         expected = {
-            "supply_chain", "customer_service", "code_generation",
-            "finance", "healthcare",
+            "supply_chain",
+            "customer_service",
+            "code_generation",
+            "finance",
+            "healthcare",
         }
         assert set(synthetic_dataset.domains) == expected
 
@@ -91,9 +91,7 @@ class TestComputeH1Hypothesis:
         result = analyzer.compute_h1_hypothesis(synthetic_dataset, n_bootstrap=200)
 
         assert isinstance(result, H1Result)
-        assert result.h1_passed, (
-            f"H1 미통과: ρ = {result.rho:.4f}, p = {result.p_value:.4f}"
-        )
+        assert result.h1_passed, f"H1 미통과: ρ = {result.rho:.4f}, p = {result.p_value:.4f}"
         assert result.rho >= 0.60
         assert result.p_value < 0.01
 
@@ -111,9 +109,7 @@ class TestComputeH1Hypothesis:
         expected_bonferroni = min(1.0, result.p_value * result.n_tests)
         assert abs(result.bonferroni_corrected_p - expected_bonferroni) < 1e-8
 
-    def test_ci_is_valid(
-        self, analyzer: StudyAnalyzer, synthetic_dataset: StudyDataset
-    ) -> None:
+    def test_ci_is_valid(self, analyzer: StudyAnalyzer, synthetic_dataset: StudyDataset) -> None:
         """95% CI가 ρ를 포함한다."""
         result = analyzer.compute_h1_hypothesis(synthetic_dataset, n_bootstrap=300)
         if not math.isnan(result.ci_lower):
@@ -193,8 +189,13 @@ class TestDomainSubgroupAnalysis:
     ) -> None:
         result = analyzer.domain_subgroup_analysis(synthetic_dataset)
         summary = result.summary()
-        for domain in ["supply_chain", "customer_service", "code_generation",
-                        "finance", "healthcare"]:
+        for domain in [
+            "supply_chain",
+            "customer_service",
+            "code_generation",
+            "finance",
+            "healthcare",
+        ]:
             assert domain in summary
 
 
@@ -230,17 +231,17 @@ class TestSDKWeightUpdate:
             operational_health=CategoryScore(name="OHM", score=60.0),
         )
 
-        # 기본 가중치로 계산: 80*0.40 + 70*0.35 + 60*0.25 = 32 + 24.5 + 15 = 71.5
+        # v2.1 기본 가중치로 계산: 80*0.45 + 70*0.35 + 60*0.20 = 36 + 24.5 + 12 = 72.5
         score_before = report.composite_score
-        assert abs(score_before - 71.5) < 0.01
+        assert abs(score_before - 72.5) < 0.01
 
-        # 가중치 업데이트 (wmq 높임, ohm 낮춤)
-        new_w = ShapleyWeights(wmq=0.45, alm=0.35, ohm=0.20, study_id="test", n_agents=25)
+        # 가중치 업데이트 (wmq 유지, ohm→alm 이동)
+        new_w = ShapleyWeights(wmq=0.45, alm=0.40, ohm=0.15, study_id="test", n_agents=25)
         analyzer.sdk_weight_update(new_w)
 
-        # 새 가중치: 80*0.45 + 70*0.35 + 60*0.20 = 36 + 24.5 + 12 = 72.5
+        # 새 가중치: 80*0.45 + 70*0.40 + 60*0.15 = 36 + 28 + 9 = 73.0
         score_after = report.composite_score
-        assert abs(score_after - 72.5) < 0.01
+        assert abs(score_after - 73.0) < 0.01
         assert score_after != score_before
 
     def test_invalid_weights_rejected(self, analyzer: StudyAnalyzer) -> None:
@@ -258,9 +259,10 @@ class TestSDKWeightUpdate:
 
         reset_has_weights()
 
-        assert abs(HAS_WEIGHTS["wmq"] - 0.40) < 1e-9
+        # v2.1 기본값: HAW-STUDY-001 실증 결과 반영 (0.45/0.35/0.20)
+        assert abs(HAS_WEIGHTS["wmq"] - 0.45) < 1e-9
         assert abs(HAS_WEIGHTS["alm"] - 0.35) < 1e-9
-        assert abs(HAS_WEIGHTS["ohm"] - 0.25) < 1e-9
+        assert abs(HAS_WEIGHTS["ohm"] - 0.20) < 1e-9
 
 
 # ── 테스트 6: 합성 데이터 재현성 ─────────────────────────────────────

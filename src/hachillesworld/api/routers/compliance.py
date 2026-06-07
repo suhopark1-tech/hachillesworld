@@ -60,9 +60,7 @@ class ISO42001CheckResponse(BaseModel):
 
 
 @router.post("/report/compliance", response_model=EUAIActReportResponse)
-def generate_eu_act_report(
-    req: ComplianceReportRequest, request: Request
-) -> EUAIActReportResponse:
+def generate_eu_act_report(req: ComplianceReportRequest, request: Request) -> EUAIActReportResponse:
     """EU AI Act 관련 HAW 지표 모니터링 참고 보고서 생성 (법적 효력 없음)."""
     report = request.app.state.store.get_latest_report(req.agent_id)
     if report is None:
@@ -73,7 +71,7 @@ def generate_eu_act_report(
 
     mapper = EUAIActMapper()
     eu_report = mapper.map_to_articles(report)
-    html_body = mapper.generate_compliance_report(report, format=req.format)
+    html_body = mapper.generate_monitoring_report(report, output_format=req.format)
 
     articles = [
         EUAIActArticleSchema(

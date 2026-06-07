@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr  # type: ignore[import-untyped]
 
 from hachillesworld.collect.episode import EpisodeRecord
 from hachillesworld.privacy.data_classifier import DataClassifier

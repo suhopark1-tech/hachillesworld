@@ -1,3 +1,6 @@
+# Copyright 2026 HAchillesWorld (박성훈)
+# SPDX-License-Identifier: Apache-2.0
+
 """HAchillesWorld — 횡단 타당도 분석 모듈
 
 H1: ρ(HAS, Q_composite) ≥ 0.60, p < 0.01

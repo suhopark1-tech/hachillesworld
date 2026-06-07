@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import warnings
 
-import pytest
-
-from hachillesworld.privacy.data_classifier import DataClassifier, DataClassification
+from hachillesworld.privacy.data_classifier import DataClassifier
 
 
 class TestDataClassification:

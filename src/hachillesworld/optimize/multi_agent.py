@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from hachillesworld.core.models import DiagnosticReport, Level
@@ -32,7 +32,7 @@ class SimultaneousDriftResult:
     """다중 에이전트 동시 드리프트 분석 결과."""
 
     detected: bool
-    cause: str                                   # "environment" | "individual" | "unknown"
+    cause: str  # "environment" | "individual" | "unknown"
     correlated_pairs: list[tuple[str, str, float]]  # (agent1, agent2, rho)
     mean_correlation: float
     n_agents_affected: int
@@ -70,10 +70,7 @@ class GroupHASReport:
             lines.append("   ⚠ 동시 드리프트 감지 — 환경 레벨 변화 점검 필요")
         if self.dependency_risk:
             top = max(self.dependency_risk, key=lambda k: self.dependency_risk[k])
-            lines.append(
-                f"   최고 전파 위험: {top}  "
-                f"(위험도 {self.dependency_risk[top]:.1%})"
-            )
+            lines.append(f"   최고 전파 위험: {top}  (위험도 {self.dependency_risk[top]:.1%})")
         lines.append(f"   생성: {self.generated_at}")
         return "\n".join(lines)
 
@@ -189,11 +186,7 @@ class AgentDependencyGraph:
 
     def edges(self) -> list[tuple[str, str, float]]:
         """(from, to, weight) 형태의 엣지 목록."""
-        return [
-            (src, dst, w)
-            for src, nbrs in self._adj.items()
-            for dst, w in nbrs.items()
-        ]
+        return [(src, dst, w) for src, nbrs in self._adj.items() for dst, w in nbrs.items()]
 
     # ── 내부 ──────────────────────────────────────────────────────
 

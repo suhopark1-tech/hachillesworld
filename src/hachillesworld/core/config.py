@@ -2,22 +2,33 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# ── HAS 카테고리 가중치 ─────────────────────────────────────────────
-# 기본값: HAW-TR-001 이론 기반 (WMQ:ALM:OHM = 0.40:0.35:0.25)
-# HAW-STUDY-001 완료 후 StudyAnalyzer.sdk_weight_update()로 실증 기반 갱신 가능.
-# 세 값의 합계는 반드시 1.0 이어야 한다.
-HAS_WEIGHTS: dict[str, float] = {
-    "wmq": 0.40,
-    "alm": 0.35,
-    "ohm": 0.25,
+# ── HAS 가중치 버전 레지스트리 ──────────────────────────────────────
+# HAW-STUDY-001 실증 결과(WMQ:ALM:OHM = 0.45:0.35:0.20)를 v2.0부터 반영.
+# 새 버전 추가 시 HAS_CURRENT_VERSION만 변경하면 된다.
+HAS_WEIGHT_VERSIONS: dict[str, dict[str, object]] = {
+    "2.0": {"wmq": 0.45, "alm": 0.35, "ohm": 0.20, "released": "2026-06-06"},
+    "2.1": {"wmq": 0.45, "alm": 0.35, "ohm": 0.20, "released": "2026-10-01"},
 }
+HAS_CURRENT_VERSION: str = "2.1"
+
+
+def get_weights_for_version(version: str) -> dict[str, float]:
+    """지정 버전의 HAS 가중치를 반환한다. 없는 버전이면 ValueError."""
+    if version not in HAS_WEIGHT_VERSIONS:
+        available = ", ".join(sorted(HAS_WEIGHT_VERSIONS.keys()))
+        raise ValueError(f"알 수 없는 HAS 가중치 버전: '{version}'. 사용 가능: {available}")
+    entry = HAS_WEIGHT_VERSIONS[version]
+    return {k: float(v) for k, v in entry.items() if k != "released"}  # type: ignore[arg-type]
+
+
+HAS_WEIGHTS: dict[str, float] = get_weights_for_version(HAS_CURRENT_VERSION)
 
 # 초기화용 기본값 스냅샷 (sdk_weight_update 후 롤백 가능)
 _DEFAULT_HAS_WEIGHTS: dict[str, float] = dict(HAS_WEIGHTS)
 
 
 def reset_has_weights() -> None:
-    """HAS 가중치를 이론 기본값으로 복원한다."""
+    """HAS 가중치를 현재 버전 기본값으로 복원한다."""
     HAS_WEIGHTS.update(_DEFAULT_HAS_WEIGHTS)
 
 

@@ -9,8 +9,6 @@
 
 from __future__ import annotations
 
-import json
-
 from hachillesworld.scan.judge.base import JudgeBackend  # noqa: F401 — Protocol 참조용
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,8 +17,6 @@ from hachillesworld.core.models import (
     MetricScore,
 )
 from hachillesworld.interpret.has_interpreter import (
-    ActionItem,
-    HASInterpretation,
     HASInterpreter,
 )
 
