@@ -72,12 +72,29 @@ Admin 로그인 → 토큰 입력란에 붙여넣기 → **연결** 클릭
 
 | 항목 | 데이터 소스 |
 |---|---|
-| 총 블로그 포스트 수 | 하드코딩 (포스트 추가 시 업데이트) |
+| 총 블로그 포스트 수 | **10개** (POST 01~10, admin.html BLOG_POSTS 배열 하드코딩) |
 | 추적된 블로그 방문 수 | localStorage |
 | 평균 체류시간 (초) | localStorage (페이지 이탈 시 기록) |
 | 평균 스크롤 깊이 (%) | localStorage (25·50·75·90% 마일스톤) |
 | 포스트별 방문·체류·스크롤 표 | localStorage |
 | GitHub Views (포스트별) | GitHub Traffic API (Traffic 탭 연결 후 표시) |
+
+**BLOG_POSTS 배열 현황** (`landing/admin.html` 기준):
+
+| # | 파일 | 제목 |
+|---|------|------|
+| 10 | blog-v3-roadmap.html | HAchillesWorld v3.0 로드맵 |
+| 09 | blog-multi-agent-collaboration.html | Multi-Agent 협업 실전 |
+| 08 | blog-agent-cost-optimization.html | AI 에이전트 비용 최적화 |
+| 07 | blog-user-guide.html | 완전 사용 가이드 v2.1 |
+| 06 | blog-glossary.html | 플랫폼 용어 완전 해설 |
+| 05 | blog-recognition-certification.html | AI 에이전트 인정과 인증 |
+| 04 | blog-arxiv-paper.html | AI 에이전트 신용 점수 |
+| 03 | blog-why-world-model.html | World Model 기업 도입 이유 |
+| 02 | blog-mcts-planning-depth.html | MCTS Planning Depth |
+| 01 | blog-world-model.html | AI 에이전트 왜 실패하는가 |
+
+> 다음 포스트 번호: **11** — `/blog-add` 스킬 실행 시 자동 업데이트됨
 
 ### Tab 3 — Scan 진단
 
