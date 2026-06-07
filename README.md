@@ -1,7 +1,8 @@
 # HAchillesWorld
 
-[![CI](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml/badge.svg)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
-[![Pages](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml/badge.svg)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/suhopark1-tech/hachillesworld/ci.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/suhopark1-tech/hachillesworld/ci.yml?branch=main&style=flat-square&label=security%20scan&logo=shieldsdotio&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
+[![Pages](https://img.shields.io/github/actions/workflow/status/suhopark1-tech/hachillesworld/pages.yml?branch=main&style=flat-square&label=Pages&logo=githubpages&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/pages.yml)
 [![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://github.com/suhopark1-tech/hachillesworld/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)](https://github.com/suhopark1-tech/hachillesworld/releases)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
