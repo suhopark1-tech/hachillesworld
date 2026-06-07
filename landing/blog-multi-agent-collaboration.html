@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — Multi-Agent 협업 실전: 에이전트들이 서로 충돌할 때 | HAchillesWorld</title>
+  <meta name="description" content="두 에이전트가 같은 재고를 두고 동시에 발주를 냈다. 합산 금액이 예산의 2배였다. Multi-Agent 시스템의 World Model 충돌 — 왜 발생하고 HAchillesWorld로 어떻게 막는가." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f; --bg2:#0f0f1a; --bg3:#141428; --surface:#1a1a2e;
+      --border:rgba(139,92,246,.22); --accent:#8b5cf6; --accent2:#06b6d4;
+      --accent3:#10b981; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#94a3b8; --glow:rgba(139,92,246,.35);
+      --mono:'JetBrains Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .nav-logo{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+    .nav-links{display:flex;gap:2rem;align-items:center}
+    .nav-links a{color:var(--muted);font-size:.875rem;font-weight:500;transition:color .2s}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);text-decoration:none}
+    .nav-cta{padding:8px 20px;border-radius:8px;font-size:.875rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:opacity .2s;text-decoration:none}
+    .nav-cta:hover{opacity:.85;text-decoration:none}
+    @media(max-width:768px){.nav-links{display:none}}
+
+    .container{max-width:720px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1120px;margin:0 auto;padding:0 24px}
+
+    .blog-hero{padding:120px 0 60px;position:relative;overflow:hidden}
+    .blog-hero-grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(139,92,246,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.5) 1px,transparent 1px);background-size:60px 60px}
+    .blog-hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 70%);pointer-events:none}
+    .blog-hero-inner{position:relative;z-index:1}
+    .blog-tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+    .blog-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#c4b5fd}
+    .blog-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;line-height:1.2;letter-spacing:-.02em;margin-bottom:12px}
+    .blog-subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:28px;line-height:1.6}
+    .blog-meta{display:flex;gap:20px;align-items:center;font-size:.82rem;color:var(--muted);flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+    .blog-author{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+    .author-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff}
+
+    .article{padding:0 0 80px}
+    .article-body{font-size:1rem;line-height:1.85;color:#cbd5e1}
+    .article-body h2{font-size:1.45rem;font-weight:900;color:var(--text);margin:48px 0 16px;letter-spacing:-.01em;padding-top:12px;border-top:1px solid var(--border)}
+    .article-body h2:first-child{margin-top:0;border-top:none;padding-top:0}
+    .article-body h3{font-size:1.1rem;font-weight:800;color:var(--text);margin:32px 0 12px}
+    .article-body p{margin-bottom:20px}
+    .article-body strong{color:var(--text);font-weight:700}
+    .article-body em{color:var(--muted);font-style:normal;background:rgba(139,92,246,.1);padding:1px 5px;border-radius:4px;font-size:.92em}
+    .article-body ul,.article-body ol{margin:0 0 20px 24px}
+    .article-body li{margin-bottom:8px}
+    .article-body blockquote{border-left:3px solid var(--accent);padding:12px 20px;margin:24px 0;background:rgba(139,92,246,.07);border-radius:0 8px 8px 0;color:var(--muted);font-style:normal}
+    .article-body hr{border:none;border-top:1px solid var(--border);margin:40px 0}
+    .article-body a{color:var(--accent2)}
+
+    .code-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .code-block-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent);display:flex;align-items:center;gap:8px}
+    .code-block-head .dots{display:flex;gap:5px}
+    .code-block-head .dot{width:10px;height:10px;border-radius:50%}
+    .code-block pre{padding:20px;font-family:var(--mono);font-size:.82rem;line-height:1.7;color:#c4b5fd;overflow-x:auto;margin:0}
+    .code-block pre .kw{color:#67e8f9}
+    .code-block pre .st{color:#86efac}
+    .code-block pre .cm{color:#4b5563}
+    .code-block pre .nm{color:#fda4af}
+
+    .article-body code{font-family:var(--mono);font-size:.82em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:1px 6px;border-radius:4px;color:#c4b5fd}
+
+    .scan-output{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:24px 0}
+    .scan-output-head{background:var(--bg3);padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.72rem;color:var(--accent3);display:flex;align-items:center;gap:6px}
+    .scan-output pre{padding:18px;font-family:var(--mono);font-size:.79rem;line-height:1.75;color:#d1fae5;overflow-x:auto;margin:0}
+
+    .data-table-wrap{overflow-x:auto;margin:24px 0}
+    .data-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .data-table th{background:var(--bg3);padding:10px 16px;text-align:left;font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:#cbd5e1}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:rgba(139,92,246,.03)}
+    .data-table td strong{color:var(--accent3);font-weight:700}
+
+    .result-card{background:var(--surface);border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:28px;margin:32px 0;box-shadow:0 0 30px rgba(16,185,129,.07)}
+    .result-card h3{font-size:1rem;font-weight:800;color:var(--accent3);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+    .result-item{background:var(--bg3);border-radius:10px;padding:12px 14px}
+    .result-item .ri-label{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+    .result-item .ri-before{font-family:var(--mono);font-size:.8rem;color:var(--muted);text-decoration:line-through;margin-bottom:2px}
+    .result-item .ri-after{font-family:var(--mono);font-size:1rem;font-weight:800;color:var(--accent3)}
+
+    .article-cta{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.07));border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;margin:48px 0 0}
+    .article-cta h3{font-size:1.4rem;font-weight:900;margin-bottom:12px}
+    .article-cta p{color:var(--muted);font-size:.9rem;margin-bottom:28px}
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);color:#fff;border:none;cursor:pointer;transition:transform .2s,opacity .2s;text-decoration:none;display:inline-block}
+    .btn-primary:hover{transform:translateY(-2px);opacity:.9;text-decoration:none}
+    .btn-secondary{padding:12px 28px;border-radius:10px;font-size:.9rem;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+    .btn-secondary:hover{border-color:var(--accent);text-decoration:none}
+
+    footer{background:var(--bg);padding:48px 0 32px;border-top:1px solid var(--border);margin-top:60px}
+    .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+    .footer-brand{font-size:1rem;font-weight:900;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .footer-links{display:flex;gap:20px;flex-wrap:wrap}
+    .footer-links a{font-size:.8rem;color:var(--muted);transition:color .2s}
+    .footer-links a:hover{color:var(--text);text-decoration:none}
+    .footer-copy{font-size:.76rem;color:var(--muted);margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .fade-up{animation:fadeInUp .6s ease both}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}
+
+    .article-layout{display:grid;grid-template-columns:1fr 220px;gap:48px;align-items:start;max-width:1000px;margin:0 auto;padding:0 24px}
+    @media(max-width:900px){.article-layout{grid-template-columns:1fr}}
+    .toc{position:sticky;top:88px}
+    .toc h4{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+    .toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+    .toc-list li a{font-size:.8rem;color:var(--muted);transition:color .2s;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--border)}
+    .toc-list li a:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
+    @media(max-width:900px){.toc{display:none}}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">HAchillesWorld</a>
+  <div class="nav-links">
+    <a href="index.html#modules">솔루션</a>
+    <a href="index.html#pricing">가격</a>
+    <a href="optimize.html">Optimize</a>
+    <a href="operate.html">Operate</a>
+    <a href="blog.html" class="active">Blog</a>
+    <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+  </div>
+  <a href="scan.html" class="nav-cta">무료 진단 시작</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="blog-hero">
+  <div class="blog-hero-grid"></div>
+  <div class="blog-hero-glow"></div>
+  <div class="container blog-hero-inner">
+    <div class="blog-tag-row fade-up">
+      <span class="blog-tag">#AgenticAI</span>
+      <span class="blog-tag">#MultiAgent</span>
+      <span class="blog-tag">#WorldModel</span>
+      <span class="blog-tag">#실전케이스</span>
+    </div>
+    <h1 class="blog-title fade-up delay-1">
+      Multi-Agent 협업 실전:<br/>에이전트들이 서로 충돌할 때
+    </h1>
+    <p class="blog-subtitle fade-up delay-2">
+      두 에이전트가 같은 재고를 두고 동시에 발주했다. 합산 금액이 예산의 2배였다.
+    </p>
+    <div class="blog-meta fade-up delay-2">
+      <div class="blog-author">
+        <div class="author-avatar">박</div>
+        박성훈
+      </div>
+      <span>2026년 6월</span>
+      <span>약 3,500자 · 13분 읽기</span>
+      <span style="color:var(--accent3)">◈ 실전 케이스 포함</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARTICLE + TOC ── -->
+<section class="article">
+  <div class="article-layout">
+
+    <div class="article-body">
+
+      <p>사고가 났다. 그것도 두 에이전트가 동시에.</p>
+
+      <p>공급망 에이전트 A가 부품 재고 부족을 감지하고 1,200만 원어치 발주를 냈다. 같은 시각, 물류 에이전트 B도 동일한 재고 부족을 확인하고 800만 원어치 발주를 냈다. 둘 다 옳았다. 둘 다 자신의 World Model 안에서 완벽하게 합리적인 결정을 내렸다.</p>
+
+      <p>문제는 서로의 결정을 <strong>몰랐다</strong>는 것이다.</p>
+
+      <p>합산 발주 금액: 2,000만 원. 실제 필요량: 700만 원어치. 창고에는 갑자기 재고가 넘쳐흘렀고, 나머지 1,300만 원은 3개월 뒤에야 소진됐다.</p>
+
+      <hr/>
+
+      <h2 id="s-why">왜 에이전트끼리 충돌하는가</h2>
+
+      <p>단일 에이전트 시스템에서는 World Model이 하나다. 에이전트 하나가 세상을 이해하고, 하나가 결정을 내린다.</p>
+
+      <p>Multi-Agent 시스템에서는 <strong>World Model이 에이전트 수만큼 존재한다.</strong> 각 에이전트는 자신만의 세계 이해를 가지고 있고, 그 이해가 서로 다를 수 있다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#f87171">●</span> 충돌 발생 구조
+        </div>
+        <pre><span style="color:#fbbf24">에이전트 A의 World Model:</span>
+  재고: 부품-K7 잔량 12개 → 부족 (임계치 50개)
+  예측: 3일 후 생산 라인 중단 위험
+  결정: 즉시 발주 ₩1,200만
+
+<span style="color:#f87171">에이전트 B의 World Model:</span>
+  재고: 부품-K7 잔량 12개 → 부족 (임계치 30개)
+  예측: 5일 후 물류 지연 위험
+  결정: 즉시 발주 ₩800만
+
+<span style="color:#94a3b8">공유된 정보: 없음
+충돌 감지: 없음 → 중복 발주 실행</span></pre>
+      </div>
+
+      <p>두 에이전트의 World Model이 같은 현실(재고 12개)을 보면서도 다른 임계치, 다른 예측, 다른 결정으로 이어졌다. 각자의 관점에서는 완벽히 올바른 행동이었다.</p>
+
+      <p>이것이 <strong>World Model 충돌(World Model Conflict)</strong>이다. 에이전트 개별 성능이 아무리 높아도, 시스템 수준에서 일관성이 없으면 반드시 발생한다.</p>
+
+      <hr/>
+
+      <h2 id="s-types">Multi-Agent 충돌의 세 가지 유형</h2>
+
+      <p>HAchillesWorld가 분류한 Multi-Agent 충돌 패턴은 크게 세 가지다.</p>
+
+      <h3>1. 상태 충돌 (State Conflict)</h3>
+      <p>여러 에이전트가 동일한 자원의 상태를 각자 다르게 인식한다. 위의 발주 사례가 전형적인 예다. 재고라는 단일 사실을 두 에이전트가 서로 다른 World Model로 읽는다.</p>
+
+      <h3>2. 계획 충돌 (Plan Conflict)</h3>
+      <p>각 에이전트의 계획이 다른 에이전트의 계획을 방해한다. 에이전트 A가 특정 서버 리소스를 점유하는 계획을 세우는 동안, 에이전트 B가 같은 리소스를 사용하는 작업을 스케줄링한다.</p>
+
+      <h3>3. 목표 충돌 (Goal Conflict)</h3>
+      <p>가장 근본적인 충돌. 에이전트 A의 목표(비용 최소화)와 에이전트 B의 목표(납기 준수)가 서로 상충될 때, 둘 다 자신의 목표를 최적화하면서 시스템 전체의 성과를 악화시킨다.</p>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>충돌 유형</th>
+              <th>발생 빈도</th>
+              <th>비용 영향</th>
+              <th>감지 난이도</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>상태 충돌</td>
+              <td style="color:#f87171">높음</td>
+              <td style="color:#f87171">즉각적</td>
+              <td style="color:#fbbf24">중간</td>
+            </tr>
+            <tr>
+              <td>계획 충돌</td>
+              <td style="color:#fbbf24">중간</td>
+              <td style="color:#fbbf24">지연됨</td>
+              <td style="color:#f87171">어려움</td>
+            </tr>
+            <tr>
+              <td>목표 충돌</td>
+              <td style="color:#6ee7b7">낮음</td>
+              <td style="color:#f87171">누적·만성</td>
+              <td style="color:#f87171">매우 어려움</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr/>
+
+      <h2 id="s-diagnosis">HAchillesWorld로 Multi-Agent 시스템 진단</h2>
+
+      <p>단일 에이전트 진단과 Multi-Agent 진단의 차이는 <strong>시스템 수준 일관성 지표</strong>의 유무다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          multi_agent_scan.py
+        </div>
+        <pre><span class="kw">from</span> hachillesworld <span class="kw">import</span> HAchillesWorldClient, instrument
+
+client = HAchillesWorldClient()
+
+<span class="cm"># 각 에이전트에 동일한 클라이언트 인스턴스로 계측</span>
+<span class="nm">@instrument</span>(client, agent_name=<span class="st">"supply-agent"</span>)
+<span class="kw">class</span> SupplyAgent: ...
+
+<span class="nm">@instrument</span>(client, agent_name=<span class="st">"logistics-agent"</span>)
+<span class="kw">class</span> LogisticsAgent: ...
+
+<span class="cm"># Multi-Agent 시스템 전체 진단</span>
+report = client.scan_multi_agent(
+    agents=[<span class="st">"supply-agent"</span>, <span class="st">"logistics-agent"</span>],
+    logs=<span class="st">"./system_logs.json"</span>
+)
+<span class="nm">print</span>(report.conflict_summary())</pre>
+      </div>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#f59e0b">●</span> Multi-Agent 진단 결과
+        </div>
+        <pre><span style="color:#fbbf24">⚠ Multi-Agent 시스템 진단 — 2에이전트</span>
+
+개별 에이전트 점수:
+  supply-agent    : 81/100  ✓
+  logistics-agent : 78/100  ✓
+
+<span style="color:#f87171">시스템 일관성 점수: 34/100  🔴</span>
+
+충돌 감지 (최근 30일):
+  상태 충돌   : 23건  🔴
+  계획 충돌   :  7건  ⚠
+  목표 충돌   :  2건  ⚠
+
+주요 충돌 지점:
+  ├─ 재고 임계치 불일치 (A: 50개, B: 30개)
+  ├─ 발주 쿨다운 미공유 (A 발주 후 B 미인지)
+  └─ 예산 잔액 동기화 지연 (평균 4.2초)
+
+💡 권장: Shared World Model 레이어 구축</pre>
+      </div>
+
+      <p>개별 에이전트는 80점대로 양호하지만 <strong>시스템 일관성이 34점</strong>이다. 이 숫자가 핵심이다. 에이전트를 개별적으로 아무리 잘 만들어도 시스템 수준 일관성이 없으면 충돌은 불가피하다.</p>
+
+      <hr/>
+
+      <h2 id="s-shared-wm">해결책: Shared World Model 레이어</h2>
+
+      <p>Multi-Agent 충돌의 근본 원인은 <strong>공유되지 않은 현실 이해</strong>다. 해결 방향은 하나다: 에이전트들이 공통의 현실 인식을 갖도록 만드는 것.</p>
+
+      <p>HAchillesWorld v2.1이 제공하는 <code>SharedWorldModel</code>은 에이전트 간에 중요한 상태 정보를 실시간으로 동기화하는 레이어다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          shared_world_model.py
+        </div>
+        <pre><span class="kw">from</span> hachillesworld <span class="kw">import</span> HAchillesWorldClient, SharedWorldModel
+
+client = HAchillesWorldClient()
+
+<span class="cm"># 공유 World Model 초기화 — 모든 에이전트가 참조</span>
+swm = SharedWorldModel(
+    client=client,
+    sync_interval_ms=<span class="nm">500</span>,   <span class="cm"># 0.5초마다 동기화</span>
+    conflict_policy=<span class="st">"latest-wins"</span>
+)
+
+<span class="cm"># 에이전트가 행동 전 공유 상태를 읽고 쓴다</span>
+<span class="kw">class</span> SupplyAgent:
+    <span class="kw">def</span> plan(<span class="nm">self</span>, state, goal):
+        <span class="cm"># 발주 전 다른 에이전트의 의도를 확인</span>
+        pending = swm.get(<span class="st">"pending_orders"</span>)
+        <span class="kw">if</span> pending.covers(state.shortage):
+            <span class="kw">return</span> Action.SKIP   <span class="cm"># 중복 발주 방지</span>
+
+        <span class="cm"># 발주 의도를 공유 상태에 먼저 등록</span>
+        swm.set(<span class="st">"pending_orders"</span>, {
+            <span class="st">"agent"</span>: <span class="st">"supply-agent"</span>,
+            <span class="st">"item"</span>: state.shortage.item,
+            <span class="st">"amount"</span>: goal.order_qty,
+            <span class="st">"expires_at"</span>: now() + timedelta(minutes=<span class="nm">5</span>)
+        })
+        <span class="kw">return</span> Action.ORDER</pre>
+      </div>
+
+      <p>핵심 패턴은 <strong>"행동 전 의도 등록, 행동 전 의도 확인"</strong>이다. 에이전트가 중요한 행동을 하기 전에 공유 공간에 자신의 의도를 먼저 기록하고, 다른 에이전트의 의도도 확인한 뒤 행동한다.</p>
+
+      <hr/>
+
+      <h2 id="s-harness-coord">Harness 기반 에이전트 간 조율</h2>
+
+      <p>Shared World Model은 상태를 공유하지만, <strong>행동 규칙</strong>은 별도로 관리해야 한다. HAchillesWorld의 Multi-Agent Harness가 이를 담당한다.</p>
+
+      <div class="scan-output">
+        <div class="scan-output-head">
+          <span style="color:#6ee7b7">●</span> Multi-Agent Harness 규칙 예시
+        </div>
+        <pre><span style="color:#6ee7b7">규칙 MA-001:</span> 발주 전 공유 상태 확인 필수
+  조건: action.type == "ORDER"
+  실행: check swm["pending_orders"] before proceed
+
+<span style="color:#6ee7b7">규칙 MA-002:</span> 동일 자원 동시 접근 금지
+  조건: resource.concurrent_agents > 1
+  실행: queue 처리, 선착순 잠금
+
+<span style="color:#6ee7b7">규칙 MA-003:</span> 예산 소진 시 타 에이전트 알림
+  조건: budget.remaining < threshold
+  실행: broadcast to all agents
+
+<span style="color:#6ee7b7">규칙 MA-004:</span> 충돌 감지 시 인간 승인 요청
+  조건: conflict.severity == "HIGH"
+  실행: pause + notify operator</pre>
+      </div>
+
+      <p>이 규칙들은 코드가 아니라 <strong>선언형 정책</strong>으로 작성된다. 에이전트 코드를 수정하지 않아도 Harness 규칙만 추가하면 충돌 방지 로직이 적용된다.</p>
+
+      <hr/>
+
+      <h2 id="s-result">적용 결과: 8주 후</h2>
+
+      <p>Shared World Model 구축과 Multi-Agent Harness 규칙 12개 적용 후의 변화다.</p>
+
+      <div class="result-card">
+        <h3>◈ Multi-Agent 충돌 방지 8주 결과</h3>
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="ri-label">시스템 일관성</div>
+            <div class="ri-before">34점</div>
+            <div class="ri-after">89점</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">상태 충돌</div>
+            <div class="ri-before">23건/월</div>
+            <div class="ri-after">1건/월</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">중복 발주</div>
+            <div class="ri-before">월 3.2건</div>
+            <div class="ri-after">0건</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">예산 초과율</div>
+            <div class="ri-before">18%</div>
+            <div class="ri-after">2%</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">Harness 규칙</div>
+            <div class="ri-before">0개</div>
+            <div class="ri-after">12개</div>
+          </div>
+          <div class="result-item">
+            <div class="ri-label">연간 절감</div>
+            <div class="ri-before">—</div>
+            <div class="ri-after">₩2,800만</div>
+          </div>
+        </div>
+      </div>
+
+      <p>가장 인상적인 변화는 <strong>시스템 일관성 점수</strong>였다. 개별 에이전트는 처음부터 잘 만들어져 있었다. 문제는 에이전트 사이에 있었다. 그 사이를 채우는 것이 전부였다.</p>
+
+      <blockquote>
+        "에이전트를 잘 만드는 것과 에이전트들이 잘 협업하게 만드는 것은 완전히 다른 문제다."<br/>
+        — Shared World Model이 없으면 개별 에이전트의 성능은 시스템 수준에서 빛을 발하지 못한다.
+      </blockquote>
+
+      <hr/>
+
+      <h2 id="s-checklist">Multi-Agent 시스템 도입 전 체크리스트</h2>
+
+      <p>Multi-Agent 시스템을 새로 구축하거나 기존 시스템에 에이전트를 추가할 때 반드시 확인해야 할 항목이다.</p>
+
+      <ul>
+        <li><strong>공유 자원 목록 작성</strong> — 둘 이상의 에이전트가 접근하는 모든 자원을 식별한다.</li>
+        <li><strong>임계치 통일</strong> — 에이전트마다 다른 판단 기준(임계치)을 하나의 설정 파일로 통합한다.</li>
+        <li><strong>의도 공유 메커니즘</strong> — 중요한 행동 전에 의도를 공유 공간에 등록하는 패턴을 설계한다.</li>
+        <li><strong>충돌 감지 모니터링</strong> — HAchillesWorld 시스템 일관성 점수를 지속 관측한다.</li>
+        <li><strong>충돌 정책 문서화</strong> — 충돌 발생 시 어떤 에이전트의 결정이 우선하는지 사전에 정의한다.</li>
+        <li><strong>인간 개입 조건 설정</strong> — 자동 처리 한계를 벗어난 충돌에 대한 알림과 승인 흐름을 만든다.</li>
+      </ul>
+
+      <hr/>
+
+      <h2 id="s-start">지금 Multi-Agent 시스템을 진단하세요</h2>
+
+      <p>이미 여러 에이전트를 운영 중이라면, 지금 이 순간에도 충돌이 발생하고 있을 가능성이 높다. 대부분은 로그에 묻혀서 보이지 않는다.</p>
+
+      <div class="code-block">
+        <div class="code-block-head">
+          <div class="dots"><div class="dot" style="background:#ef4444"></div><div class="dot" style="background:#f59e0b"></div><div class="dot" style="background:#22c55e"></div></div>
+          bash
+        </div>
+        <pre>pip install hachillesworld
+
+<span class="cm"># Multi-Agent 시스템 충돌 진단</span>
+hachillesworld scan \
+  --logs ./system_logs.json \
+  --agents supply-agent,logistics-agent \
+  --mode multi-agent</pre>
+      </div>
+
+      <p>진단 결과에 <strong>시스템 일관성 점수</strong>가 표시된다. 70점 미만이라면 지금 당장 Shared World Model 구축을 시작할 이유가 있다.</p>
+
+      <div class="article-cta">
+        <h3>Multi-Agent 시스템<br/><span style="background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">충돌 진단</span>을 시작하세요</h3>
+        <p>에이전트 간 World Model 충돌을 자동으로 감지합니다.<br/>개별 에이전트 진단 + 시스템 일관성 점수를 동시에 확인.</p>
+        <div class="cta-btns">
+          <a href="scan.html" class="btn-primary">🔍 무료 Scan 시작</a>
+          <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank" class="btn-secondary">⭐ GitHub</a>
+        </div>
+      </div>
+
+      <!-- RELATED POSTS -->
+      <div style="margin:48px 0 0">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px">다음 글</h3>
+        <a href="blog-agent-cost-optimization.html" style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+          <span style="font-size:1.2rem;flex-shrink:0;margin-top:2px">→</span>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px">AI 에이전트 비용 최적화 실전 가이드</div>
+            <div style="font-size:.82rem;color:var(--muted)">LLM 호출 70%를 줄이고 연간 ₩3,600만을 절감한 구체적인 방법</div>
+          </div>
+        </a>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        이 글은 《Agentic World Modeling 2027》의 이론을 기반으로 실제 프로젝트 경험을 정리한 것입니다.<br/>
+        저자: 박성훈 &nbsp;·&nbsp; HAchillesWorld &nbsp;·&nbsp; 2026
+      </p>
+
+    </div><!-- /article-body -->
+
+    <!-- TOC -->
+    <aside class="toc">
+      <h4>목차</h4>
+      <ul class="toc-list">
+        <li><a href="#s-why">왜 에이전트끼리 충돌하는가</a></li>
+        <li><a href="#s-types">충돌의 세 가지 유형</a></li>
+        <li><a href="#s-diagnosis">Multi-Agent 시스템 진단</a></li>
+        <li><a href="#s-shared-wm">Shared World Model</a></li>
+        <li><a href="#s-harness-coord">Harness 기반 조율</a></li>
+        <li><a href="#s-result">8주 결과</a></li>
+        <li><a href="#s-checklist">도입 전 체크리스트</a></li>
+        <li><a href="#s-start">지금 시작할 수 있다</a></li>
+      </ul>
+    </aside>
+
+  </div><!-- /article-layout -->
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">HAchillesWorld</div>
+      <div class="footer-links">
+        <a href="index.html">홈</a>
+        <a href="scan.html">무료 Scan</a>
+        <a href="optimize.html">Optimize</a>
+        <a href="operate.html">Operate</a>
+        <a href="cert.html">인증</a>
+        <a href="blog.html">Blog</a>
+        <a href="https://github.com/suhopark1-tech/hachillesworld" target="_blank">GitHub</a>
+        <a href="mailto:suhopark1@gmail.com">문의</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 HAchillesWorld. 박성훈. All rights reserved. &nbsp;·&nbsp;
+      이론적 기반: 《Agentic World Modeling 2027》
+    </div>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.querySelector('nav').style.background =
+      window.scrollY > 50 ? 'rgba(10,10,15,.98)' : 'rgba(10,10,15,.92)';
+  });
+
+  const tocLinks = document.querySelectorAll('.toc-list a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => { l.style.color = ''; l.style.borderColor = ''; });
+        const active = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+        if (active) { active.style.color = 'var(--text)'; active.style.borderColor = 'var(--accent)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('h2[id]').forEach(h => observer.observe(h));
+</script>
+</body>
+</html>
