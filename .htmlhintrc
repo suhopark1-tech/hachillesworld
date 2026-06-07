@@ -19,5 +19,5 @@
   "id-class-ad-disabled": false,
   "href-abs-or-rel": false,
   "attr-unsafe-chars": true,
-  "tags-check": {}
+  "tags-check": false
 }
