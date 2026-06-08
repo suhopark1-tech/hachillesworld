@@ -23,7 +23,7 @@
 ```powershell
 (Get-ChildItem "landing\blog-*.html" | Where-Object { $_.Name -ne "blog.html" }).Count
 ```
-→ 현재 개수 + 1 = 새 포스트 번호 (2자리, 예: 14)
+→ 현재 개수 + 1 = 새 포스트 번호 (2자리, 예: 15)
 
 슬러그와 번호를 확정하기 전에 사용자에게 다음을 확인한다:
 - 생성할 파일명 (`landing/blog-{slug}.html`)

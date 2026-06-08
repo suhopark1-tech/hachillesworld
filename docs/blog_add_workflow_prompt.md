@@ -114,6 +114,7 @@ gh run view --log-failed $(gh run list --workflow=pages.yml --limit=1 --json dat
 
 | # | 파일 | 제목 |
 |---|------|------|
+| 14 | blog-agent-diagnostic-evolution.html | AI 에이전트 진단도구의 발전, HAchillesWorld 이전과 이후 |
 | 13 | blog-deployment-checklist.html | AI 에이전트 배포 전 체크리스트 15 |
 | 12 | blog-harness-guide.html | HAchillesWorld Harness 완전 가이드 |
 | 11 | blog-planning-depth-cost.html | Planning Depth와 비용의 상관관계 |
@@ -128,4 +129,4 @@ gh run view --log-failed $(gh run list --workflow=pages.yml --limit=1 --json dat
 | 02 | blog-mcts-planning-depth.html | AI는 몇 수 앞을 보는가? MCTS Planning Depth |
 | 01 | blog-world-model.html | 당신의 AI 에이전트, 왜 실패하는지 알고 있나요? |
 
-> 다음 포스트 번호: **14**
+> 다음 포스트 번호: **15**
