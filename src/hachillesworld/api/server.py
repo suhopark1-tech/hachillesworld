@@ -12,6 +12,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from hachillesworld.api.middleware import AuditMiddleware
 from hachillesworld.api.routers import compliance, group, operate, scan, study
+from hachillesworld.api.routers import email_unsubscribe
 from hachillesworld.api.routers.operate import audit_router
 from hachillesworld.api.state import AppState
 from hachillesworld.audit.logger import AuditLogger
@@ -70,9 +71,16 @@ app = FastAPI(
 )
 
 app.add_middleware(AuditMiddleware)
+
+# OWASP A05: 프로덕션에서 HAW_CORS_ORIGINS 환경변수로 도메인 제한 필수
+_CORS_ORIGINS = os.getenv(
+    "HAW_CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:3001",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,6 +94,8 @@ app.include_router(audit_router, prefix="/v1")  # admin 전용 — 자체 인증
 app.include_router(study.router, prefix="/v1", dependencies=_auth)
 app.include_router(group.router, prefix="/v1", dependencies=_auth)
 app.include_router(compliance.router, prefix="/v1", dependencies=_auth)
+# 수신 거부 엔드포인트 — 인증 불필요 (이메일 링크 클릭자·웹훅 서비스 접근)
+app.include_router(email_unsubscribe.router, prefix="/v1")
 
 
 @app.get("/health", tags=["meta"])

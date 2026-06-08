@@ -398,7 +398,7 @@ Step 3. 삭제 미대상 데이터 안내
         <Table
           heads={['이전 대상국', '이전 방법', '적용 근거']}
           rows={[
-            ['대한민국 (AWS 서울 리전)', '클라우드 저장·처리', 'EU 표준계약조항 (SCCs, 2021년 개정판) Module 2 적용'],
+            ['대한민국 (AWS 서울 리전)', 'AWS 클라우드 저장·처리', 'SCCs Module 2 (Controller-to-Processor, 유럽위원회 2021-06-04 채택)'],
           ]}
         />
         <InfoBox>

@@ -315,9 +315,10 @@ Step 3. 삭제 미대상 데이터 안내
 
 | 이전 대상국 | 이전 방법 | 적용 근거 |
 |-----------|---------|---------|
-| 대한민국 (AWS 서울 리전) | 클라우드 저장·처리 | EU 표준계약조항 (SCCs, 2021년 개정판) Module 2 적용 |
+| 대한민국 (AWS 서울 리전) | AWS 클라우드 저장·처리 | **SCCs Module 2** (Controller-to-Processor, 유럽위원회 2021-06-04 채택) |
 
-> 한국은 현재 GDPR 적정성 결정(Adequacy Decision)이 내려지지 않은 상태입니다. 이에 따라 EU 이용자 데이터에는 유럽위원회가 2021년 6월 승인한 표준계약조항(SCCs)이 적용됩니다.
+> 한국은 현재 GDPR 적정성 결정(Adequacy Decision)이 내려지지 않은 상태입니다. 이에 따라 EU 이용자 데이터에는 유럽위원회가 2021년 6월 4일 채택한 표준계약조항(SCCs) **Module 2 (Controller-to-Processor)** 가 적용됩니다.  
+> SCCs 원문: [eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021D0914](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021D0914)
 
 ### 9-2. 이전 거부 및 대안
 
