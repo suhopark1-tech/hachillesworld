@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const NAV_INTERNAL = [
   { href: '/dashboard',          label: '에이전트 목록', icon: '⬡' },
   { href: '/dashboard/settings', label: '알림 설정',     icon: '⚙' },
+  { href: '/privacy',            label: '개인정보처리방침', icon: '🔒' },
 ];
 
 /* ── 정적 HTML 페이지 ────────────────────────────── */
