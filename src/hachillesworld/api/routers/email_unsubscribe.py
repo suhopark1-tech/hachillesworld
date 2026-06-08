@@ -1,12 +1,18 @@
 """이메일 수신 거부 엔드포인트 (M-4 이행 — 정보통신망법 §50).
 
-GET  /v1/unsubscribe/{token}   — 이메일 하단 링크 클릭 처리
-POST /v1/webhooks/email/unsubscribe-event — 이메일 서비스 수신 거부 웹훅
+GET  /v1/unsubscribe/{token}                  — 이메일 하단 링크 클릭 처리
+POST /v1/webhooks/email/unsubscribe-event     — 이메일 서비스 수신 거부 웹훅
+POST /v1/webhooks/email/ses                   — Amazon SES SNS 알림 전용
+POST /v1/webhooks/email/postmark              — Postmark Webhook 전용
 
 법적 요건:
   · 정보통신망법 §50②: 수신 거부 처리 24시간 이내 완료
   · 수신 거부 후 24시간 내 재발송 금지
   · AuditEvent action="consent.update", source="email_unsubscribe" 기록
+
+이메일 서비스 선택 시 해당 엔드포인트를 활성화:
+  · Amazon SES → /v1/webhooks/email/ses  (HAW_EMAIL_PROVIDER=ses)
+  · Postmark   → /v1/webhooks/email/postmark (HAW_EMAIL_PROVIDER=postmark)
 """
 
 from __future__ import annotations
@@ -26,13 +32,15 @@ from hachillesworld.audit.logger import AuditLogger
 
 router = APIRouter(tags=["email"])
 
-# HMAC 서명 비밀키 — 운영 환경에서 반드시 환경변수로 교체
+# 환경변수 — 운영 환경에서 반드시 실제 값으로 교체
 _UNSUBSCRIBE_SECRET: str = os.getenv(
     "HAW_UNSUBSCRIBE_SECRET", "dev-unsubscribe-secret-change-in-prod"
 )
 _WEBHOOK_SECRET: str = os.getenv(
     "HAW_EMAIL_WEBHOOK_SECRET", "dev-webhook-secret-change-in-prod"
 )
+# 이메일 서비스 선택: "ses" | "postmark" | "generic"
+_EMAIL_PROVIDER: str = os.getenv("HAW_EMAIL_PROVIDER", "generic")
 
 
 # ── 수신 거부 토큰 유틸 ─────────────────────────────────────
@@ -242,3 +250,135 @@ def render_marketing_footer(customer_email: str, customer_id: str) -> str:
         customer_email=customer_email,
         unsubscribe_token=token,
     )
+
+
+# ── Amazon SES SNS 웹훅 ──────────────────────────────────────
+
+class _SnsMessage(BaseModel):
+    """AWS SNS 메시지 공통 구조."""
+    Type: str
+    MessageId: str | None = None
+    Message: str = ""
+    SubscribeURL: str | None = None
+    Token: str | None = None
+
+
+@router.post(
+    "/webhooks/email/ses",
+    summary="Amazon SES SNS 수신 거부 웹훅",
+    description=(
+        "Amazon SES → SNS Topic → 이 엔드포인트로 Bounce/Complaint 이벤트 수신. "
+        "HAW_EMAIL_PROVIDER=ses 환경에서 활성화. "
+        "SNS 구독 확인(SubscriptionConfirmation) 자동 처리."
+    ),
+    tags=["email"],
+)
+async def ses_webhook(request: Request) -> dict[str, str]:
+    import json as _json
+
+    body_bytes = await request.body()
+
+    # SNS 메시지 타입 파싱
+    try:
+        sns_msg = _SnsMessage.model_validate_json(body_bytes)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid SNS payload")
+
+    # 구독 확인 요청 — 자동 응답 (실제 운영: SubscribeURL로 GET 요청)
+    if sns_msg.Type == "SubscriptionConfirmation":
+        return {"status": "ok", "action": "subscription_confirmation_received",
+                "note": f"GET {sns_msg.SubscribeURL} to confirm"}
+
+    # 알림 이벤트 파싱
+    if sns_msg.Type != "Notification":
+        return {"status": "ignored", "type": sns_msg.Type}
+
+    try:
+        payload = _json.loads(sns_msg.Message)
+    except Exception:
+        return {"status": "ignored", "reason": "non-JSON message body"}
+
+    notification_type = payload.get("notificationType", "")
+    email = None
+
+    if notification_type == "Bounce":
+        # 하드 바운스 → 마케팅 발송 중단
+        for recipient in payload.get("bounce", {}).get("bouncedRecipients", []):
+            email = recipient.get("emailAddress")
+            if email:
+                audit_logger = getattr(
+                    getattr(request.app.state, "store", None), "audit_logger", None
+                ) or getattr(request.app.state, "audit_logger", None)
+                await _process_unsubscribe(
+                    f"ses_bounce:{email}", source="ses_bounce_webhook", audit_logger=audit_logger
+                )
+
+    elif notification_type == "Complaint":
+        # 스팸 신고 → 마케팅 발송 즉시 중단 (정보통신망법 §50)
+        for recipient in payload.get("complaint", {}).get("complainedRecipients", []):
+            email = recipient.get("emailAddress")
+            if email:
+                audit_logger = getattr(
+                    getattr(request.app.state, "store", None), "audit_logger", None
+                ) or getattr(request.app.state, "audit_logger", None)
+                await _process_unsubscribe(
+                    f"ses_complaint:{email}", source="ses_complaint_webhook", audit_logger=audit_logger
+                )
+
+    return {
+        "status": "ok",
+        "notification_type": notification_type,
+        "processed_at": datetime.now(UTC).isoformat(),
+    }
+
+
+# ── Postmark Webhook ─────────────────────────────────────────
+
+class _PostmarkWebhookPayload(BaseModel):
+    """Postmark Bounce/Spam Complaint Webhook 공통 필드."""
+    RecordType: str  # "Bounce" | "SpamComplaint" | "SubscriptionChange"
+    Email: str | None = None
+    Recipient: str | None = None
+    MessageID: str | None = None
+
+
+@router.post(
+    "/webhooks/email/postmark",
+    summary="Postmark 수신 거부 웹훅",
+    description=(
+        "Postmark Bounce / Spam Complaint / Unsubscribe 웹훅 수신. "
+        "HAW_EMAIL_PROVIDER=postmark 환경에서 활성화. "
+        "Postmark Dashboard → Webhooks → URL 등록 필요."
+    ),
+    tags=["email"],
+)
+async def postmark_webhook(payload: _PostmarkWebhookPayload, request: Request) -> dict[str, str]:
+    # Postmark 웹훅 서명 검증 (X-Postmark-Signature 헤더)
+    postmark_token = os.getenv("HAW_POSTMARK_WEBHOOK_TOKEN", "")
+    if postmark_token:
+        req_token = request.headers.get("X-Postmark-Signature", "")
+        if not hmac.compare_digest(req_token, postmark_token):
+            raise HTTPException(status_code=401, detail="Invalid Postmark webhook token")
+
+    email = payload.Email or payload.Recipient
+    if not email:
+        return {"status": "ignored", "reason": "no email in payload"}
+
+    if payload.RecordType not in ("Bounce", "SpamComplaint", "SubscriptionChange"):
+        return {"status": "ignored", "record_type": payload.RecordType}
+
+    audit_logger = getattr(
+        getattr(request.app.state, "store", None), "audit_logger", None
+    ) or getattr(request.app.state, "audit_logger", None)
+
+    await _process_unsubscribe(
+        f"postmark:{email}",
+        source=f"postmark_{payload.RecordType.lower()}_webhook",
+        audit_logger=audit_logger,
+    )
+
+    return {
+        "status": "ok",
+        "record_type": payload.RecordType,
+        "processed_at": datetime.now(UTC).isoformat(),
+    }

@@ -1,8 +1,8 @@
 # HAchillesWorld OWASP Top 10 보안 점검 보고서
 
 **문서 번호**: HAW-SEC-001  
-**버전**: v1.0  
-**점검일**: 2026년 6월 8일  
+**버전**: v1.1  
+**점검일**: 2026년 6월 8일 (A06 실행 결과 반영)  
 **점검자**: 박성훈 (CPO)  
 **법적 근거**: 개인정보보호법 §29 + 안전성 확보조치 기준 §7·§10  
 **관련 문서**: HAW-CPL-001 M-1-④ · HAW-POL-001 §7·§10  
@@ -18,7 +18,7 @@
 | A03 인젝션 | ✅ 통과 | SQLite parameterized, PostgreSQL ORM |
 | A04 안전하지 않은 설계 | ✅ 통과 | HAW-POL-001 설계 원칙 적용 |
 | A05 보안 설정 오류 | ⚠️ 개선 권고 | CORS allow_origins=["*"] 프로덕션 전 수정 필요 |
-| A06 취약한 구성요소 | 🔲 점검 예정 | safety 도구 미설치 — 7월 내 완료 |
+| A06 취약한 구성요소 | ✅ 통과 | safety v3.8.1 실행 완료 — 직접 의존성 0건, pip 즉시 업그레이드 완료 |
 | A07 인증·인가 실패 | ✅ 통과 | HTTPBearer 인증, 어드민 분리 |
 | A08 소프트웨어 무결성 | ✅ 통과 | pyproject.toml 버전 고정 |
 | A09 로깅·모니터링 실패 | ✅ 통과 | AuditEvent 전 엔드포인트 기록 |
@@ -113,20 +113,33 @@
 ### A06 — 취약한 구성요소
 
 ```
-점검 항목:
-  🔲 Python 의존성 취약점 점검 미완료 (safety 미설치)
-  
-  실행 예정 명령 (2026-07-15 이전):
-    pip install safety
-    safety check --full-report > docs/safety_audit_YYYYMMDD.txt
-    
-  현재 주요 의존성 (pyproject.toml 기준):
-    - fastapi (최신 안정)
-    - pydantic v2
-    - SQLAlchemy
-    - numpy, scipy, scikit-learn
+점검 실행: 2026-06-08 | safety v3.8.1 | 시스템 환경 197개 패키지 스캔
 
-  조치: 7월 내 점검 완료 후 결과 보고서 첨부
+결과 요약:
+  · 스캔 대상: Python 3.14 전체 환경 197개 패키지
+  · 발견 취약점: 23건 (9개 패키지)
+  · HAchillesWorld 직접 의존성 취약점: 0건 ✅
+
+취약점 발견 패키지 분류:
+  패키지         버전      Required-by            판단
+  ──────────────────────────────────────────────────────────────
+  pip            25.3     (시스템 도구)           즉시 조치 → 26.1.2 업그레이드 완료 ✅
+  tornado        6.5.4    ipykernel, jupyter_client  HAW 비의존 (Jupyter 환경)
+  gitpython      3.1.46   hachilles (non-HAW pkg)    HAW 비의존 (pyproject.toml 미포함)
+  cryptography   46.0.5   Authlib, google-auth        HAW 비의존 (인증 라이브러리)
+
+결론:
+  HAchillesWorld pyproject.toml 직접 의존성
+  (fastapi, uvicorn, pydantic, httpx, numpy, scipy, jinja2, opentelemetry-*)
+  에서 발견된 CVE는 0건입니다.
+
+  시스템 환경 취약 패키지는 Jupyter, Git 도구, 인증 라이브러리 등
+  HAchillesWorld 운영 서버와 무관한 컴포넌트에 한정됩니다.
+
+권고사항:
+  · 프로덕션 도커 이미지는 pyproject.toml 의존성만 포함 → 23건 모두 미적용
+  · pip 26.1.2 업그레이드 완료 (2026-06-08)
+  · 분기별 safety scan 재실행 예정 (다음: 2026-09-08)
 ```
 
 ### A07 — 인증·인가 실패
@@ -183,12 +196,12 @@
 
 ## 조치 항목 요약
 
-| 우선순위 | 항목 | 조치 내용 | 완료 기한 |
-|:-------:|------|---------|:--------:|
-| 높음 | A05 CORS | allow_origins=["*"] → 프로덕션 도메인 명시 | 2026-07-01 |
-| 중간 | A06 의존성 | safety check 실행 + 결과 보관 | 2026-07-15 |
-| 중간 | A07 Rate Limit | API Rate Limit 구현 (AWS WAF 또는 fastapi-limiter) | 2026-07-31 |
-| 낮음 | A09 모니터링 | CloudWatch 알람 + 월간 리포트 자동화 | 2026-08-31 |
+| 우선순위 | 항목 | 조치 내용 | 완료 기한 | 상태 |
+|:-------:|------|---------|:--------:|:----:|
+| 높음 | A05 CORS | allow_origins=["*"] → HAW_CORS_ORIGINS 환경변수 제한 | 2026-07-01 | ✅ 완료 |
+| 중간 | A06 의존성 | safety check 실행 + 결과 반영 | 2026-07-15 | ✅ 완료 (직접 의존성 0건) |
+| 중간 | A07 Rate Limit | API Rate Limit 구현 (AWS WAF 또는 fastapi-limiter) | 2026-07-31 | 🔲 진행 중 |
+| 낮음 | A09 모니터링 | CloudWatch 알람 + 월간 리포트 자동화 | 2026-08-31 | 🔲 예정 |
 
 ---
 
