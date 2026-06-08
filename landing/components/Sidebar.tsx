@@ -5,9 +5,10 @@ import { usePathname } from 'next/navigation';
 
 /* ── 내부 Next.js 라우트 ─────────────────────────── */
 const NAV_INTERNAL = [
-  { href: '/dashboard',          label: '에이전트 목록', icon: '⬡' },
-  { href: '/dashboard/settings', label: '알림 설정',     icon: '⚙' },
-  { href: '/privacy',            label: '개인정보처리방침', icon: '🔒' },
+  { href: '/dashboard',                  label: '에이전트 목록',   icon: '⬡' },
+  { href: '/dashboard/settings',         label: '알림 설정',       icon: '⚙' },
+  { href: '/dashboard/settings/consent', label: '동의 관리',       icon: '🛡️' },
+  { href: '/privacy',                    label: '개인정보처리방침', icon: '🔒' },
 ];
 
 /* ── 정적 HTML 페이지 ────────────────────────────── */

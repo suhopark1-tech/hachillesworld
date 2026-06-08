@@ -76,3 +76,16 @@ export interface AlertSettings {
   has_critical_threshold: number;
   drift_threshold: number;
 }
+
+export interface ConsentRecord {
+  version: string;
+  required: boolean;
+  anonymous_benchmark: boolean;
+  product_improvement: boolean;
+  marketing_contact: boolean;
+  public_case_study: boolean;
+  consented_at: string;
+  region: 'KR' | 'EU' | 'US' | 'JP';
+}
+
+export const CONSENT_STORAGE_KEY = 'haw_consent_v1';

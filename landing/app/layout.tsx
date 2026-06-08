@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import ConsentBanner from '@/components/ConsentBanner';
 
 export const metadata: Metadata = {
   title: 'HAchillesWorld Dashboard',
@@ -20,7 +21,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ConsentBanner />
+        {children}
+      </body>
     </html>
   );
 }
