@@ -160,7 +160,7 @@ class ActionItemSchema(BaseModel):
 
 class ComparisonContextSchema(BaseModel):
     peer_avg_score: float
-    peer_count: int
+    peer_count_range: str  # 재식별 방지: 정수 대신 구간 문자열 노출 (HAW-LGL-002)
     domain: str
     level: str
     percentile_rank: float

@@ -34,7 +34,7 @@ class ComparisonContext:
     """Study-001 동일 도메인·레벨 에이전트 대비 상대 위치."""
 
     peer_avg_score: float
-    peer_count: int
+    peer_count_range: str  # 재식별 방지용 구간 문자열 (HAW-LGL-002)
     domain: str
     level: str
     percentile_rank: float  # 상위 몇% (낮을수록 우수)
@@ -53,6 +53,26 @@ class HASInterpretation:
     next_actions: list[ActionItem]  # 상위 3개 액션
     estimated_improvement: float  # 상위 3개 액션 수행 시 예상 총 HAS 상승폭
     comparison: ComparisonContext
+
+
+# ── 재식별 방지용 agent_count 구간 변환 (HAW-LGL-002) ────────────────
+# K=5 임계값 유지, 정확한 정수 대신 구간 문자열을 공개 API에 노출한다.
+# 구간 경계: 5~9 / 10~29 / 30~99 / 100+
+# K 미달(n < 5)은 호출 측에서 404를 반환하므로 이 함수에는 도달하지 않는다.
+_COUNT_RANGES: list[tuple[int, str]] = [
+    (100, "100개 이상"),
+    (30,  "30~99개"),
+    (10,  "10~29개"),
+    (5,   "5~9개"),
+]
+
+
+def _count_to_range(n: int) -> str:
+    """정수 n을 공개 노출용 구간 문자열로 변환한다."""
+    for threshold, label in _COUNT_RANGES:
+        if n >= threshold:
+            return label
+    return "5~9개"  # n < 5는 벤치마크 비활성화 대상이므로 도달 불가
 
 
 # ── Study-001 실증 데이터 기반 percentile 테이블 ──────────────────────
@@ -269,10 +289,15 @@ class HASInterpreter:
         return f"{top.metric}={top.current_value:.3g} (임계 초과) → {top.action}"
 
     def _comparison_context(self, report: "DiagnosticReport") -> ComparisonContext:
-        """Study-001 동일 도메인·레벨 에이전트 대비 상대 위치."""
+        """Study-001 동일 도메인·레벨 에이전트 대비 상대 위치.
+
+        peer_count_range: 재식별 방지를 위해 정수 대신 구간 문자열을 반환한다.
+        (HAW-LGL-002 — K=5 유지 + 구간 표시 방안)
+        """
+        _study_peer_count = 47  # Study-001 참여 에이전트 수
         return ComparisonContext(
             peer_avg_score=65.0,  # Study-001 전체 평균
-            peer_count=47,  # Study-001 참여 에이전트 수
+            peer_count_range=_count_to_range(_study_peer_count),
             domain=report.laws_domain.value,
             level=report.level.value,
             percentile_rank=self._percentile(report.composite_score),
