@@ -8,6 +8,7 @@ const NAV_INTERNAL = [
   { href: '/dashboard',                  label: '에이전트 목록',   icon: '⬡' },
   { href: '/dashboard/settings',         label: '알림 설정',       icon: '⚙' },
   { href: '/dashboard/settings/consent', label: '동의 관리',       icon: '🛡️' },
+  { href: '/signup',                     label: '새 계정 만들기',  icon: '✦' },
   { href: '/privacy',                    label: '개인정보처리방침', icon: '🔒' },
 ];
 

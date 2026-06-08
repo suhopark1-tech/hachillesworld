@@ -89,3 +89,21 @@ export interface ConsentRecord {
 }
 
 export const CONSENT_STORAGE_KEY = 'haw_consent_v1';
+
+export interface AccountRecord {
+  email: string;
+  company: string;
+  region: 'KR' | 'EU' | 'US' | 'JP';
+  created_at: string;
+}
+
+export interface OnboardingAgent {
+  agent_id: string;
+  name: string;
+  domain: string;
+  purpose: string;
+  created_at: string;
+}
+
+export const ACCOUNT_STORAGE_KEY = 'haw_account_v1';
+export const AGENTS_STORAGE_KEY  = 'haw_agents_v1';

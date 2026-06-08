@@ -91,7 +91,7 @@ export default function ConsentBanner() {
     }
   }, []);
 
-  if (!show || pathname === '/privacy') return null;
+  if (!show || pathname === '/privacy' || pathname === '/signup') return null;
 
   function toggle(key: keyof OptionalConsents) {
     setOpts((prev) => ({ ...prev, [key]: !prev[key] }));
